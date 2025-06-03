@@ -67,3 +67,4 @@ out/
 *.temp
 *.identifier
 *Zone.Identifier
+*.pyc
