@@ -18,7 +18,7 @@ RUN npm run build
 # 2. Production stage (serving with built-in server)
 FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /
 
 # Copy built app and node_modules from builder
 COPY --from=builder /src/app ./
