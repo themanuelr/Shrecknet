@@ -1,0 +1,112 @@
+import React, { useEffect, useState } from "react";
+import { getPage } from "@/app/lib/pagesAPI";
+import { getGameWorld } from "@/app/lib/gameworldsAPI";
+import { useAuth } from "@/app/components/auth/AuthProvider";
+import HTMLRenderer from "./HTMLRenderer";
+import Image from "next/image";
+function getPreviewHTML(content, maxLen = 220) {
+  if (!content) return "";
+  const el = document.createElement("div");
+  el.innerHTML = content;
+  const ps = Array.from(el.querySelectorAll("p"));
+  let preview = "";
+  let len = 0;
+  for (let i = 0; i < ps.length; i++) {
+    const t = ps[i].innerText || ps[i].textContent || "";
+    preview += "<p>" + t + "</p>";
+    len += t.length;
+    if (len > maxLen || i > 1) break;
+  }
+  if (!preview) preview = (el.textContent || "").slice(0, maxLen) + "...";
+  return preview;
+}
+
+export default function WikiLinkHoverCard({ href, children }) {
+  const [show, setShow] = useState(false);
+  const [info, setInfo] = useState(null);
+  const { token } = useAuth();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  // If you use Next.js 13+, can use: const pathname = usePathname();
+  const match = pathname.match(/\/worlds\/(\d+)/);
+  const currentWorldId = match ? match[1] : null;
+  const hrefMatch = href.match(/\/worlds\/(\d+)\//);
+  const linkWorldId = hrefMatch ? hrefMatch[1] : null;
+  const isCrossWorld = currentWorldId && linkWorldId && currentWorldId !== linkWorldId;
+
+
+  useEffect(() => {
+    if (!show || info) return;
+    const match = href.match(/\/worlds\/(\d+)\/concept\/(\d+)\/page\/(\d+)/);
+    if (match) {
+      const [, wid, , pid] = match;
+  
+      getPage(pid, token).then(page =>
+        getGameWorld(wid, token).then(world =>
+          setInfo({ page, world })
+        )
+      );
+    }
+  }, [show, info, href, token]);
+
+  
+  // No hovercard on mobile:
+  const isMobile = typeof window !== "undefined" && /Mobi|Android/i.test(window.navigator.userAgent);
+  if (isMobile) return (
+    <a href={href} className={`wiki-link${isCrossWorld ? " cross-world-link" : ""}`}>{children}</a>
+  );
+
+
+  
+
+  return (
+    <span className="relative wiki-link-wrapper"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      tabIndex={0}
+      style={{ display: "inline-block" }}
+    >
+      <a
+        href={href}
+        className={`wiki-link${isCrossWorld ? " cross-world-link" : ""}`}
+        style={isCrossWorld
+          ? {
+              background: "linear-gradient(90deg, #00b96f 15%, #a6f7d1 98%)",
+              color: "#fff",
+              borderColor: "#00b96f"
+            }
+          : undefined
+        }
+      >
+        {children}
+      </a>
+      {show && info && (
+        <span className="wiki-hovercard-pop absolute top-full left-1/2 z-50 -translate-x-1/3 mt-2"
+          style={{
+            pointerEvents: "auto",
+            background: "#fff",
+            minWidth: 350, maxWidth: 540,
+          }}
+        >
+          <span className="wiki-hovercard-triangle">
+            <svg width="28" height="15"><polygon points="14,0 28,15 0,15" fill="#fff" stroke="var(--primary)" strokeWidth="1.5" /></svg>
+          </span>
+          <div className="wiki-hovercard-content">
+            <div className="wiki-hovercard-title" title={info.page.name}>{info.page.name}</div>
+            <div className="wiki-hovercard-preview">
+              <HTMLRenderer content={getPreviewHTML(info.page.content)} />
+            </div>
+          </div>
+          <div className="wiki-hovercard-worldlogo">
+          <Image
+          width={400}
+          height={400}
+          src={info.world.logo || "/images/worlds/new_game.png"}
+          alt={info.world.name}
+          title={info.world.name}/>          
+            
+          </div>
+        </span>
+      )}
+    </span>
+  );
+}

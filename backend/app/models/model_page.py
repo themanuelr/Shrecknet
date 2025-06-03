@@ -1,0 +1,36 @@
+# model_page.py
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship, JSON
+from datetime import datetime, timezone
+from sqlalchemy import Column
+
+from datetime import datetime
+
+
+class PageCharacteristicValue(SQLModel, table=True):
+    page_id: int = Field(foreign_key="page.id", primary_key=True)
+    characteristic_id: int = Field(foreign_key="characteristic.id", primary_key=True)
+    value: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
+    # If value is a reference to another page, it will be the other page's id (as string)
+
+
+class Page(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    gameworld_id: int = Field(foreign_key="gameworld.id")
+    concept_id: int = Field(foreign_key="concept.id")
+    logo : Optional[str]
+    name: str
+    content: Optional[str] = None  # Rich text, etc.
+
+    #Cross Link information    
+    allow_crosslinks: Optional[bool] = True #allow crosslinks in this page
+    ignore_crosslink: Optional[bool] = False #ignore this page when adding crosslinks to other pages
+    allow_crossworld: Optional[bool] = True #Allow adding crosslink for other worlds to this page / allow this page to be added to crosslink for other worlds    
+    
+
+    
+    created_by_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    allowed_user_ids: Optional[List[int]] = Field(default_factory=list, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))            
+    updated_at: Optional[datetime] = None
+

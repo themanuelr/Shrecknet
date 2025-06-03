@@ -1,0 +1,41 @@
+from typing import Optional, List
+from sqlmodel import SQLModel
+from datetime import datetime
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .schema_page_characteristic_value import PageCharacteristicValueCreate, PageCharacteristicValueUpdate, PageCharacteristicValueRead
+
+class PageBase(SQLModel):
+    gameworld_id: int
+    concept_id: int
+    name: str
+    content: Optional[str] = None
+    logo: Optional[str] = None    
+    allowed_user_ids: Optional[List[int]] = []
+
+    #Cross Link information    
+    allow_crosslinks: Optional[bool] = True #allow crosslinks in this page
+    ignore_crosslink: Optional[bool] = False #ignore this page when adding crosslinks to other pages
+    allow_crossworld: Optional[bool] = True #Allow adding crosslink for other worlds to this page / allow this page to be added to crosslink for other worlds    
+        
+
+class PageCreate(PageBase):
+    values: Optional[List["PageCharacteristicValueCreate"]] = []
+
+class PageUpdate(SQLModel):
+    name: Optional[str] = None
+    content: Optional[str] = None
+    logo: Optional[str] = None
+    values: Optional[List["PageCharacteristicValueUpdate"]] = None    
+    allow_crosslinks: Optional[bool] = True #allow crosslinks in this page
+    ignore_crosslink: Optional[bool] = False #ignore this page when adding crosslinks to other pages
+    allow_crossworld: Optional[bool] = True #Allow adding crosslink for other worlds to this page / allow this page to be added to crosslink for other worlds    
+
+class PageRead(PageBase):
+    id: int
+    created_by_user_id: Optional[int]
+    created_at: datetime
+    updated_at: Optional[datetime]
+    values: List["PageCharacteristicValueRead"] = []
+
