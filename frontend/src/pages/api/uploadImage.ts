@@ -52,13 +52,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     if (fs.existsSync(dest)) fs.unlinkSync(dest);
 
     // Robust: check for filepath (formidable v3+), fallback to path (v2)
-    const tempPath = (file as unknown).filepath || (file as unknown).path;
+    const tempPath = (file as any).filepath || (file as any).path;
     if (!tempPath) {
       res.status(400).json({ error: "File path not found for upload" });
       return;
     }
 
-    fs.renameSync(tempPath, dest);
+    // --- PATCH: Use copy + unlink instead of rename ---
+    try {
+      fs.copyFileSync(tempPath, dest);
+      fs.unlinkSync(tempPath);
+    } catch (copyErr) {
+      res.status(500).json({ error: `Error saving file: ${String(copyErr)}` });
+      return;
+    }
+    // -------------------------------------------------
 
     res.status(200).json({
       url: `/images/pages/${pageType}/${pageName}/${fileName}`.replace(/\/+/g, "/"),
