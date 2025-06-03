@@ -7,7 +7,7 @@ services:
       - backend
 
     volumes:
-      - ./frontend/public:/frontend/public         # maps host ./data to /backend/data in the container      
+      - ./frontend/public:/app/public   
 
   backend:
     build: ./backend
