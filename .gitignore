@@ -66,3 +66,4 @@ out/
 *.tmp
 *.temp
 *.identifier
+*Zone.Identifier
