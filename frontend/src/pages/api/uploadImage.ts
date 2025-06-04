@@ -42,10 +42,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const baseName =
       (file.originalFilename || file.name || "upload").replace(/[^a-zA-Z0-9_.-]/g, "_");
 
-    // Use customFileName if present, otherwise fallback to timestamp name
+    // Use customFileName if present, otherwise use the base name so repeated
+    // uploads replace the previous file
     const fileName = customFileName
       ? `${customFileName}${fileExt}`
-      : `${Date.now()}_${baseName}`;
+      : `${baseName}`;
     const dest = path.join(dir, fileName);
 
     // Delete unknown old file with the same name to avoid duplicates

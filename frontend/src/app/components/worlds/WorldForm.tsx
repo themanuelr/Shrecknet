@@ -7,7 +7,8 @@ async function uploadWorldLogo(file, worldName) {
   const safeWorldName = worldName.trim().replace(/[^a-zA-Z0-9_-]/g, "_") || "new_world";
   const customFileName = "world_logo";
   const imageUrl = await uploadImage(file, "worlds", safeWorldName, customFileName);
-  return imageUrl;
+  // Append timestamp to bypass aggressive caching for the same filename
+  return `${imageUrl}?t=${Date.now()}`;
 }
 
 export default function WorldForm({
