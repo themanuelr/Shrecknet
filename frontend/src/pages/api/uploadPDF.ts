@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
   
-    const dir = join(process.cwd(), "public", "pdfs", "pages", pageID);
+    const dir = join(process.cwd(), "uploads", "pdfs", "pages", pageID);
     await mkdir(dir, { recursive: true });
   
     const filename = `${uuidv4()}.pdf`;
     const filepath = join(dir, filename);
     await writeFile(filepath, buffer);
   
-    const publicUrl = `/pdfs/pages/${pageID}/${filename}`;
+    const publicUrl = `/uploads/pdfs/pages/${pageID}/${filename}`;
     return new Response(JSON.stringify({ url: publicUrl }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

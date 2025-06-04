@@ -32,7 +32,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    const dir = path.join(process.cwd(), "public/images/pages", pageType, pageName);
+    const dir = path.join(process.cwd(), "uploads/images/pages", pageType, pageName);
     fs.mkdirSync(dir, { recursive: true });
 
     // File extension
@@ -69,7 +69,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     // -------------------------------------------------
 
     res.status(200).json({
-      url: `/images/pages/${pageType}/${pageName}/${fileName}`.replace(/\/+/g, "/"),
+      url: `/uploads/images/pages/${pageType}/${pageName}/${fileName}`.replace(/\/+/g, "/"),
     });
   });
 }

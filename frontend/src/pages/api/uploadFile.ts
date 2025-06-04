@@ -35,7 +35,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    const dir = path.join(process.cwd(), "public/images", folder);
+    const dir = path.join(process.cwd(), "uploads", folder);
     fs.mkdirSync(dir, { recursive: true });
 
     const fileExt = path.extname(file.originalFilename || file.name || "upload").toLowerCase();
@@ -65,6 +65,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     // -------------------------------------------------
 
-    res.status(200).json({ url: `/images/${folder}/${fileName}`.replace(/\/+/g, "/") });
+    res.status(200).json({ url: `/uploads/${folder}/${fileName}`.replace(/\/+/g, "/") });
   });
 }

@@ -17,6 +17,6 @@ export async function uploadFile(file, folder, filename) {
     }
   
     const data = await res.json();
-    // data.url should be the public path of the uploaded file
+    // data.url should be the /uploads path of the uploaded file
     return data.url;
   }
