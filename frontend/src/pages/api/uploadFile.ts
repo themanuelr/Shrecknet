@@ -44,7 +44,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const fileName = customFileName
       ? `${customFileName}${fileExt}`
-      : `${Date.now()}_${baseName}`;
+      : `${baseName}`;
     const dest = path.join(dir, fileName);
 
     if (fs.existsSync(dest)) fs.unlinkSync(dest);
