@@ -103,8 +103,8 @@ export default function TopBar() {
         <Image
           src="/images/logo.svg"
           alt="Shrecknet logo"
-          width={400}
-          height={400}
+          width={100}
+          height={100}
           className="drop-shadow-lg transition-transform group-hover:scale-105"
           priority
         />
