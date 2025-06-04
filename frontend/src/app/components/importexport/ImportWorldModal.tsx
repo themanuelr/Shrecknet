@@ -17,7 +17,6 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
   const [progress, setProgress] = useState(""); // progress for ZIP handling
 
   function reset() {
-    setFile(null);
     setImportData(null);
     setEditedWorld(null);
     setError("");
@@ -31,7 +30,6 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
     reset();
     const f = e.target.files?.[0];
     if (!f) return;
-    setFile(f);
     try {
       if (f.name.endsWith(".zip")) {
         setProgress("Reading ZIP file...");
