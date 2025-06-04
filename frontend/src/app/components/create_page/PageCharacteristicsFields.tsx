@@ -176,7 +176,7 @@ export default function PageCharacteristicsFields({
           <div key={field.id} className="flex flex-col gap-2">
             <label className="text-[var(--primary)] font-semibold text-sm flex items-center gap-2">
               {field.logo && (
-                <Image src={field.logo} alt="logo" width={400} height={400} className="rounded-full border" />
+                <Image src={field.logo} alt="logo" width={50} height={50} className="rounded-full border" />
               )}
               {field.name}
               <span className="ml-2 text-xs text-[var(--foreground)]/60">
@@ -360,8 +360,8 @@ export default function PageCharacteristicsFields({
                                 <Image
                                   src={url}
                                   alt={`${field.name} ${idx + 1}`}
-                                  width={400}
-                                  height={400}
+                                  width={50}
+                                  height={50}
                                   className="rounded border border-[var(--primary)]"
                                 />
                               </li>
@@ -371,8 +371,8 @@ export default function PageCharacteristicsFields({
                           <Image
                             src={val}
                             alt={field.name}
-                            width={400}
-                            height={400}
+                            width={50}
+                            height={50}
                             className="rounded border border-[var(--primary)]"
                           />
                         ) : null}
