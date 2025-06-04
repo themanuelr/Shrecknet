@@ -127,12 +127,14 @@ export default function PageView() {
 
   async function handleSaveContent(newContent) {
     if (!pageId || !token) return;
-    
+
     try {
       await updatePage(Number(pageId), { content: newContent }, token);
       const freshPage = await getPage(pageId, token);
       setPage(freshPage);
-    } 
+    } catch (err) {
+      console.error("Failed to save page content", err);
+    }
   }
 
   // --- DELETE PAGE HANDLER ---
