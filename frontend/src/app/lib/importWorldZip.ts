@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 
-// Helper: upload a file to your frontend public folder
+// Helper: upload a file to your uploads directory
 export async function uploadImageFile(fileBlob, folder, filename) {
   const formData = new FormData();
   formData.append("file", fileBlob, filename);
@@ -12,7 +12,7 @@ export async function uploadImageFile(fileBlob, folder, filename) {
     body: formData,
   });
   if (!res.ok) throw new Error("Failed to upload file " + filename);
-  return await res.json(); // { url: "/images/..." }
+  return await res.json(); // { url: "/uploads/..." }
 }
 
 // Main function to process import zip

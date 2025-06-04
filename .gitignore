@@ -68,3 +68,7 @@ out/
 *.identifier
 *Zone.Identifier
 *.pyc
+# Uploaded files
+frontend/uploads/
+!frontend/uploads/.gitkeep
+
