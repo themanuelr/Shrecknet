@@ -16,10 +16,11 @@ services:
       context: ./backend
       network: host
     ports:
-      - "8000:8000"    
+      - "8000:8000"
     env_file:
-     - ./backend/.env      
+     - ./backend/.env
 
     volumes:
-      - ./backend/data:/app/data         # maps host ./data to /backend/data in the container      
+      - ./backend/data:/app/data         # maps host ./data to /backend/data in the container
+      - ./frontend/public:/app/public    # share uploaded assets with frontend
  
