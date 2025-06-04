@@ -3,7 +3,7 @@ import JSZip from "jszip";
 // Helper: upload a file to your frontend public folder
 export async function uploadImageFile(fileBlob, folder, filename) {
   const formData = new FormData();
-  formData.append("file", fileBlob);
+  formData.append("file", fileBlob, filename);
   formData.append("folder", folder);
   formData.append("filename", filename.replace(/\.[^/.]+$/, "")); // Remove extension if present, add it below
 
