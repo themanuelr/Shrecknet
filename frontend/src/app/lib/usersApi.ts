@@ -1,6 +1,6 @@
 import { API_URL } from "./config";
 
-
+console.log("Public API: "+API_URL)
 export async function getUserCount(): Promise<number> {
   const res = await fetch(`${API_URL}/users/users`);
   if (!res.ok) throw new Error("Could not fetch user list");

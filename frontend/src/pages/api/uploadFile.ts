@@ -55,7 +55,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    fs.renameSync(tempPath, dest);
+    // --- PATCH: Use copy + unlink instead of rename ---
+    try {
+      fs.copyFileSync(tempPath, dest);
+      fs.unlinkSync(tempPath);
+    } catch (copyErr) {
+      res.status(500).json({ error: `Error saving file: ${String(copyErr)}` });
+      return;
+    }
+    // -------------------------------------------------
 
     res.status(200).json({ url: `/images/${folder}/${fileName}`.replace(/\/+/g, "/") });
   });

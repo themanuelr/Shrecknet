@@ -103,10 +103,10 @@ export default function AuthCard() {
         setError(
           (typeof errObj.detail === "string" && errObj.detail) ||
           (typeof errObj.message === "string" && errObj.message) ||
-          "Unknown error"
+          "Unknown error!" + err
         );
       } else {
-        setError("Unknown error");
+        setError("Unknown error!");
       }
     } finally {
       setLoading(false);
