@@ -66,12 +66,12 @@ export default function WorldDetailPage({ params }) {
 
   async function handleSaveContent(newContent) {
     if (!worldID || !token) return;
-    setSavingContent(true);
+    
     try {
       const updated = await updateGameWorld(Number(worldID), { content: newContent }, token);
       setWorld(updated);
     } finally {
-      setSavingContent(false);
+      
     }
   }
 

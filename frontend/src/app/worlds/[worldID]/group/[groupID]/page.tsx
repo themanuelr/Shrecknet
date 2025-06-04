@@ -13,6 +13,7 @@ import { BookOpen } from "lucide-react";
 import CardScroller from "@/app/components/template/CardScroller";
 import Link from "next/link";
 import Image from "next/image";
+import { getConcepts } from "@/app/lib/conceptsAPI";
 export default function GroupPage({ params }) {
 
 
