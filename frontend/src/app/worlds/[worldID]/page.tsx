@@ -113,7 +113,7 @@ export default function WorldDetailPage({ params }) {
               <Image
                       width={400}
                       height={400}                   
-                src={world.logo || "/images/worlds/new_game.png"}
+                src={world.logo || "/images/default/worlds/logo.png"}
                 alt={world.name}
                 onClick={() => setZoomOpen(true)}
                 className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover border-2 border-[var(--primary)] shadow-md cursor-pointer hover:scale-105 transition"
@@ -170,9 +170,9 @@ export default function WorldDetailPage({ params }) {
                   <Image
                       width={400}
                       height={400}                       
-                    src={concept.logo || "/images/pages/concept/concept.png"}
+                    src={concept.logo || "/images/default/concepts/logo.png"}
                     alt={concept.name}
-                    className="w-28 h-28 object-cover rounded-2xl border border-[var(--primary)]/30 mb-1 mt-1 bg-white/70 shadow-sm"
+                    className=""
                     style={{
                       transition: "box-shadow 0.2s, border 0.2s",
                     }}

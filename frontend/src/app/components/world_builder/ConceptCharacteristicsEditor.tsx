@@ -97,10 +97,10 @@ function ColumnAddDropdown({ available, onAdd, disabled }) {
               tabIndex={0}
             >
               <Image
-                src={c.logo || "/images/pages/characteristics/logo.png"}
+                src={c.logo || "/images/default/characteristics/logo.png"}
                 alt=""
-                width={400}
-                height={400}
+                width={100}
+                height={100}
                 className="rounded-full border border-[var(--primary)] object-cover"
               />
               {c.name}
@@ -286,10 +286,10 @@ function SortableCharacteristicRow({ id, name, logo, onRemove }) {
     >
       <span className="flex items-center gap-2">
         <Image
-          src={logo || "/images/pages/characteristics/logo.png"}
+          src={logo || "/images/default/characteristics/logo.png"}
           alt=""
-          width={400}
-          height={400}
+          width={50}
+          height={50}
           className="rounded-full border border-[var(--primary)] object-cover"
         />
         <span className="text-[var(--primary)] font-semibold">{name}</span>
@@ -312,10 +312,10 @@ function OverlayCharacteristicRow({ char }) {
   return (
     <div className="flex items-center gap-2 bg-[var(--primary)]/20 border border-[var(--primary)]/30 rounded-xl px-3 py-2 shadow-lg">
       <Image
-        src={char.logo || "/images/pages/characteristics/logo.png"}
+        src={char.logo || "/images/default/characteristics/logo.png"}
         alt=""
-        width={400}
-        height={400}
+        width={50}
+        height={50}
         className="rounded-full border border-[var(--primary)] object-cover"
       />
       <span className="text-[var(--primary)] font-semibold">{char.name}</span>

@@ -294,8 +294,8 @@ export default function ConceptForm({
             <Image
               src={form.logoUrl?.trim() || "/images/default/concepts/logo.png"}
               alt="Concept logo"
-              width={400}
-              height={400}
+              width={100}
+              height={100}
               className="rounded-xl border-2 border-[var(--primary)] object-cover"
             />
           </div>

@@ -235,7 +235,7 @@ export default function DashboardWorlds({
                 </div>
               )}
               <a href={`/${linkURL}/${world.id}`} className="w-full block group">
-                <div className="relative w-full h-[220px] sm:h-[260px] md:h-[320px] overflow-hidden rounded-t-3xl">
+                <div className="relative w-full h-[220px] sm:h-[320px] md:h-[250px] overflow-hidden rounded-t-3xl">
                   <Image
                     src={world.logo || "/images/worlds/new_game.png"}
                     alt={world.name}

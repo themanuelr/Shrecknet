@@ -203,7 +203,43 @@ export default function CharacteristicForm({
           autoFocus
         />
       </div>
-
+      
+      <div>
+        <span className="block font-semibold text-[var(--primary)] mb-1">Characteristic Logo (optional)</span>
+        <div className="flex items-center gap-4">
+          <input
+            type="file"
+            accept="image/*"
+            name="logo"
+            onChange={async e => {
+              if (e.target.files && e.target.files[0]) {
+                setUploading(true);
+                try {
+                  const uploadedUrl = await uploadCharacteristicLogo(e.target.files[0], form.name);
+                  setForm(f => ({
+                    ...f,
+                    logo: null,
+                    logoUrl: uploadedUrl,
+                  }));
+                } catch (err) {
+                  setError("Image upload failed: " + err.message);
+                }
+                setUploading(false);
+              }
+            }}
+            className="block w-full rounded-xl border border-[var(--primary)] px-2 py-2 bg-[var(--surface-variant)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+            disabled={loading || uploading}
+          />
+          <Image
+            src={logoPreview  || "/images/default/characteristics/logo.png"}
+            alt="Characteristic logo"
+            width={50}
+            height={50}
+            className="rounded-lg border border-[var(--primary)] object-cover"
+          />
+        </div>
+      </div>
+      
       {/* Single/List chip selector */}
       <div>
         <span className="block font-semibold text-[var(--primary)] mb-1">Cardinality</span>
@@ -273,10 +309,10 @@ export default function CharacteristicForm({
                 {filteredConcepts.map(concept => (
                   <Combobox.Option key={concept.id} value={concept.id} className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-[var(--accent)]/20">
                     <Image
-                      src={concept.logo || "/images/pages/concept/concept.png"}
+                      src={concept.logo || "/images/default/concepts/logo.png"}
                       alt=""
-                      width={400}
-                      height={400}
+                      width={50}
+                      height={50}
                       className="rounded border border-[var(--primary)] object-cover"
                     />
                     <span>{concept.name}</span>
@@ -290,11 +326,11 @@ export default function CharacteristicForm({
               <Image
                 src={
                   concepts.find(c => c.id === form.ref_concept_id)?.logo ||
-                  "/images/pages/concept/concept.png"
+                  "/images/default/concepts/logo.png"
                 }
                 alt=""
-                width={400}
-                height={400}
+                width={50}
+                height={50}
                 className="rounded border border-[var(--primary)] object-cover"
               />
               <span className="font-semibold text-[var(--primary)]">
@@ -306,41 +342,7 @@ export default function CharacteristicForm({
       )}
 
       {/* Logo Upload */}
-      <div>
-        <span className="block font-semibold text-[var(--primary)] mb-1">Characteristic Logo (optional)</span>
-        <div className="flex items-center gap-4">
-          <input
-            type="file"
-            accept="image/*"
-            name="logo"
-            onChange={async e => {
-              if (e.target.files && e.target.files[0]) {
-                setUploading(true);
-                try {
-                  const uploadedUrl = await uploadCharacteristicLogo(e.target.files[0], form.name);
-                  setForm(f => ({
-                    ...f,
-                    logo: null,
-                    logoUrl: uploadedUrl,
-                  }));
-                } catch (err) {
-                  setError("Image upload failed: " + err.message);
-                }
-                setUploading(false);
-              }
-            }}
-            className="block w-full rounded-xl border border-[var(--primary)] px-2 py-2 bg-[var(--surface-variant)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
-            disabled={loading || uploading}
-          />
-          <Image
-            src={logoPreview}
-            alt="Characteristic logo"
-            width={400}
-            height={400}
-            className="rounded-lg border border-[var(--primary)] object-cover"
-          />
-        </div>
-      </div>
+      
 
       {/* Actions */}
       <div className="flex justify-end gap-4 pt-6">
