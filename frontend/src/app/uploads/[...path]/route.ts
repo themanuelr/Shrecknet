@@ -5,10 +5,12 @@ import { lookup as mimeLookup } from 'mime-types';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: { path: string[] } }
 ) {
+  const { params } = await context;    // <-- This is the fix
   const segments = params.path || [];
   const filePath = path.join(process.cwd(), "uploads", ...segments);
+
   try {
     const data = await fs.readFile(filePath);
     const mimeType = mimeLookup(filePath) || 'application/octet-stream';
