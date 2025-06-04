@@ -29,6 +29,7 @@ export async function importWorldZip(zipFile) {
         if (!match) return;
         const folder = match[1];
         const filename = match[2];
+        console.log("Upload: " + folder + "/"+filename)
         return uploadImageFile(blob, folder, filename);
       });
       imagePromises.push(blobPromise);
