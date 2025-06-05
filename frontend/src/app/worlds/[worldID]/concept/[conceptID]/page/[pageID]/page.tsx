@@ -92,7 +92,7 @@ export default function PageView() {
         const allWorlds = await getGameWorlds(token);
         setWorlds(allWorlds);
 
-        const worldConcepts = await getConcepts(token, worldData.id);
+        const worldConcepts = await getConcepts(token, { gameworld_id: worldData.id });
         setConcepts(worldConcepts);
 
       } catch (error) {
