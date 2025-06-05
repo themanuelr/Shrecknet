@@ -56,6 +56,15 @@ async def delete_page(session: AsyncSession, page_id: int) -> bool:
 # --- PAGE CHARACTERISTIC VALUE CRUD ---
 
 async def create_page_characteristic_value(session: AsyncSession, value_obj: PageCharacteristicValue) -> PageCharacteristicValue:
+    existing = await session.get(
+        PageCharacteristicValue,
+        (value_obj.page_id, value_obj.characteristic_id),
+    )
+    if existing:
+        existing.value = value_obj.value
+        await session.commit()
+        await session.flush()
+        return existing
     session.add(value_obj)
     await session.commit()
     await session.flush()
