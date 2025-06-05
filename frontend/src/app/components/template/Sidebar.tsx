@@ -37,7 +37,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
     {
       label: "Virtual Table",
       icon: <CasinoRoundedIcon fontSize="medium" />,
-      href: "https://shrecknet.club:8989",
+      href: "https://foundry.shrecknet.club",
       external: true,
       show: true,
     },
