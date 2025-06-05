@@ -70,7 +70,11 @@ async def create_page_endpoint(
     # --- Store characteristic values ---
     # print (f"All page to be inserted: {page}")
     # print (f"All values to be inserted: {page.values}")
+    seen_characteristic_ids = set()
     for val in page.values or []:
+        if val.characteristic_id in seen_characteristic_ids:
+            continue
+        seen_characteristic_ids.add(val.characteristic_id)
         value_obj = PageCharacteristicValue(
             page_id=db_page.id,
             characteristic_id=val.characteristic_id,
@@ -148,8 +152,12 @@ async def update_page_endpoint(
     if updates.values is not None:
         # Remove all existing values for this page
         await delete_page_characteristic_values(session, page_id)        
-        # Add the new ones
+        # Add the new ones without duplicates
+        seen_characteristic_ids = set()
         for val in updates.values:
+            if val.characteristic_id in seen_characteristic_ids:
+                continue
+            seen_characteristic_ids.add(val.characteristic_id)
             print (f"VAL: {val} - {val.model_dump()}")
             value_obj = PageCharacteristicValue(
                 page_id=page_id,
