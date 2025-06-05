@@ -18,6 +18,13 @@ export async function registerUser({ nickname, email, password, role, image_url 
   return await res.json();
 }
 
+export async function userExists(email: string): Promise<boolean> {
+  const res = await fetch(`${API_URL}/users/users`);
+  if (!res.ok) throw new Error("Could not fetch user list");
+  const users = await res.json();
+  return users.some((u: { email: string }) => u.email.toLowerCase() === email.toLowerCase());
+}
+
   export async function loginUser({ email, password }: unknown) {
     const params = new URLSearchParams();
     params.append("username", email);
