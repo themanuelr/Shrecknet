@@ -8,7 +8,17 @@ from app.models.model_page import Page, PageCharacteristicValue
 from app.schemas.schema_page import PageCreate, PageRead, PageUpdate
 from app.schemas.schema_page_characteristic_value import  PageCharacteristicValueUpdate, PageCharacteristicValueRead, PageCharacteristicValueCreate
 from app.crud.crud_page import (
-    create_page, get_pages, get_page, update_page, delete_page, create_page_characteristic_value, get_page_characteristic_values, update_page_characteristic_value, delete_page_characteristic_value,delete_page_characteristic_values
+    create_page,
+    get_pages,
+    get_page,
+    update_page,
+    delete_page,
+    create_page_characteristic_value,
+    get_page_characteristic_values,
+    get_pages_characteristic_values,
+    update_page_characteristic_value,
+    delete_page_characteristic_value,
+    delete_page_characteristic_values,
 )
 from datetime import datetime, timezone
 from app.dependencies import get_current_user, require_role
@@ -90,8 +100,10 @@ async def read_pages(
     session: AsyncSession = Depends(get_session),
 ):
     db_pages = await get_pages(session, gameworld_id=gameworld_id, concept_id=concept_id)
+    page_id_list = [p.id for p in db_pages]
+    values_map = await get_pages_characteristic_values(session, page_id_list)
     return [
-        PageRead.model_validate({**page.model_dump(), "values": await get_page_characteristic_values(session, page.id)})
+        PageRead.model_validate({**page.model_dump(), "values": values_map.get(page.id, [])})
         for page in db_pages
     ]
 

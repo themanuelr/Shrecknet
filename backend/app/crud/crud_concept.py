@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from app.models.model_concept import Concept, ConceptCharacteristicLink
 from sqlalchemy import func
 from app.models.model_page import Page
+from typing import List
 from app.schemas.schema_concept import ConceptRead  # Import your schema
 
 async def create_concept(session: AsyncSession, concept: Concept) -> Concept:
@@ -13,7 +14,12 @@ async def create_concept(session: AsyncSession, concept: Concept) -> Concept:
     return concept
 
 async def get_concepts(session: AsyncSession, gameworld_id: int = None, name: str = None, auto_generated: bool = None, group: str = None, display_on_world: bool = None):
-    stmt = select(Concept).options(selectinload(Concept.characteristics))
+    stmt = (
+        select(Concept, func.count(Page.id).label("pages_count"))
+        .options(selectinload(Concept.characteristics))
+        .outerjoin(Page, Page.concept_id == Concept.id)
+        .group_by(Concept.id)
+    )
     if gameworld_id:
         stmt = stmt.where(Concept.gameworld_id == gameworld_id)
     if name:
@@ -26,28 +32,26 @@ async def get_concepts(session: AsyncSession, gameworld_id: int = None, name: st
         stmt = stmt.where(Concept.display_on_world == display_on_world)
 
     result = await session.execute(stmt)
-    concepts = result.scalars().all()
-    response = []
-    for concept in concepts:
-        page_count = await session.execute(
-            select(func.count()).select_from(Page).where(Page.concept_id == concept.id)
-        )
+    concepts_with_counts = result.all()
+    response: List[ConceptRead] = []
+    for concept, pages_count in concepts_with_counts:
         response.append(
-            ConceptRead.model_validate({
-                **concept.__dict__,
-                "id": concept.id,
-                "gameworld_id": concept.gameworld_id,
-                "name": concept.name,
-                "description": concept.description,
-                "logo": concept.logo,
-                "auto_generated": concept.auto_generated,
-                "characteristics": concept.characteristics,
-                "pages_count": page_count.scalar(),
-                "group": concept.group,
-                "display_on_world": concept.display_on_world,   
-                "auto_generated_prompt":concept.auto_generated_prompt
-
-            })
+            ConceptRead.model_validate(
+                {
+                    **concept.__dict__,
+                    "id": concept.id,
+                    "gameworld_id": concept.gameworld_id,
+                    "name": concept.name,
+                    "description": concept.description,
+                    "logo": concept.logo,
+                    "auto_generated": concept.auto_generated,
+                    "characteristics": concept.characteristics,
+                    "pages_count": pages_count,
+                    "group": concept.group,
+                    "display_on_world": concept.display_on_world,
+                    "auto_generated_prompt": concept.auto_generated_prompt,
+                }
+            )
         )
     return response
 

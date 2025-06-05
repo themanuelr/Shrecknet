@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +66,20 @@ async def get_page_characteristic_values(session: AsyncSession, page_id: int) ->
         select(PageCharacteristicValue).where(PageCharacteristicValue.page_id == page_id)
     )
     return result.scalars().all()
+
+async def get_pages_characteristic_values(
+    session: AsyncSession, page_ids: List[int]
+) -> Dict[int, List[PageCharacteristicValue]]:
+    if not page_ids:
+        return {}
+    result = await session.execute(
+        select(PageCharacteristicValue).where(PageCharacteristicValue.page_id.in_(page_ids))
+    )
+    all_values = result.scalars().all()
+    values_by_page: Dict[int, List[PageCharacteristicValue]] = {}
+    for val in all_values:
+        values_by_page.setdefault(val.page_id, []).append(val)
+    return values_by_page
 
 async def delete_page_characteristic_values(session: AsyncSession, page_id: int) -> None:
     await session.execute(
