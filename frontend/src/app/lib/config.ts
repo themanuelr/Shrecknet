@@ -8,6 +8,13 @@
  * that fetch calls use relative URLs and automatically match the current
  * protocol and host.
  */
-export const API_URL = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/^http:/, "https:")
-  : "";
+const envUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+let url = envUrl;
+
+// When running in the browser over HTTPS and the API URL uses HTTP,
+// upgrade it to HTTPS to avoid mixed content errors.
+if (typeof window !== "undefined" && url.startsWith("http://") && window.location.protocol === "https:") {
+  url = url.replace(/^http:/, "https:");
+}
+
+export const API_URL = url;
