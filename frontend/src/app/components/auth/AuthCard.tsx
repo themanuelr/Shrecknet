@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
-import { getUserCount, loginUser, registerUser } from "../../lib/usersApi";
+import { getUserCount, loginUser, registerUser, userExists } from "../../lib/usersApi";
 
 // Material 3 Floating Label Field
 function M3TextField({
@@ -55,6 +55,7 @@ export default function AuthCard() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const { setToken, setRedirectAfterLogin, getRedirectAfterLogin } = useAuth();
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function AuthCard() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfo(null);
     try {
       if (formMode === FormMode.LOGIN) {
         const { access_token } = await loginUser({ email: form.email, password: form.password });
@@ -98,12 +100,29 @@ export default function AuthCard() {
         router.replace("/worlds");
       }
     } catch (err: unknown) {
+      if (
+        formMode === FormMode.LOGIN &&
+        typeof err === "object" &&
+        err !== null &&
+        (err as Record<string, unknown>).detail === "Incorrect email or password"
+      ) {
+        try {
+          const exists = await userExists(form.email);
+          if (!exists) {
+            setFormMode(FormMode.REGISTER);
+            setInfo("Welcome to Shrecknet! First you have to create an account!");
+            return;
+          }
+        } catch (e) {
+          // ignore check errors and fall back to generic error handling
+        }
+      }
       if (typeof err === "object" && err !== null) {
         const errObj = err as Record<string, unknown>;
         setError(
           (typeof errObj.detail === "string" && errObj.detail) ||
-          (typeof errObj.message === "string" && errObj.message) ||
-          "Unknown error!" + err
+            (typeof errObj.message === "string" && errObj.message) ||
+            "Unknown error!" + err
         );
       } else {
         setError("Unknown error!");
@@ -118,6 +137,7 @@ export default function AuthCard() {
       m === FormMode.LOGIN ? FormMode.REGISTER : FormMode.LOGIN
     );
     setError(null);
+    setInfo(null);
     setForm({ email: "", password: "", nickname: "" });
   };
 
@@ -142,6 +162,11 @@ export default function AuthCard() {
           <span className="font-semibold text-yellow-400">
             Set up the first account as System Admin!
           </span>
+        </div>
+      )}
+      {info && (
+        <div className="w-full mb-4 py-2 px-4 bg-green-600/90 rounded-lg text-white text-center text-sm">
+          {info}
         </div>
       )}
       {error && (
