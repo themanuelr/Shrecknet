@@ -9,7 +9,15 @@
  * protocol and host.
  */
 const envUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+const isProd = process.env.NODE_ENV === "production";
+
 let url = envUrl;
+
+// When building for production, assume the site will run over HTTPS and
+// upgrade the API URL if it explicitly uses HTTP.
+if (isProd && url.startsWith("http://")) {
+  url = url.replace(/^http:/, "https:");
+}
 
 // When running in the browser over HTTPS and the API URL uses HTTP,
 // upgrade it to HTTPS to avoid mixed content errors.
