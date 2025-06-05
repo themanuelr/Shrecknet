@@ -14,13 +14,20 @@ from bs4 import BeautifulSoup
 import re
 
 
-async def remove_page_refs_from_characteristics(deleted_page: Page):
+async def remove_page_refs_from_characteristics(deleted_page: Page | int):
     """
     Remove references to the deleted page in any PageCharacteristicValue
     for characteristics of type 'page_ref' that point to the same concept as the deleted page.
     """    
     async with async_session_maker() as session:
-        # 1. Find all characteristics of type "page_ref" whose ref_concept_id matches the deleted page's concept_id
+        if isinstance(deleted_page, Page):
+            deleted_page = await get_page(session, deleted_page.id)
+        else:
+            deleted_page = await get_page(session, deleted_page)
+
+        if not deleted_page:
+            return
+
         result = await session.execute(
             select(Characteristic).where(
                 (Characteristic.type == "page_ref") &
@@ -81,7 +88,10 @@ async def remove_crosslinks_to_page(deleted_page_id: int):
 async def auto_crosslink_page_content(page):
 
     async with async_session_maker() as session:
-        page = await get_page(session, page.id)
+        if isinstance(page, Page):
+            page = await get_page(session, page.id)
+        else:
+            page = await get_page(session, page)
         print (f"Page allows autocrosslinl: {page.allow_crosslinks} ")
         print (f"Page allows crossworld: {page.allow_crossworld} ")
         if not page.allow_crosslinks:
@@ -169,21 +179,19 @@ async def auto_crosslink_page_content(page):
                         import traceback; traceback.print_exc()            
 
 
-async def auto_crosslink_batch(new_page: Page):
-    """
-    When a new page is created, update all existing pages to link to it, if relevant.
-    """
-    # Get all candidate pages
+async def auto_crosslink_batch(new_page_id: int):
+    """Update existing pages to link to the newly created page."""
     async with async_session_maker() as session:
-        new_session_age = await get_page(session, new_page.id)
+        new_page = await get_page(session, new_page_id)
+        if not new_page:
+            return
 
         candidate_pages = await session.execute(
             select(Page)
             .where(Page.ignore_crosslink == False)
-            .where(Page.id != new_session_age.id)
+            .where(Page.id != new_page.id)
         )
         candidate_pages = candidate_pages.scalars().all()
 
-    # For each candidate, update its content if needed
     for page in candidate_pages:
         await auto_crosslink_page_content(page)
