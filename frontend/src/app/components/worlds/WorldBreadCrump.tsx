@@ -52,9 +52,9 @@ export default function WorldBreadcrumb({
             <span className="truncate max-w-[140px] font-bold">{world.name}</span>
             <ChevronDown className="w-4 h-4 opacity-60" />
           </button>
-          {worldOpen && (
-            <div className="absolute left-0 mt-2 bg-[var(--background)] border border-[var(--primary)]/20 rounded-xl shadow-lg w-64 z-50 overflow-y-auto max-h-[320px]">
-              {allWorlds.map((w) => (
+            {worldOpen && (
+              <div className="absolute left-0 top-full mt-2 bg-[var(--background)] border border-[var(--primary)]/20 rounded-xl shadow-lg w-64 z-50 overflow-y-auto max-h-[320px]">
+                {allWorlds.map((w) => (
                 <button
                   key={w.id}
                   onClick={() => {
@@ -103,7 +103,7 @@ export default function WorldBreadcrumb({
                 <ChevronDown className="w-4 h-4 opacity-60" />
               </button>
               {conceptOpen && (
-                <div className="absolute left-0 mt-2 bg-[var(--background)] border border-[var(--primary)]/20 rounded-xl shadow-lg w-64 z-50 overflow-y-auto max-h-[320px]">
+                <div className="absolute left-0 top-full mt-2 bg-[var(--background)] border border-[var(--primary)]/20 rounded-xl shadow-lg w-64 z-50 overflow-y-auto max-h-[320px]">
                   {concepts.length > 0 && (
                     <div className="p-2">
                       <div className="px-2 py-1 text-xs text-[var(--primary)]/70 uppercase font-bold">Concepts</div>
