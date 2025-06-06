@@ -1,75 +1,46 @@
 "use client";
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../components/auth/AuthProvider";
 import EditableContent from "../../components/editor/EditableContent";
-import { getGameWorld, updateGameWorld, getGameWorlds } from "../../lib/gameworldsAPI";
+import { updateGameWorld } from "../../lib/gameworldsAPI";
+import { useWorld } from "../../lib/useWorld";
+import { useWorlds } from "../../lib/userWorlds";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
-import { getConcepts } from "../../lib/conceptsAPI";
+import { useConcepts } from "../../lib/useConcept";
 import WorldFormModal from "../../components/worlds/WorldFormModal";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
 import ModalContainer from "../../components/template/modalContainer";
-import { getUsers } from "@/app/lib/usersApi";
+import { useUsers } from "@/app/lib/useUsers";
 import Image from "next/image";
 
 
 export default function WorldDetailPage({ params }) {
   const { worldID } = use(params);
   const { user, token } = useAuth();
-  const [world, setWorld] = useState(null);
-  const [concepts, setConcepts] = useState([]);  
-  const [loading, setLoading] = useState(true);  
   const [modalOpen, setModalOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
-  const [worlds, setWorlds] = useState([]);
-  const [users, setUsers] = useState([]);
   const router = useRouter();
+
+  const { world, mutate: mutateWorld, isLoading: worldLoading } = useWorld(Number(worldID));
+  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { users, isLoading: usersLoading } = useUsers();
+  const { concepts, isLoading: conceptsLoading } = useConcepts(Number(worldID));
+
+  const loading = worldLoading || worldsLoading || usersLoading || conceptsLoading;
+  const [saving, setSaving] = useState(false);
   
-  useEffect(() => {
-    if (!worldID || !token) return;
-    async function load() {
-      try {
-        const [single, all] = await Promise.all([
-          getGameWorld(Number(worldID), token),
-          getGameWorlds(token),
-        ]);
-        setWorld(single);
-        setWorlds(all);
-      } catch (err) {
-        console.error("Failed to load world or worlds", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [worldID, token]);
-
-  useEffect(() => {
-    if (!token) return;
-    getUsers(token)
-      .then(setUsers)
-      .catch((err) => console.error("User fetch error:", err));
-  }, [token]);
-
-  useEffect(() => {
-    if (!worldID || !token) return;
-    getConcepts(token, { gameworld_id: worldID })
-      .then(setConcepts)
-      .catch((err) => console.error("Concept fetch error:", err));
-
-
-  }, [worldID, token]);
 
   async function handleSaveContent(newContent) {
     if (!worldID || !token) return;
     
     try {
-      const updated = await updateGameWorld(Number(worldID), { content: newContent }, token);
-      setWorld(updated);
+      await updateGameWorld(Number(worldID), { content: newContent }, token);
+      mutateWorld();
     } finally {
       
     }
@@ -77,13 +48,13 @@ export default function WorldDetailPage({ params }) {
 
   async function handleSaveWorld(updatedData) {
     if (!worldID || !token) return;
-    setLoading(true);
+    setSaving(true);
     try {
-      const updated = await updateGameWorld(Number(worldID), updatedData, token);
-      setWorld(updated);
+      await updateGameWorld(Number(worldID), updatedData, token);
+      mutateWorld();
       setModalOpen(false);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
   
@@ -250,7 +221,7 @@ export default function WorldDetailPage({ params }) {
             open={modalOpen}
             initialData={world}
             onSubmit={handleSaveWorld}
-            loading={loading}
+            loading={saving}
             worlds={[]}
             onClose={() => setModalOpen(false)}
           />

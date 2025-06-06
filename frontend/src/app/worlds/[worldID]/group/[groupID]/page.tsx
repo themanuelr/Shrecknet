@@ -2,9 +2,10 @@
 
 import { use } from "react";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAuth } from "../../../../components/auth/AuthProvider";
-import { getGameWorld, getGameWorlds } from "../../../../lib/gameworldsAPI";
+import { useWorld } from "../../../../lib/useWorld";
+import { useWorlds } from "../../../../lib/userWorlds";
 import DashboardLayout from "../../../../components/DashboardLayout";
 import AuthGuard from "../../../../components/auth/AuthGuard";
 import WorldBreadcrumb from "../../../../components/worlds/WorldBreadCrump";
@@ -13,39 +14,22 @@ import { BookOpen } from "lucide-react";
 import CardScroller from "@/app/components/template/CardScroller";
 import Link from "next/link";
 import Image from "next/image";
-import { getConcepts } from "@/app/lib/conceptsAPI";
+import { useConcepts } from "@/app/lib/useConcept";
 export default function GroupPage({ params }) {
 
 
   const { worldID, groupID } = use(params);
-  const {token} = useAuth()
-  
+  const { token } = useAuth();
+
   const router = useRouter();
 
-  const [world, setWorld] = useState(null);
-  const [worlds, setWorlds] = useState([]);
-  const [concepts, setConcepts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { world, isLoading: worldLoading } = useWorld(Number(worldID));
+  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { concepts, isLoading: conceptsLoading } = useConcepts(Number(worldID));
+
+  const loading = worldLoading || worldsLoading || conceptsLoading;
 
 
-  useEffect(() => {
-    
-  async function fetchData() {
-      if (!token) return;
-      try {
-        const allWorlds = await getGameWorlds(token);        
-        const currentWorld = await getGameWorld(worldID, token);
-        const worldConcepts = await getConcepts(token, { gameworld_id: worldID });
-
-        setWorld(currentWorld);
-        setWorlds(allWorlds);
-        setConcepts(worldConcepts);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [worldID, token]);
 
   const filteredConcepts = concepts
   .filter(c => c.group === groupID)

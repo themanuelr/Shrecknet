@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AuthGuard from "@/app/components/auth/AuthGuard";
 import DashboardLayout from "@/app/components/DashboardLayout";
 import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useParams, useRouter } from "next/navigation";
-import { getPage, updatePage, deletePage } from "@/app/lib/pagesAPI";
-import { getGameWorld, getGameWorlds } from "@/app/lib/gameworldsAPI";
-import { getConcept, getConcepts } from "@/app/lib/conceptsAPI";
-import { getCharacteristicsForConcept } from "@/app/lib/characteristicsAPI";
+import { updatePage, deletePage } from "@/app/lib/pagesAPI";
+import { usePageById } from "@/app/lib/usePageById";
+import { useWorld } from "@/app/lib/useWorld";
+import { useWorlds } from "@/app/lib/userWorlds";
+import { useConceptById } from "@/app/lib/useConceptById";
+import { useConcepts } from "@/app/lib/useConcept";
+import { useCharacteristicsForConcept } from "@/app/lib/useCharacteristicsForConcept";
 import PageTitleBar from "@/app/components/see_page/PageTitleBar";
 import TitleSection from "@/app/components/see_page/TitleSection";
 import HeaderSection from "@/app/components/see_page/HeaderSection";
@@ -57,13 +60,6 @@ export default function PageView() {
   const params = useParams();
   const pageId = Number(params?.pageID);
 
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(null);
-  const [concept, setConcept] = useState(null);
-  const [world, setWorld] = useState(null);
-  const [characteristics, setCharacteristics] = useState([]);
-  const [worlds, setWorlds] = useState([]);
-  const [concepts, setConcepts] = useState([]);  
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -71,39 +67,15 @@ export default function PageView() {
   // For sidebar open/collapse
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    async function fetchAll() {
-      if (!pageId || !token) return;
-      try {
-        setLoading(true);
+  const { page, mutate: mutatePage, isLoading: pageLoading } = usePageById(pageId);
+  const { concept, isLoading: conceptLoading } = useConceptById(page?.concept_id);
+  const { world, isLoading: worldLoading } = useWorld(page?.gameworld_id);
+  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { concepts, isLoading: conceptsLoading } = useConcepts(world?.id);
+  const { characteristics, isLoading: charsLoading } = useCharacteristicsForConcept(page?.concept_id);
 
-        const pageData = await getPage(pageId, token);
-        setPage(pageData);
+  const loading = pageLoading || conceptLoading || worldLoading || worldsLoading || conceptsLoading || charsLoading;
 
-        const conceptData = await getConcept(pageData.concept_id, token);
-        setConcept(conceptData);
-
-        const worldData = await getGameWorld(pageData.gameworld_id, token);
-        setWorld(worldData);
-
-        const chars = await getCharacteristicsForConcept(pageData.concept_id, token);
-        setCharacteristics(chars);
-
-        const allWorlds = await getGameWorlds(token);
-        setWorlds(allWorlds);
-
-        const worldConcepts = await getConcepts(token, { gameworld_id: worldData.id });
-        setConcepts(worldConcepts);
-
-      } catch (error) {
-        console.error("Failed to load page view:", error);
-        setPage(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAll();
-  }, [pageId, token]);
 
   const getSectionValues = (type) => {
     if (!characteristics || !page?.values) return [];
@@ -130,8 +102,7 @@ export default function PageView() {
 
     try {
       await updatePage(Number(pageId), { content: newContent }, token);
-      const freshPage = await getPage(pageId, token);
-      setPage(freshPage);
+      mutatePage();
     } catch (err) {
       console.error("Failed to save page content", err);
     }
@@ -280,9 +251,7 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                 onSubmit={async (payload) => {
                   await updatePage(page.id, payload, token);
                   setShowEditModal(false);
-                  // Optionally re-fetch page info here:
-                  const updatedPage = await getPage(page.id, token);
-                  setPage(updatedPage);
+                  mutatePage();
                 }}
                 onSuccess={() => setShowEditModal(false)}
               />
