@@ -11,13 +11,13 @@ async def test_user_registration_and_login(async_client, create_user, login_and_
     assert token
 
     # Authenticated endpoint
-    resp = await async_client.get("/users/me", headers={"Authorization": f"Bearer {token}"})
+    resp = await async_client.get("/user/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     assert resp.json()["email"] == "writer@test.com"
 
 @pytest.mark.anyio
 async def test_protected_route_requires_login(async_client):
-    resp = await async_client.get("/users/me")
+    resp = await async_client.get("/user/me")
     assert resp.status_code == 401
 
 @pytest.mark.anyio
