@@ -1,10 +1,11 @@
 "use client";
 import { use } from "react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/app/components/auth/AuthProvider";
-import { getGameWorld, getGameWorlds } from "@/app/lib/gameworldsAPI";
-import { getConcept } from "@/app/lib/conceptsAPI";
-import { getPagesForConcept } from "@/app/lib/pagesAPI";
+import { useWorld } from "@/app/lib/useWorld";
+import { useWorlds } from "@/app/lib/userWorlds";
+import { useConceptById } from "@/app/lib/useConceptById";
+import { usePagesForConcept } from "@/app/lib/usePagesForConcept";
 import DashboardLayout from "@/app/components/DashboardLayout";
 import AuthGuard from "@/app/components/auth/AuthGuard";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
@@ -16,49 +17,20 @@ import CardScroller from "@/app/components/template/CardScroller";
 import Image from "next/image";
 export default function ConceptPage({ params }) {
   const { conceptID } = use(params);
-  const {token} = useAuth()
-  
-  const router = useRouter();  
+  const { token } = useAuth();
 
-  const [concept, setConcept] = useState(null);
-  const [pages, setPages] = useState([]);
-  const [world, setWorld] = useState(null);
-  const [worlds, setWorlds] = useState([]);
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [zoomOpen, setZoomOpen] = useState(false);
 
- useEffect(() => {
-     async function fetchData() {
-       if (!token || !conceptID) return;
-       try {
-        console.log("Concept Number:" + Number(conceptID))
-         const conceptData = await getConcept(Number(conceptID), token);
-         console.log("Concept data:" + JSON.stringify(conceptData))
-         setConcept(conceptData);
-
-         console.log("Gameworld Number:" + conceptData.gameworld_id)
-         const worldData = await getGameWorld(conceptData.gameworld_id, token);
-         console.log("Gameworld data:" + JSON.stringify(worldData))
-         setWorld(worldData);
- 
-         const worldsList = await getGameWorlds(token);
-         console.log("World list data:" + JSON.stringify(worldsList))
-         setWorlds(worldsList);
-
-         console.log("ConceptID:" + JSON.stringify(Number(conceptID)))
-         console.log("Token:" + token)
-         const pagesData = await getPagesForConcept(Number(conceptID), token);
-         console.log("pagesData data:" + JSON.stringify(pagesData))
-         setPages(pagesData);
-       } finally {
-         setLoading(false);
-       }
-     }
-     fetchData();
-   }, [conceptID, token]);
-
+  const { concept, isLoading: conceptLoading } = useConceptById(Number(conceptID));
+  const { world, isLoading: worldLoading } = useWorld(concept?.gameworld_id);
+  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { pages, isLoading: pagesLoading } = usePagesForConcept(Number(conceptID));
   const { concepts } = useConcepts(world?.id);
+
+  const loading = conceptLoading || worldLoading || worldsLoading || pagesLoading;
 
   const filteredPages = pages
   .filter(p =>
