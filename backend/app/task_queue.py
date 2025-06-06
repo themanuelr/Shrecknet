@@ -21,7 +21,15 @@ from app.crud.crud_page_links_update import (
 )
 
 # Ensure all models are imported so SQLModel can resolve relationships
-import app.models.model_concept  # noqa:F401
+# Import all models so SQLModel is aware of every table when running in the
+# Celery worker context. Without these imports SQLModel may not register the
+# tables referenced by relationships, leading to NoReferencedTableError during
+# flush/commit.
+import app.models.model_concept  # noqa: F401
+import app.models.model_gameworld  # noqa: F401
+import app.models.model_user  # noqa: F401
+import app.models.model_page  # noqa: F401
+import app.models.model_characteristic  # noqa: F401
 
 @celery_app.task
 def task_auto_crosslink_page_content(page_id: int):
