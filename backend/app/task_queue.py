@@ -20,6 +20,9 @@ from app.crud.crud_page_links_update import (
     remove_page_refs_from_characteristics,
 )
 
+# Ensure all models are imported so SQLModel can resolve relationships
+import app.models.model_concept  # noqa:F401
+
 @celery_app.task
 def task_auto_crosslink_page_content(page_id: int):
     asyncio.run(auto_crosslink_page_content(page_id))
