@@ -81,7 +81,7 @@ async def create_user(async_client):
         }
 
         print (f"User created: {email}")
-        response = await async_client.post("/users/", json=user_data)
+        response = await async_client.post("/user/", json=user_data)
         assert response.status_code == 200, response.text
         return response.json()
     return _create_user
@@ -91,7 +91,7 @@ async def login_and_get_token(async_client, create_user):
     async def _login(email, password, role):
         # await create_user(email, password, role)
         data = {"username": email, "password": password}
-        response = await async_client.post("/users/login", data=data)
+        response = await async_client.post("/user/login", data=data)
         assert response.status_code == 200, response.text
         token = response.json()["access_token"]
         return token
