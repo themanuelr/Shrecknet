@@ -58,7 +58,15 @@ async def export_world_zip(session, world_id, frontend_base_url):
                 try:
                     resp = requests.get(url, timeout=8)
                     resp.raise_for_status()
-                    zf.writestr(rel_path.lstrip("/"), resp.content)
+                    # Store images under the "images/" folder in the ZIP. This
+                    # keeps compatibility with the import helper that expects
+                    # files inside an "images" directory. Uploaded assets are
+                    # stored under "/uploads" in the frontend, so strip that
+                    # prefix if present.
+                    internal_path = rel_path.lstrip("/")
+                    if internal_path.startswith("uploads/"):
+                        internal_path = "images/" + internal_path[len("uploads/"):]
+                    zf.writestr(internal_path, resp.content)
                     print(f"Included {url}")
                 except Exception as e:
                     print(f"Could not fetch {url}: {e}")
