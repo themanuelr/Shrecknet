@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { createAgent, updateAgent, deleteAgent } from "../../lib/agentAPI";
+import { uploadImage } from "../../lib/uploadImage";
 import { useAuth } from "../auth/AuthProvider";
 import ModalContainer from "../template/modalContainer";
 import { M3FloatingInput } from "../template/M3FloatingInput";
@@ -10,18 +12,22 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
   const isEdit = !!agent;
   const [form, setForm] = useState({
     name: "",
-    logo: "",
+    logoUrl: "",
+    logoFile: null as File | null,
     personality: "",
     task: "",
     world_id: worlds?.[0]?.id || "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setForm({
       name: agent?.name || "",
-      logo: agent?.logo || "",
+      logoUrl: agent?.logo || "",
+      logoFile: null,
       personality: agent?.personality || "",
       task: agent?.task || "",
       world_id: agent?.world_id || worlds?.[0]?.id || "",
@@ -36,7 +42,7 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
     try {
       const payload = {
         name: form.name,
-        logo: form.logo,
+        logo: form.logoUrl,
         personality: form.personality,
         task: form.task,
         world_id: Number(form.world_id),
@@ -53,6 +59,30 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
       return;
     }
     setSaving(false);
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const worldId = form.world_id || worlds?.[0]?.id || "0";
+      const safeName = (form.name || "agent")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .slice(0, 48);
+      const url = await uploadImage(
+        file,
+        "agents",
+        worldId.toString(),
+        safeName || undefined
+      );
+      setForm(f => ({ ...f, logoUrl: url, logoFile: null }));
+    } catch (err: any) {
+      setError("Logo upload failed: " + (err?.message || err));
+    }
+    setUploading(false);
+    if (logoInputRef.current) logoInputRef.current.value = "";
   }
 
   async function handleDelete() {
@@ -88,9 +118,31 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
         />
         <M3FloatingInput
           label="Logo URL"
-          value={form.logo}
-          onChange={e => setForm(f => ({ ...f, logo: e.target.value }))}
+          value={form.logoUrl}
+          onChange={e => setForm(f => ({ ...f, logoUrl: e.target.value }))}
         />
+        <div>
+          <label className="block text-[var(--primary)] font-semibold text-sm mb-1">
+            Upload Logo
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            ref={logoInputRef}
+            onChange={handleLogoUpload}
+            className="block w-full rounded-xl border border-[var(--primary)] px-2 py-2 bg-[var(--surface-variant)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+            disabled={saving || uploading}
+          />
+          {form.logoUrl && (
+            <Image
+              src={form.logoUrl}
+              alt="Agent logo"
+              width={80}
+              height={80}
+              className="mt-2 rounded-full border border-[var(--primary)] object-cover"
+            />
+          )}
+        </div>
         <M3FloatingInput
           label="Personality"
           value={form.personality}
