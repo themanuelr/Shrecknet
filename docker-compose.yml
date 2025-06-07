@@ -1,15 +1,15 @@
-services:
+  GNU nano 7.2                                                                                                 docker-compose.yml                                                                                                           services:
   frontend:
-    build: 
+    user: "33:33"
+    build:
       context: ./frontend
-      network: host    
+      network: host
     ports:
       - "3000:3000"
     depends_on:
       - backend
-
     volumes:
-      - ./frontend/public:/app/public   
+      - ./frontend/uploads:/app/uploads
 
   backend:
     build:
@@ -18,9 +18,35 @@ services:
     ports:
       - "8000:8000"
     env_file:
-     - ./backend/.env
-
+      - ./backend/.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
-      - ./backend/data:/app/data         # maps host ./data to /backend/data in the container
-      - ./frontend/public:/app/public    # share uploaded assets with frontend
- 
+      - ./backend/data:/app/data
+      - ./frontend/uploads:/app/uploads
+    depends_on:
+      - redis
+
+  celery:
+    build:
+      context: ./backend
+      network: host
+    command: celery -A app.task_queue.celery_app worker --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend/data:/app/data
+      - ./frontend/uploads:/app/uploads
+    depends_on:
+      - backend
+      - redis
+
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    ports:
+      - "6379:6379"
