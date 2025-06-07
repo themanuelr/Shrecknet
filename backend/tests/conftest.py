@@ -1,3 +1,4 @@
+import os
 import pytest
 from httpx import AsyncClient
 from sqlmodel import SQLModel
@@ -8,6 +9,9 @@ import asyncio
 import pytest_asyncio
 from httpx import AsyncClient
 from httpx import AsyncClient, ASGITransport
+
+os.environ.setdefault("CELERY_BROKER_URL", "memory://")
+os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
 
 from app.main import app
 from app.database import get_session
@@ -71,13 +75,19 @@ async def async_client(session):
 
 @pytest.fixture
 async def create_user(async_client):
-    async def _create_user(email, password, role):
+    async def _create_user(email=None, password=None, role=None, **kwargs):
+        if email is None:
+            email = kwargs.get("email")
+        if password is None:
+            password = kwargs.get("password")
+        if role is None:
+            role = kwargs.get("role")
         user_data = {
-            "nickname": email.split('@')[0],
+            "nickname": kwargs.get("nickname", email.split('@')[0]),
             "email": email,
             "password": password,
             "role": role,
-            "image_url": "http://test"
+            "image_url": kwargs.get("image_url", "http://test"),
         }
 
         print (f"User created: {email}")
