@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
 from .database import engine
-from .api import api_characteristic, api_concept, api_page, api_user, api_gameworld, api_import_export
+from .api import (
+    api_characteristic,
+    api_concept,
+    api_page,
+    api_user,
+    api_gameworld,
+    api_import_export,
+    api_vectordb,
+)
 from contextlib import asynccontextmanager
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -79,6 +87,7 @@ app.include_router(api_concept.router)
 app.include_router(api_characteristic.router)
 app.include_router(api_page.router)
 app.include_router(api_import_export.router)
+app.include_router(api_vectordb.router)
 
 
 
