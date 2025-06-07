@@ -5,63 +5,16 @@ import { hasRole } from "../lib/roles";
 import { useAuth } from "../components/auth/AuthProvider";
 import { useState } from "react";
 import ImportWorldModal from "../components/importexport/ImportWorldModal";
-import { Download, Upload, Users2, Database } from "lucide-react";
+import { Download, Upload, Users2, Bot } from "lucide-react";
 import Link from "next/link";
 import ExportWorldModal from "../components/importexport/ExportWorldModal";
-import { useWorlds } from "../lib/userWorlds";
-import { rebuildVectorDB } from "../lib/vectordbAPI";
-import { getPagesForWorld } from "../lib/pagesAPI";
+
 
 export default function UserManagementPage() {
-  const { user, token } = useAuth();
-  const { worlds } = useWorlds();
+  const { user } = useAuth();
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [success, setSuccess] = useState("");
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [selectedWorldId, setSelectedWorldId] = useState("");
-  const [vdbLoading, setVdbLoading] = useState(false);
-  const [vdbProgress, setVdbProgress] = useState("");
-  const [vdbError, setVdbError] = useState("");
-
-  async function handleRebuild() {
-    if (!selectedWorldId) return;
-    setVdbLoading(true);
-    setVdbError("");
-    let pageCount = 0;
-    try {
-      const pages = await getPagesForWorld(Number(selectedWorldId), token || "");
-      pageCount = pages.length;
-    } catch (err) {
-      // ignore count error
-    }
-    if (pageCount) {
-      setVdbProgress(
-        `Indexing ${pageCount} pages (est. 0.3s/page)...`
-      );
-    } else {
-      setVdbProgress("Indexing pages...");
-    }
-    const start = Date.now();
-    try {
-      const res = await rebuildVectorDB(token || "", Number(selectedWorldId));
-      const elapsed = (Date.now() - start) / 1000;
-      const perPage = pageCount
-        ? (elapsed / pageCount).toFixed(2)
-        : elapsed.toFixed(2);
-      setSuccess(
-        `Vector DB updated! Indexed ${res.pages_indexed} pages (${perPage}s/page).`
-      );
-    } catch (err) {
-      setVdbError("Failed to rebuild vector DB.");
-    } finally {
-      setVdbLoading(false);
-      setVdbProgress("");
-      setTimeout(() => {
-        setSuccess("");
-        setVdbError("");
-      }, 3000);
-    }
-  }
 
   if (!hasRole(user?.role, "system admin")) {
     return (
@@ -132,42 +85,22 @@ export default function UserManagementPage() {
             <ExportWorldModal open={exportModalOpen} onClose={() => setExportModalOpen(false)} />
             </div>
 
-            {/* Vector DB Rebuild Area */}
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full flex flex-col gap-3">
+            {/* Agents Settings Area */}
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full flex flex-col gap-2">
               <div className="flex items-center gap-2 mb-2">
-                <Database className="w-6 h-6 text-[var(--primary)]" />
-                <div className="text-[var(--primary)] font-bold text-lg">Vector Database</div>
+                <Bot className="w-6 h-6 text-[var(--primary)]" />
+                <div className="text-[var(--primary)] font-bold text-lg">Agent Settings</div>
               </div>
-              <div className="text-[var(--foreground)]/80 text-sm">
-                Rebuild the vector database for a selected world to update search indexes.
+              <div className="text-[var(--foreground)]/80 text-sm mb-3">
+                Manage NPC agents and their configuration.
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 mt-2 items-end">
-                <select
-                  className="flex-1 px-3 py-2 rounded-xl border border-[var(--primary)] bg-[var(--surface)] text-[var(--primary)] focus:outline-none"
-                  value={selectedWorldId}
-                  onChange={e => setSelectedWorldId(e.target.value)}
-                  disabled={vdbLoading}
-                >
-                  <option value="">— Choose World —</option>
-                  {worlds.map(w => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="px-5 py-2 rounded-xl font-bold border border-[var(--primary)] shadow transition bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--accent)] hover:text-[var(--background)] disabled:opacity-60"
-                  onClick={handleRebuild}
-                  disabled={vdbLoading || !selectedWorldId}
-                >
-                  {vdbLoading ? "Rebuilding..." : "Build Vector DB"}
-                </button>
-              </div>
-              {vdbProgress && (
-                <div className="text-sm text-[var(--primary)] mt-2">{vdbProgress}</div>
-              )}
-              {vdbError && (
-                <div className="text-sm text-red-600 mt-2">{vdbError}</div>
-              )}
+              <Link
+                href="/agents_settings"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl font-bold bg-[var(--primary)] text-[var(--primary-foreground)] shadow hover:bg-[var(--accent)] hover:text-[var(--background)] border border-[var(--primary)] transition w-fit"
+              >
+                <Bot className="w-5 h-5" />
+                Go to Agent Settings
+              </Link>
             </div>
 
             {/* User Management Area */}
