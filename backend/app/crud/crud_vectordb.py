@@ -69,8 +69,12 @@ async def add_page(session: AsyncSession, page_id: int):
 
 
 async def rebuild_world(session: AsyncSession, world_id: int):
+    name = f"world_{world_id}"
+    try:
+        _client.delete_collection(name)
+    except Exception:
+        pass
     collection = _get_collection(world_id)
-    collection.delete(where={})
 
     result = await session.execute(select(Page.id).where(Page.gameworld_id == world_id))
     page_ids = [row[0] for row in result.all()]
