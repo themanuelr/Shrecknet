@@ -43,7 +43,7 @@ app = FastAPI(
     title="Shrecknet RPG World Manager",
     description="Backend API for RPG campaign/world management.",
     version="0.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,root_path="/backend_api"
 )
 
 origins = settings.allowed_origins.split(",")
