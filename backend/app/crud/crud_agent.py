@@ -1,9 +1,8 @@
-import openai
+from openai import OpenAI
 from app.config import settings
 from app.crud import crud_vectordb
 
-openai.api_key = settings.openai_api_key
-openai_model = settings.openai_api_key
+openai_model = settings.open_ai_model
 
 def chat_with_agent(world_id: int, messages: list[dict], n_results: int = 4) -> str:
     """Generate a chat response using OpenAI with world context."""
@@ -15,6 +14,8 @@ def chat_with_agent(world_id: int, messages: list[dict], n_results: int = 4) -> 
         + context
     )
     chat_messages = [{"role": "system", "content": system_prompt}] + messages
-    resp = openai.ChatCompletion.create(model=openai_model, messages=chat_messages)
-    return resp["choices"][0]["message"]["content"]
+    # Initialize the OpenAI client lazily to avoid issues during import
+    client = OpenAI(api_key=settings.openai_api_key)
+    resp = client.chat.completions.create(model=openai_model, messages=chat_messages)
+    return resp.choices[0].message.content
 
