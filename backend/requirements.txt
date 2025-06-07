@@ -80,3 +80,4 @@ websockets==15.0.1
 celery==5.3.6
 redis==5.0.4
 chromadb
+openai==1.30.1

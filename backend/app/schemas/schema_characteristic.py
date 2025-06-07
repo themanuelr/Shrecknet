@@ -4,7 +4,7 @@ from sqlmodel import SQLModel
 
 
 class CharacteristicBase(SQLModel):
-    gameworld_id: int
+    gameworld_id: Optional[int] = None
     name: str
     type: str
     is_list: bool = False
