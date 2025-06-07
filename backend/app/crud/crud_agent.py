@@ -4,6 +4,7 @@ from app.crud import crud_vectordb
 
 openai_model = settings.open_ai_model
 
+
 def chat_with_agent(world_id: int, messages: list[dict], n_results: int = 4) -> str:
     """Generate a chat response using OpenAI with world context."""
     query = messages[-1].get("content", "") if messages else ""
@@ -16,6 +17,7 @@ def chat_with_agent(world_id: int, messages: list[dict], n_results: int = 4) -> 
     chat_messages = [{"role": "system", "content": system_prompt}] + messages
     # Initialize the OpenAI client lazily to avoid issues during import
     client = OpenAI(api_key=settings.openai_api_key)
+    print (f"Testing this model: {openai_model}")
     resp = client.chat.completions.create(model=openai_model, messages=chat_messages)
     return resp.choices[0].message.content
 
