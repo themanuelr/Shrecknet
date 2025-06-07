@@ -24,23 +24,34 @@ router = APIRouter(prefix="/concepts", tags=["Concepts"], dependencies=[Depends(
 
 @router.post("/", response_model=ConceptRead)
 async def create_concept_endpoint(
-    data: ConceptCreate,
-    user: User = Depends(require_role(UserRole.world_builder)),
+    data: dict,
+    user: User = Depends(require_role(UserRole.system_admin)),
     session: AsyncSession = Depends(get_session),
 ):
-    
-    concept_dict = data.model_dump(exclude={"characteristic_links"})
+    char_ids = data.pop("characteristic_ids", None)
+    concept_obj = ConceptCreate.model_validate(data)
+
+    concept_dict = concept_obj.model_dump(exclude={"characteristic_links"})
     concept = Concept(**concept_dict, created_by_user_id=user.id)
     db_concept = await create_concept(session, concept)
 
-    for link in data.characteristic_links:
-        await add_concept_characteristic_link(
-            session,
-            db_concept.id,
-            link.characteristic_id,
-            order=link.order,
-            display_type=link.display_type,
-        )
+    if char_ids is not None:
+        for idx, cid in enumerate(char_ids):
+            await add_concept_characteristic_link(
+                session,
+                db_concept.id,
+                cid,
+                order=idx,
+            )
+    else:
+        for link in concept_obj.characteristic_links:
+            await add_concept_characteristic_link(
+                session,
+                db_concept.id,
+                link.characteristic_id,
+                order=link.order,
+                display_type=link.display_type,
+            )
     await session.commit()
 
     db_concept = await get_concept(session, db_concept.id)
@@ -115,25 +126,36 @@ async def read_concept(
 @router.patch("/{concept_id}", response_model=ConceptRead)
 async def update_concept_endpoint(
     concept_id: int,
-    updates: ConceptUpdate,
-    user: User = Depends(require_role(UserRole.world_builder)),
+    updates: dict,
+    user: User = Depends(require_role(UserRole.system_admin)),
     session: AsyncSession = Depends(get_session),
 ):
     
 
-    update_dict = updates.model_dump(exclude_unset=True, exclude={"characteristic_links"})
+    char_ids = updates.pop("characteristic_ids", None)
+    update_obj = ConceptUpdate.model_validate(updates)
+    update_dict = update_obj.model_dump(exclude_unset=True, exclude={"characteristic_links"})
     db_concept = await update_concept(session, concept_id, update_dict)
     if not db_concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
     # Remove and re-add links if provided
-    if updates.characteristic_links is not None:
+    if char_ids is not None:
+        for char in db_concept.characteristics[:]:
+            await remove_concept_characteristic_link(session, concept_id, char.id)
+            await session.flush()
+        for idx, cid in enumerate(char_ids):
+            await add_concept_characteristic_link(session, concept_id, cid, order=idx)
+        await session.commit()
+        session.expire(db_concept, ["characteristics"])
+        db_concept = await get_concept(session, concept_id)
+    elif update_obj.characteristic_links is not None:
         # Remove all old links
         for char in db_concept.characteristics[:]:
             await remove_concept_characteristic_link(session, concept_id, char.id)
             await session.flush()
         # Add new links
-        for link in updates.characteristic_links:
+        for link in update_obj.characteristic_links:
             await add_concept_characteristic_link(
                 session,
                 concept_id,

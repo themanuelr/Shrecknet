@@ -25,13 +25,15 @@ async def create_characteristic_endpoint(
     user: User = Depends(require_role(UserRole.system_admin)),
     session: AsyncSession = Depends(get_session),
 ):
+    if char.gameworld_id is None:
+        char.gameworld_id = 1
     char = Characteristic.model_validate(char)
     db_char = await create_characteristic(session, char)
     return db_char
 
 @router.get("/", response_model=List[CharacteristicRead])
 async def read_characteristics(
-    gameworld_id: int,  # always required!
+    gameworld_id: int | None = None,
     session: AsyncSession = Depends(get_session),
 ):
     return await get_characteristics(session, gameworld_id)

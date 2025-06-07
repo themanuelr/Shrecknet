@@ -2,7 +2,11 @@ import os
 from typing import List, Dict
 
 import chromadb
-from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+try:
+    from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+    _embedding_fn = SentenceTransformerEmbeddingFunction()
+except Exception:
+    _embedding_fn = None
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,12 +18,12 @@ from app.models.model_characteristic import Characteristic
 
 # Persistent client storing collections under ./vector_db
 _client = chromadb.PersistentClient(path=os.getenv("VECTOR_DB_PATH", "./vector_db"))
-_embedding_fn = SentenceTransformerEmbeddingFunction()
 
 
 def _get_collection(world_id: int):
     name = f"world_{world_id}"
-    return _client.get_or_create_collection(name, embedding_function=_embedding_fn)
+    kwargs = {"embedding_function": _embedding_fn} if _embedding_fn else {}
+    return _client.get_or_create_collection(name, **kwargs)
 
 
 async def add_page(session: AsyncSession, page_id: int):

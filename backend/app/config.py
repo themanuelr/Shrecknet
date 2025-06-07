@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     secret_key: str
     debug: bool = False
     allowed_origins: str = "*"
+    openai_api_key: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env")
 
