@@ -1,6 +1,10 @@
 "use client";
 import { FaComments } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useRef, FormEvent } from "react";
+import Image from "next/image";
+import { useWorlds } from "../../lib/userWorlds";
+import { useAuth } from "../auth/AuthProvider";
+import { chatWithAgent, ChatMessage } from "../../lib/agentAPI";
 
 export default function ChatPanel({ open, onOpen, onClose }) {
   const PANEL_WIDTH = 420; // px, can use % if preferred
@@ -9,6 +13,138 @@ export default function ChatPanel({ open, onOpen, onClose }) {
 
   // For hover effect
   const [btnHover, setBtnHover] = useState(false);
+  const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { token } = useAuth();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const selectedWorld =
+    selectedWorldId !== null ? worlds.find(w => w.id === selectedWorldId) : null;
+
+  function scrollToBottom() {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }
+
+  async function handleSend(e: FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || selectedWorldId === null) return;
+    const newMsg: ChatMessage = { role: "user", content: input.trim() };
+    const updated = [...messages, newMsg];
+    setMessages(updated);
+    setInput("");
+    scrollToBottom();
+    setLoading(true);
+    try {
+      const res = await chatWithAgent(selectedWorldId, updated, token || "");
+      setMessages(m => [...m, { role: "assistant", content: res.response }]);
+      scrollToBottom();
+    } catch (err) {
+      setMessages(m => [
+        ...m,
+        {
+          role: "assistant",
+          content: "Sorry, something went wrong.",
+        },
+      ]);
+      scrollToBottom();
+    }
+    setLoading(false);
+  }
+
+  const panelContent = !open ? null : (
+    <div className="flex-1 flex flex-col p-4 pt-6 overflow-y-auto">
+      {!selectedWorld ? (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-center text-lg font-bold text-purple-700 mb-2">
+            {worldsLoading ? "Loading worlds..." : "Select a World"}
+          </h2>
+          {!worldsLoading &&
+            worlds.map((w) => (
+              <button
+                key={w.id}
+                onClick={() => setSelectedWorldId(w.id)}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/70 hover:bg-white border border-purple-200 shadow"
+              >
+                <Image
+                  src={w.logo || "/images/worlds/new_game.png"}
+                  alt={w.name}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded object-cover border border-purple-300"
+                />
+                <span className="font-semibold text-purple-800">{w.name}</span>
+              </button>
+            ))}
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 font-bold text-purple-700">
+              {selectedWorld.logo && (
+                <Image
+                  src={selectedWorld.logo}
+                  alt={selectedWorld.name}
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 rounded object-cover border border-purple-300"
+                />
+              )}
+              <span>{selectedWorld.name}</span>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedWorldId(null);
+                setMessages([]);
+              }}
+              className="text-sm text-purple-500 hover:underline"
+            >
+              Change
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-4 pb-2">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`${
+                    m.role === "user"
+                      ? "bg-purple-600 text-white"
+                      : "bg-white text-purple-800"
+                  } rounded-xl px-3 py-2 shadow max-w-[80%] whitespace-pre-wrap`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+          <form onSubmit={handleSend} className="mt-2 flex gap-2">
+            <input
+              className="flex-1 rounded-xl border border-purple-300 p-2 bg-white text-purple-800 placeholder-purple-400 focus:outline-none"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              disabled={loading || !input.trim()}
+            >
+              {loading ? "..." : "Send"}
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
 
   // Mobile: Floating FAB
   const mobileOpenButton = !open ? (
@@ -123,14 +259,7 @@ export default function ChatPanel({ open, onOpen, onClose }) {
             transition: "box-shadow 0.2s",
           }}
         >
-          {!open ? null : (
-            <div className="flex-1 flex flex-col p-4 pt-8 overflow-y-auto">
-              <div className="bg-purple-50/60 rounded-xl p-6 text-purple-600 shadow text-center my-12">
-                Chat with your world builder assistant will be available here soon!
-              </div>
-              {/* Place your chat UI/components here */}
-            </div>
-          )}
+          {panelContent}
         </div>
       </div>
 
@@ -158,13 +287,7 @@ export default function ChatPanel({ open, onOpen, onClose }) {
             </button>
           </div>
         )}
-        {open && (
-          <div className="flex-1 flex flex-col p-4 pt-8 overflow-y-auto">
-            <div className="bg-purple-50/60 rounded-xl p-6 text-purple-600 shadow text-center my-12">
-              Chat with your world builder assistant will be available here soon!
-            </div>
-          </div>
-        )}
+        {open && panelContent}
       </div>
     </>
   );
