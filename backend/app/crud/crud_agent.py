@@ -1,32 +1,47 @@
+from typing import AsyncGenerator
+
 from openai import OpenAI
 from app.config import settings
 from app.crud import crud_vectordb
+from app.models.model_agent import Agent
+from sqlalchemy.ext.asyncio import AsyncSession
 
 openai_model = settings.open_ai_model
 
 
-def chat_with_agent(world_id: int, messages: list[dict], n_results: int = 4) -> str:
-    """Generate a chat response using OpenAI with world context."""
+async def chat_with_agent(
+    session: AsyncSession, agent_id: int, messages: list[dict], n_results: int = 4
+) -> AsyncGenerator[str, None]:
+    """Stream a chat response using OpenAI with world and agent context."""
+
+    agent = await session.get(Agent, agent_id)
+    if not agent or agent.vector_db_update_date is None:
+        raise ValueError("Agent unavailable")
+
     query = messages[-1].get("content", "") if messages else ""
-    docs = crud_vectordb.query_world(world_id, query, n_results)
+    docs = crud_vectordb.query_world(agent.world_id, query, n_results)
     context = "\n\n".join(d["document"] for d in docs)
+    personality = agent.personality or "helpful NPC"
     system_prompt = (
-        "You are a helpful NPC from the game world. Use the following context to answer:\n"
+        f"You are an NPC with the following personality: {personality}. Use the following context to answer:\n"
         + context
     )
     chat_messages = [{"role": "system", "content": system_prompt}] + messages
-    # Initialize the OpenAI client lazily to avoid issues during import
+
     client = OpenAI(api_key=settings.openai_api_key)
-    print (f"Testing this model: {openai_model}")
-    resp = client.chat.completions.create(model=openai_model, messages=chat_messages)
-    return resp.choices[0].message.content
+    stream = client.chat.completions.create(
+        model=openai_model, messages=chat_messages, stream=True
+    )
+
+    for chunk in stream:
+        content = chunk.choices[0].delta.content
+        if content:
+            yield content
 
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import datetime, timezone
 from typing import List, Optional
-from app.models.model_agent import Agent
 
 async def create_agent(session: AsyncSession, agent: Agent) -> Agent:
     session.add(agent)
