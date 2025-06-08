@@ -21,6 +21,11 @@ export default function AgentGrid({ agents, onEdit, onDelete, onRebuild }) {
           <div className="text-xs text-[var(--foreground)]/70 mb-2">
             World ID: {agent.world_id}
           </div>
+          {agent.vector_db_update_date && (
+            <div className="text-xs text-[var(--foreground)]/70 mb-2">
+              Vector DB updated: {new Date(agent.vector_db_update_date).toLocaleString()}
+            </div>
+          )}
           <div className="flex gap-2 mt-1">
             <button
               className="px-3 py-1 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-sm shadow"
