@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
-from .database import engine
+from .database import init_db
 from .api import (
     api_characteristic,
     api_concept,
@@ -35,8 +35,7 @@ async def lifespan(app: FastAPI):
     FastAPI lifespan context: setup and teardown logic.
     This replaces the deprecated on_event('startup') decorator.
     """
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    await init_db()
     yield
     # Optional: add teardown logic here
 
