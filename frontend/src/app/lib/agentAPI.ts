@@ -49,11 +49,12 @@ export async function deleteAgent(id: number, token: string) {
 }
 
 export async function chatWithAgent(
-  worldId: number,
+  agentId: number,
   messages: ChatMessage[],
-  token: string
+  token: string,
+  onToken?: (chunk: string) => void
 ) {
-  const res = await fetch(`${API_URL}/agents/${worldId}/chat`, {
+  const res = await fetch(`${API_URL}/agents/${agentId}/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -62,6 +63,18 @@ export async function chatWithAgent(
     body: JSON.stringify({ messages }),
   });
 
-  if (!res.ok) throw await res.json();
-  return await res.json();
+  if (!res.ok) throw await res.text();
+
+  const reader = res.body?.getReader();
+  if (!reader) return "";
+  const decoder = new TextDecoder();
+  let result = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value);
+    result += chunk;
+    onToken?.(chunk);
+  }
+  return result;
 }
