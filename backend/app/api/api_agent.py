@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_current_user, require_role
 from app.models.model_user import User, UserRole
@@ -25,11 +26,23 @@ class ChatRequest(BaseModel):
 
 router = APIRouter(prefix="/agents", tags=["Agents"], dependencies=[Depends(get_current_user)])
 
-@router.post("/{world_id}/chat")
-async def chat(world_id: int, payload: ChatRequest, user: User = Depends(get_current_user)):
+@router.post("/{agent_id}/chat")
+async def chat(
+    agent_id: int,
+    payload: ChatRequest,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
     msgs = [m.model_dump() for m in payload.messages]
-    response = chat_with_agent(world_id, msgs)
-    return {"response": response}
+    agent = await get_agent(session, agent_id)
+    if not agent or agent.vector_db_update_date is None:
+        raise HTTPException(status_code=400, detail="Agent unavailable")
+
+    async def stream():
+        async for token in chat_with_agent(session, agent_id, msgs):
+            yield token
+
+    return StreamingResponse(stream(), media_type="text/plain")
 
 
 @router.post("/", response_model=AgentRead)
