@@ -9,6 +9,7 @@ import { useWorlds } from "../lib/userWorlds";
 import AgentGrid from "../components/agents/AgentGrid";
 import AgentModal from "../components/agents/AgentModal";
 import { rebuildVectorDB } from "../lib/vectordbAPI";
+import { getPagesForWorld } from "../lib/pagesAPI";
 
 export default function AgentsSettingsPage() {
   const { user, token } = useAuth();
@@ -59,8 +60,18 @@ export default function AgentsSettingsPage() {
   async function handleRebuild(agent) {
     setVdbLoading(true);
     try {
-      await rebuildVectorDB(token || "", agent.world_id);
-      setSuccess("Vector DB updated!");
+      const pages = await getPagesForWorld(agent.world_id, token || "");
+      const pageCount = pages.length;
+      const estimated = Math.ceil(pageCount * 1.5);
+      const proceed = window.confirm(
+        `Rebuilding the vector DB will add ${pageCount} pages and may take around ${estimated} seconds. Continue?`
+      );
+      if (!proceed) {
+        setVdbLoading(false);
+        return;
+      }
+      const res = await rebuildVectorDB(token || "", agent.world_id);
+      setSuccess(`Vector DB updated! ${res.pages_indexed} pages indexed.`);
     } catch (err) {
       setSuccess("Failed to rebuild vector DB");
     } finally {
