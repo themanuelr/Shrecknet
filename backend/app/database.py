@@ -30,11 +30,12 @@ async def init_db():
 
 def _migrate(conn):
     """Simple migration to add new columns without dropping data."""
-    from sqlalchemy import inspect
+    from sqlalchemy import inspect, text
+
     inspector = inspect(conn)
-    columns = [c['name'] for c in inspector.get_columns('agent')]
-    if 'vector_db_update_date' not in columns:
-        conn.execute('ALTER TABLE agent ADD COLUMN vector_db_update_date DATETIME')
+    columns = [c["name"] for c in inspector.get_columns("agent")]
+    if "vector_db_update_date" not in columns:
+        conn.execute(text("ALTER TABLE agent ADD COLUMN vector_db_update_date DATETIME"))
 
 async def get_session() -> AsyncSession:
     async with async_session_maker() as session:
