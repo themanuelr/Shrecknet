@@ -2,7 +2,7 @@
 import { FaComments } from "react-icons/fa";
 import { useState, useRef, FormEvent } from "react";
 import Image from "next/image";
-import { useWorlds } from "../../lib/userWorlds";
+import { useAgents } from "../../lib/useAgents";
 import { useAuth } from "../auth/AuthProvider";
 import { chatWithAgent, ChatMessage } from "../../lib/agentAPI";
 
@@ -13,16 +13,19 @@ export default function ChatPanel({ open, onOpen, onClose }) {
 
   // For hover effect
   const [btnHover, setBtnHover] = useState(false);
-  const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { worlds, isLoading: worldsLoading } = useWorlds();
+  const { agents, isLoading: agentsLoading } = useAgents();
   const { token } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const selectedWorld =
-    selectedWorldId !== null ? worlds.find(w => w.id === selectedWorldId) : null;
+  const availableAgents = agents.filter(a => a.vector_db_update_date);
+  const selectedAgent =
+    selectedAgentId !== null
+      ? agents.find(a => a.id === selectedAgentId)
+      : null;
 
   function scrollToBottom() {
     setTimeout(() => {
@@ -32,24 +35,29 @@ export default function ChatPanel({ open, onOpen, onClose }) {
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim() || selectedWorldId === null) return;
+    if (!input.trim() || selectedAgentId === null) return;
     const newMsg: ChatMessage = { role: "user", content: input.trim() };
     const updated = [...messages, newMsg];
     setMessages(updated);
     setInput("");
     scrollToBottom();
     setLoading(true);
+    let assistantText = "";
+    setMessages(m => [...m, { role: "assistant", content: "" }]);
     try {
-      const res = await chatWithAgent(selectedWorldId, updated, token || "");
-      setMessages(m => [...m, { role: "assistant", content: res.response }]);
-      scrollToBottom();
-    } catch (err) {
+      await chatWithAgent(selectedAgentId, updated, token || "", chunk => {
+        assistantText += chunk;
+        setMessages(m => {
+          const arr = [...m];
+          arr[arr.length - 1] = { role: "assistant", content: assistantText };
+          return arr;
+        });
+        scrollToBottom();
+      });
+    } catch {
       setMessages(m => [
-        ...m,
-        {
-          role: "assistant",
-          content: "Sorry, something went wrong.",
-        },
+        ...m.slice(0, -1),
+        { role: "assistant", content: "Sorry, something went wrong." },
       ]);
       scrollToBottom();
     }
@@ -58,47 +66,50 @@ export default function ChatPanel({ open, onOpen, onClose }) {
 
   const panelContent = !open ? null : (
     <div className="flex-1 flex flex-col p-4 pt-6 overflow-y-auto">
-      {!selectedWorld ? (
+      {!selectedAgent ? (
         <div className="flex flex-col gap-4">
           <h2 className="text-center text-lg font-bold text-purple-700 mb-2">
-            {worldsLoading ? "Loading worlds..." : "Select a World"}
+            {agentsLoading ? "Loading agents..." : "Select an Agent"}
           </h2>
-          {!worldsLoading &&
-            worlds.map((w) => (
+          {!agentsLoading &&
+            availableAgents.map((a) => (
               <button
-                key={w.id}
-                onClick={() => setSelectedWorldId(w.id)}
+                key={a.id}
+                onClick={() => setSelectedAgentId(a.id)}
                 className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/70 hover:bg-white border border-purple-200 shadow"
               >
                 <Image
-                  src={w.logo || "/images/worlds/new_game.png"}
-                  alt={w.name}
+                  src={a.logo || "/images/default/avatars/logo.png"}
+                  alt={a.name}
                   width={32}
                   height={32}
                   className="w-8 h-8 rounded object-cover border border-purple-300"
                 />
-                <span className="font-semibold text-purple-800">{w.name}</span>
+                <span className="font-semibold text-purple-800">{a.name}</span>
               </button>
             ))}
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 font-bold text-purple-700">
-              {selectedWorld.logo && (
+          <div className="flex items-center justify-between mb-4 bg-[var(--surface-variant)] px-3 py-2 rounded-xl">
+            <div className="flex items-center gap-3">
+              {selectedAgent?.logo && (
                 <Image
-                  src={selectedWorld.logo}
-                  alt={selectedWorld.name}
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded object-cover border border-purple-300"
+                  src={selectedAgent.logo}
+                  alt={selectedAgent.name}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full object-cover border border-purple-300"
                 />
               )}
-              <span>{selectedWorld.name}</span>
+              <div>
+                <div className="text-[var(--primary)] font-bold text-lg">{selectedAgent?.name}</div>
+                <div className="text-xs text-[var(--foreground)]/70">ID: {selectedAgent?.id}</div>
+              </div>
             </div>
             <button
               onClick={() => {
-                setSelectedWorldId(null);
+                setSelectedAgentId(null);
                 setMessages([]);
               }}
               className="text-sm text-purple-500 hover:underline"
@@ -277,7 +288,14 @@ export default function ChatPanel({ open, onOpen, onClose }) {
       >
         {open && (
           <div className="flex items-center justify-between p-4 border-b border-purple-100">
-            <span className="text-lg font-bold text-purple-900">Chat Assistant</span>
+            <div>
+              <div className="text-lg font-bold text-purple-900">
+                {selectedAgent ? selectedAgent.name : "Chat"}
+              </div>
+              {selectedAgent && (
+                <div className="text-xs text-purple-700">ID: {selectedAgent.id}</div>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="text-purple-500 hover:bg-purple-100 p-2 rounded-full transition"
