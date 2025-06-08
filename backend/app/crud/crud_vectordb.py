@@ -94,9 +94,37 @@ async def rebuild_world(session: AsyncSession, world_id: int):
 
 
 def query_world(world_id: int, query: str, n_results: int = 5) -> List[Dict]:
+    """Query the vector DB for documents related to the given query."""
     collection = _get_collection(world_id)
     res = collection.query(query_texts=[query], n_results=n_results)
+
+    # ``chromadb`` has changed its return type across versions.  Older
+    # versions return a ``dict`` while newer ones return a dataclass-like
+    # object with attributes.  Support both formats and gracefully handle
+    # unexpected shapes.
+    documents = None
+    metadatas = None
+
+    if isinstance(res, dict):
+        documents = res.get("documents")
+        metadatas = res.get("metadatas")
+    else:  # newer versions expose attributes
+        documents = getattr(res, "documents", None)
+        metadatas = getattr(res, "metadatas", None)
+
+    if not documents or not metadatas:
+        return []
+
+    # Results may be wrapped in an extra list; unwrap if needed
+    if isinstance(documents, list) and documents and isinstance(documents[0], list):
+        documents = documents[0]
+    if isinstance(metadatas, list) and metadatas and isinstance(metadatas[0], list):
+        metadatas = metadatas[0]
+
     docs = []
-    for doc, meta in zip(res["documents"][0], res["metadatas"][0]):
-        docs.append({"document": doc, **meta})
+    for doc, meta in zip(documents, metadatas):
+        if isinstance(meta, dict):
+            docs.append({"document": doc, **meta})
+        else:
+            docs.append({"document": doc})
     return docs
