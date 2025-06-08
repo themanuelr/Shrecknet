@@ -116,11 +116,7 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           required
         />
-        <M3FloatingInput
-          label="Logo URL"
-          value={form.logoUrl}
-          onChange={e => setForm(f => ({ ...f, logoUrl: e.target.value }))}
-        />
+        
         <div>
           <label className="block text-[var(--primary)] font-semibold text-sm mb-1">
             Upload Logo
