@@ -10,10 +10,12 @@ except Exception:
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from datetime import datetime, timezone
 
 from app.models.model_page import Page, PageCharacteristicValue
 from app.models.model_concept import Concept
 from app.models.model_characteristic import Characteristic
+from app.models.model_agent import Agent
 
 
 # Persistent client storing collections under ./vector_db
@@ -80,6 +82,14 @@ async def rebuild_world(session: AsyncSession, world_id: int):
     page_ids = [row[0] for row in result.all()]
     for pid in page_ids:
         await add_page(session, pid)
+
+    # update agents in this world with current time
+    agent_result = await session.execute(select(Agent).where(Agent.world_id == world_id))
+    agents = agent_result.scalars().all()
+    now = datetime.now(timezone.utc)
+    for agent in agents:
+        agent.vector_db_update_date = now
+    await session.commit()
     return len(page_ids)
 
 

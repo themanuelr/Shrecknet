@@ -11,4 +11,5 @@ class Agent(SQLModel, table=True):
     world_id: int = Field(foreign_key="gameworld.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    vector_db_update_date: Optional[datetime] = None
 

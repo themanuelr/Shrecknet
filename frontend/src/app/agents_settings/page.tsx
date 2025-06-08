@@ -72,6 +72,7 @@ export default function AgentsSettingsPage() {
       }
       const res = await rebuildVectorDB(token || "", agent.world_id);
       setSuccess(`Vector DB updated! ${res.pages_indexed} pages indexed.`);
+      mutate();
     } catch (err) {
       setSuccess("Failed to rebuild vector DB");
     } finally {
