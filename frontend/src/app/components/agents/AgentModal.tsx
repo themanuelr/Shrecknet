@@ -26,7 +26,7 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
   useEffect(() => {
     setForm({
       name: agent?.name || "",
-      logoUrl: agent?.logo || "",
+      logoUrl: agent?.logo || "images/default/avatars/logo.png",
       logoFile: null,
       personality: agent?.personality || "",
       task: agent?.task || "",
