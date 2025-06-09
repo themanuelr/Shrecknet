@@ -103,6 +103,24 @@ export default function UserManagementPage() {
               </Link>
             </div>
 
+            {/* Chat Test Area */}
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full flex flex-col gap-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Bot className="w-6 h-6 text-[var(--primary)]" />
+                <div className="text-[var(--primary)] font-bold text-lg">Chat Test</div>
+              </div>
+              <div className="text-[var(--foreground)]/80 text-sm mb-3">
+                Debug vector DB queries by chatting with agents.
+              </div>
+              <Link
+                href="/chat_test"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl font-bold bg-[var(--primary)] text-[var(--primary-foreground)] shadow hover:bg-[var(--accent)] hover:text-[var(--background)] border border-[var(--primary)] transition w-fit"
+              >
+                <Bot className="w-5 h-5" />
+                Go to Chat Test
+              </Link>
+            </div>
+
             {/* User Management Area */}
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full flex flex-col gap-2">
               <div className="flex items-center gap-2 mb-2">

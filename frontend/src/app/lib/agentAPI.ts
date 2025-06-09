@@ -78,3 +78,20 @@ export async function chatWithAgent(
   }
   return result;
 }
+
+export async function chatTest(
+  agentId: number,
+  messages: ChatMessage[],
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/chat_test`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ messages }),
+  });
+  if (!res.ok) throw await res.json();
+  return await res.json();
+}

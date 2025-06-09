@@ -12,6 +12,7 @@ from app.crud.crud_agent import (
     update_agent,
     delete_agent,
 )
+from app.crud import crud_vectordb
 from app.schemas.schema_agent import AgentCreate, AgentRead, AgentUpdate
 from app.database import get_session
 from pydantic import BaseModel
@@ -43,6 +44,24 @@ async def chat(
             yield token
 
     return StreamingResponse(stream(), media_type="text/plain")
+
+
+@router.post("/{agent_id}/chat_test")
+async def chat_test(
+    agent_id: int,
+    payload: ChatRequest,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    """Return the vector DB documents for the last user message."""
+    msgs = [m.model_dump() for m in payload.messages]
+    agent = await get_agent(session, agent_id)
+    if not agent or agent.vector_db_update_date is None:
+        raise HTTPException(status_code=400, detail="Agent unavailable")
+
+    query = msgs[-1].get("content", "") if msgs else ""
+    docs = crud_vectordb.query_world(agent.world_id, query, n_results=4)
+    return {"documents": docs}
 
 
 @router.post("/", response_model=AgentRead)

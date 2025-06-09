@@ -18,7 +18,7 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
         yield "Hi"
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
-         patch("app.crud.crud_agent.chat_with_agent", side_effect=fake_chat):
+         patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
         async with async_client.stream(
             "POST",
             "/agents/1/chat",
@@ -28,6 +28,30 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
             text = "".join([chunk async for chunk in resp.aiter_text()])
         assert resp.status_code == 200
         assert text == "Hi"
+
+
+@pytest.mark.anyio
+async def test_chat_test_endpoint(async_client, create_user, login_and_get_token):
+    await create_user("agent@test2.com", "pass", "writer")
+    token = await login_and_get_token("agent@test2.com", "pass", "writer")
+
+    payload = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    class FakeAgent:
+        world_id = 1
+        vector_db_update_date = datetime.now(timezone.utc)
+
+    fake_docs = [{"document": "Doc1"}, {"document": "Doc2"}]
+
+    with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
+         patch("app.api.api_agent.crud_vectordb.query_world", return_value=fake_docs):
+        resp = await async_client.post(
+            "/agents/1/chat_test",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["documents"] == fake_docs
 
 
 @pytest.mark.anyio
