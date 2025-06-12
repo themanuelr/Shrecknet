@@ -61,7 +61,7 @@ export default function BodySection({ values, worldId, conceptid }) {
                         ) : (
                           <div
                             key={i}
-                            className="bg-[var(--surface-variant)]/40 rounded-lg border border-[var(--primary)]/5 px-3 py-1 text-sm"
+                            className="px-3 py-1 text-sm"
                           >
                             {v}
                           </div>

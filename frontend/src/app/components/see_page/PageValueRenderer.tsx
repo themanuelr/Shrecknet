@@ -238,7 +238,7 @@ export default function PageValueRenderer({
                 transition
                 hover:underline
                 ${isMini ? "text-xs" : ""}
-                justify-end
+                justify-left
               `}
               style={{ textDecoration: "none" }}
             >
@@ -273,7 +273,7 @@ export default function PageValueRenderer({
             key={idx}
             className={`
               whitespace-pre-line text-[var(--foreground)] w-full
-              text-right
+              text-left
             `}
             style={{
               background: "none",
