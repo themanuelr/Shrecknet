@@ -57,7 +57,7 @@
 }
 
 [data-theme="light"] {
-  --background: #faf8fd;             /* Soft off-white for main bg */
+  --background: #ffffff;             /* Soft off-white for main bg */
   --foreground: #231b36;             /* Deep, readable, not pure black */
   --primary: #7b2ff2;                /* Vibrant Material Purple */
   --primary-foreground: #fff;

@@ -16,8 +16,10 @@ import Link from "next/link";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
 import ModalContainer from "../../components/template/modalContainer";
 import { useUsers } from "@/app/lib/useUsers";
+import { HiOutlineDocumentText } from "react-icons/hi2";
 import Image from "next/image";
-
+import { FaRegObjectGroup } from "react-icons/fa6"; // or FaUserFriends, FaRegObjectGroup, etc.
+import { FaUsers } from "react-icons/fa6"; // or FaUserFriends, FaRegObjectGroup, etc.
 
 export default function WorldDetailPage({ params }) {
   const { worldID } = use(params);
@@ -123,100 +125,124 @@ export default function WorldDetailPage({ params }) {
 
 
         {/* Highlight Concepts */}
-        {highlightConcepts.length > 0 && (
-  <div className="max-w-6xl mx-auto px-4 md:px-0 mb-10">
-    <h2 className="text-xl font-bold text-[var(--primary)] mb-3">Explore This World</h2>
-    <div
-      className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-x-2 gap-y-5"
-      style={{ justifyItems: "center" }}
-    >
-            {highlightConcepts.map((concept) => (
-              <Link href={`/worlds/${world.id}/concept/${concept.id}`} key={concept.id}>
-                <div
-                  className={`
-                    rounded-3xl
-                    bg-[var(--surface-variant)]/30 
-                    border border-[var(--primary)]/10
-                    shadow-[0_2px_12px_0_rgba(90,60,150,0.06)]
-                    p-2.5 flex flex-col items-center
-                    transition
-                    cursor-pointer
-                    hover:shadow-[0_4px_24px_0_rgba(123,47,242,0.16)]
-                    hover:border-[var(--primary)]/50
-                    hover:bg-[var(--primary)]/10
-                    active:shadow-[0_2px_12px_0_rgba(123,47,242,0.10)]
-                    min-w-[150px] max-w-[180px] w-[94%] md:w-[90%] lg:w-[85%]
-                  `}
-                  style={{
-                    backdropFilter: "blur(4px)",
-                    WebkitBackdropFilter: "blur(4px)",
-                  }}
-                >
-                  <Image
-                      width={400}
-                      height={400}                       
-                    src={concept.logo || "/images/default/concepts/logo.png"}
-                    alt={concept.name}
-                    className=""
-                    style={{
-                      transition: "box-shadow 0.2s, border 0.2s",
-                    }}
-                  />
-                  <span className="text-base text-center font-semibold text-[var(--primary)] break-words mt-2 mb-1 px-1.5" style={{
-                    letterSpacing: ".01em"
-                  }}>
-                    {concept.name}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+        <div className="max-w-6xl mx-auto px-4 md:px-0 mb-10">
+  <h2 className="text-xl font-bold text-[var(--primary)] mb-4">Explore This World</h2>
+  <div  
+    className="
+      grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4
+      gap-6 justify-items-center
+    "
+  >
+    {highlightConcepts.map((concept) => (
+      <Link
+        href={`/worlds/${world.id}/concept/${concept.id}`}
+        key={concept.id}
+        className="
+          group
+          rounded-2xl
+          bg-white/10
+          border border-white/20
+          shadow-2xl
+          backdrop-blur-xl
+          w-full max-w-[220px] min-h-[260px]
+          flex flex-col items-center justify-start
+          transition-all duration-200
+          hover:shadow-[0_6px_28px_0_rgba(123,47,242,0.17)]
+          hover:border-[var(--primary)]/50
+          hover:bg-[var(--primary)]/10
+          hover:scale-[1.035]
+          relative
+          p-4
+          cursor-pointer
+        "
+        style={{
+          boxShadow: "0 3px 18px 0 #7b2ff232, 0 2px 8px #36205a22",
+        }}
+        title={concept.description || concept.name}
+      >
+        {/* Logo in glass circle */}
+        <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-white/20 border border-[var(--primary)]/40 shadow-md mb-3 mt-2 overflow-hidden">
+          <Image
+            width={80}
+            height={80}
+            src={concept.logo || "/images/default/concepts/logo.png"}
+            alt={concept.name}
+            className="object-cover w-36 h-36 rounded-full"
+          />
+          <div className="absolute inset-0 rounded-full ring-2 ring-[var(--primary)]/40 pointer-events-none" />
         </div>
-      )}
+        {/* Concept Name */}
+        <span
+          className="
+            font-bold text-base text-center text-[var(--primary)]/90 max-w-[90%] truncate block
+            group-hover:text-[var(--primary)] transition
+            mb-2
+          "
+          title={concept.name}
+        >
+          {concept.name}
+        </span>
+        {/* Page count badge */}
+        <span
+          className={`
+            flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--primary)]/15
+            text-[var(--primary)] text-xs font-semibold
+            shadow-sm
+            mb-1
+            ${concept.pages_count > 0 ? "ring-2 ring-[var(--primary)]/40" : ""}
+          `}
+        >
+          <HiOutlineDocumentText className="w-4 h-4" />
+          {concept.pages_count || 0} page{concept.pages_count === 1 ? "" : "s"}
+        </span>
+      </Link>
+    ))}
+  </div>
+</div>
 
-        {highlightGroups.length > 0 && (
-          <div className="max-w-6xl mx-auto px-4 md:px-0 mb-14">
-            <h2 className="text-lg font-bold text-[var(--primary)] mb-3 flex items-center gap-2">
-              <FaSearch className="text-[var(--primary)]" /> Looking for something specific?
-            </h2>
-            <div className="flex flex-wrap gap-3">
-              {highlightGroups.map((group) => (
-                <Link href={`/worlds/${world.id}/group/${group}`} key={group}>
-                  <div
-                    className={`
-                      rounded-2xl
-                      bg-[var(--surface-variant)]/25
-                      border border-[var(--primary)]/10
-                      shadow-[0_2px_12px_0_rgba(123,47,242,0.05)]
-                      px-5 py-2
-                      text-[var(--primary)]
-                      font-semibold
-                      text-base
-                      cursor-pointer
-                      transition
-                      hover:bg-[var(--primary)]/10
-                      hover:border-[var(--primary)]/40
-                      hover:shadow-[0_4px_24px_0_rgba(123,47,242,0.10)]
-                      focus-visible:ring-2 focus-visible:ring-[var(--primary)]
-                      backdrop-blur-sm
-                      select-none
-                    `}
-                    style={{
-                      minWidth: "110px",
-                      textAlign: "center",
-                      letterSpacing: ".01em",
-                      WebkitBackdropFilter: "blur(4px)",
-                      backdropFilter: "blur(4px)",
-                    }}
-                    tabIndex={0}
-                  >
-                    {group}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+<div className="max-w-6xl mx-auto px-4 md:px-0 mb-14">
+  <h2 className="text-lg font-bold text-[var(--primary)] mb-8 flex items-center gap-2">
+    <FaUsers className="text-[var(--primary)]" /> Looking for something specific?
+  </h2>
+  <div className="flex flex-wrap gap-4">
+    {highlightGroups.map((group) => (
+      <Link href={`/worlds/${world.id}/group/${group}`} key={group}>
+        <div
+          className="
+            flex items-center gap-2
+            rounded-full
+            bg-white/10
+            border border-white/20
+            shadow-lg
+            px-5 py-2.5
+            text-[var(--primary)]
+            font-semibold
+            text-base
+            cursor-pointer
+            transition-all duration-150
+            hover:bg-[var(--primary)]/15
+            hover:border-[var(--primary)]/50
+            hover:text-white
+            hover:scale-[1.04]
+            active:scale-100
+            select-none
+            backdrop-blur-[5px]
+          "
+          title="View group"
+          tabIndex={0}
+          style={{
+            minWidth: "120px",
+            letterSpacing: ".01em",
+            boxShadow: "0 3px 12px 0 #7b2ff224",
+          }}
+        >
+          <FaRegObjectGroup className="w-5 h-5 opacity-80" />
+          <span className="truncate">{group}</span>
+        </div>
+      </Link>
+    ))}
+  </div>
+</div>
 
           {/* Full Width Editable Content */}
           
