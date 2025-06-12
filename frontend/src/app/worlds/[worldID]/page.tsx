@@ -79,32 +79,33 @@ export default function WorldDetailPage({ params }) {
       />
       <DashboardLayout>
         <div className="pt-2 w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] py-0 px-0">
-          <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-3 mb-12">
-            <div className="relative">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-4 mb-12">
+            <div className="relative flex-shrink-0" onClick={() => setZoomOpen(true)}>
               <Image
-                      width={400}
-                      height={400}                   
+                width={400}
+                height={400}
                 src={world.logo || "/images/default/worlds/logo.png"}
                 alt={world.name}
-                onClick={() => setZoomOpen(true)}
                 className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover border-2 border-[var(--primary)] shadow-md cursor-pointer hover:scale-105 transition"
               />
             </div>
-            <h1 className="text-3xl font-extrabold text-[var(--primary)] tracking-tight">{world.name}</h1>
-            <p className="text-sm text-[var(--foreground)]/80" dangerouslySetInnerHTML={{ __html: world.description || "" }} />
-            <div className="flex flex-wrap justify-center gap-2 mt-2 text-[10px] md:text-xs font-semibold">
-              <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                System: {world.system}
-              </span>
-              <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                Created by: {creator ? creator.nickname || creator.email : world.created_by}
-              </span>
-              <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                Created: {new Date(world.created_at).toLocaleDateString()}
-              </span>
-              <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                Edited: {world.edited_at ? new Date(world.edited_at).toLocaleDateString() : "-"}
-              </span>
+            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-2 flex-1">
+              <h1 className="text-3xl font-extrabold text-[var(--primary)] tracking-tight">{world.name}</h1>
+              <p className="text-sm text-[var(--foreground)]/80" dangerouslySetInnerHTML={{ __html: world.description || "" }} />
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2 text-[10px] md:text-xs font-semibold">
+                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
+                  System: {world.system}
+                </span>
+                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
+                  Created by: {creator ? creator.nickname || creator.email : world.created_by}
+                </span>
+                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
+                  Created: {new Date(world.created_at).toLocaleDateString()}
+                </span>
+                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
+                  Edited: {world.edited_at ? new Date(world.edited_at).toLocaleDateString() : "-"}
+                </span>
+              </div>
             </div>
           </div>
 
