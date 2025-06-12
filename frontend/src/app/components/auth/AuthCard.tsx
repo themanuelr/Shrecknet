@@ -128,14 +128,6 @@ export default function AuthCard() {
     }
   };
 
-  const switchMode = () => {
-    setFormMode((m) =>
-      m === FormMode.LOGIN ? FormMode.REGISTER : FormMode.LOGIN
-    );
-    setError(null);
-    setInfo(null);
-    setForm({ email: "", password: "", nickname: "" });
-  };
 
   if (usersExist === null)
     return <div className="text-white text-center py-8">Loading...</div>;
@@ -147,7 +139,35 @@ export default function AuthCard() {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#29196655] via-[#7b2ff211] to-[#36205a44] rounded-2xl pointer-events-none z-0" />
       <div className="relative z-10">
-        <h3 className="font-bold text-xl mb-7 text-white/90 text-left drop-shadow-sm">
+        <div className="flex w-full mb-6 rounded-xl overflow-hidden border border-white/20 backdrop-blur-sm">
+          {usersExist && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormMode(FormMode.LOGIN);
+                setError(null);
+                setInfo(null);
+                setForm({ email: "", password: "", nickname: "" });
+              }}
+              className={`flex-1 py-2 text-sm font-semibold transition-colors ${formMode === FormMode.LOGIN ? "bg-gradient-to-r from-[#7b2ff2] to-[#e0c3fc] text-white" : "text-[var(--primary)] hover:bg-white/10 hover:text-white"}`}
+            >
+              Login
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setFormMode(usersExist ? FormMode.REGISTER : FormMode.FIRST_USER);
+              setError(null);
+              setInfo(null);
+              setForm({ email: "", password: "", nickname: "" });
+            }}
+            className={`flex-1 py-2 text-sm font-semibold transition-colors ${formMode !== FormMode.LOGIN ? "bg-gradient-to-r from-[#7b2ff2] to-[#e0c3fc] text-white" : "text-[var(--primary)] hover:bg-white/10 hover:text-white"}`}
+          >
+            Create Account
+          </button>
+        </div>
+        <h3 className="font-bold text-xl mb-5 text-white/90 text-left drop-shadow-sm">
           {formMode === FormMode.LOGIN
             ? "Sign in to your adventure"
             : formMode === FormMode.REGISTER
@@ -215,27 +235,6 @@ export default function AuthCard() {
               : "Create Account"}
           </button>
         </form>
-        <div className="flex justify-between w-full text-xs mt-5">
-          {formMode === FormMode.LOGIN && (
-            <button
-              className="font-semibold text-[var(--accent)] hover:underline hover:text-white/90 transition"
-              type="button"
-              onClick={switchMode}
-            >
-              Create account
-            </button>
-          )}
-          {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) &&
-            usersExist && (
-              <button
-                className="font-semibold text-[var(--accent)] hover:underline hover:text-white/90 transition"
-                type="button"
-                onClick={switchMode}
-              >
-                Login as existing user
-              </button>
-            )}
-        </div>
       </div>
     </div>
   );
