@@ -52,6 +52,8 @@ export default function PageValueRenderer({
   const renderDownloadLink = (val, idx, type, label = null) => {
     const isPdf = type === "pdf";
     const isJson = type === "foundry";
+
+
     return (
       <a
         key={idx}
@@ -91,31 +93,33 @@ export default function PageValueRenderer({
   };
 
   return (
-    <div
-      className={
-        isList && values.length > 1
-          ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"
-          : "w-full"
-      }
-    >
-      {values.map((val, idx) => {
-        // IMAGE
-        if (characteristic.type === "image" || characteristic.type === "img") {
-          return (
-            <div
-              key={idx}
-              className="flex justify-start items-center rounded-2xl w-full"
-            >
-              <Image
-                src={val}
-                alt={characteristic.name}
-                className="w-full max-w-xs rounded-xl border border-[var(--border)] shadow-md object-cover"
-                width={400}
-                height={400}
-              />
-            </div>
-          );
-        }
+        <div
+          className={
+            isList && values.length > 1
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full"
+              : "flex w-full"
+          }
+          style={{
+            justifyContent:
+              (!isList || values.length === 1) ? "flex-end" : undefined,
+            alignItems: "center",
+          }}
+        >
+          {values.map((val, idx) => {
+            // IMAGE
+            if (characteristic.type === "image" || characteristic.type === "img") {
+              return (
+                <div key={idx} className="flex w-full justify-end">
+                  <Image
+                    src={val}
+                    alt={characteristic.name}
+                    className="w-full max-w-xs rounded-xl border border-[var(--border)] shadow-md object-cover"
+                    width={400}
+                    height={400}
+                  />
+                </div>
+              );
+            }
 
         // PDF
         if (characteristic.type === "pdf") {
@@ -230,19 +234,13 @@ export default function PageValueRenderer({
                   : "#"
               }
               className={`
-                flex items-center gap-2
-                ${isMini
-                  ? "bg-[var(--surface-variant)]/30 rounded-xl border border-[var(--primary)]/10 px-2 py-1 shadow text-xs"
-                  : "bg-[var(--surface-variant)]/30 rounded-2xl border border-[var(--primary)]/10 px-3 py-2 shadow"
-                }
-                hover:bg-[var(--primary)]/10 hover:border-[var(--primary)]/40
+                flex items-center gap-2 w-full
                 transition
-                min-w-0
+                hover:underline
+                ${isMini ? "text-xs" : ""}
+                justify-end
               `}
-              style={{
-                width: "100%",
-                textDecoration: "none",
-              }}
+              style={{ textDecoration: "none" }}
             >
               {loadingPages ? (
                 <span className="italic text-xs text-[var(--primary)]/70">
@@ -254,17 +252,13 @@ export default function PageValueRenderer({
                     <Image
                       src={page.logo}
                       alt={page.name}
-                      className={`object-cover bg-white ${
-                        isMini ? "w-6 h-6 rounded-md" : "w-10 h-10 rounded-lg"
-                      }`}
+                      className={`object-cover bg-white ${isMini ? "w-6 h-6 rounded-md" : "w-10 h-10 rounded-lg"}`}
                       width={400}
                       height={400}
                       style={isMini ? { minWidth: 24, minHeight: 24 } : { minWidth: 40, minHeight: 40 }}
                     />
                   )}
-                  <span
-                    className={`text-[var(--primary)] font-semibold ${isMini ? "text-xs" : ""}`}
-                  >
+                  <span className={`text-[var(--primary)] font-semibold truncate`}>
                     {page.name || `Page #${val}`}
                   </span>
                 </>
@@ -276,22 +270,24 @@ export default function PageValueRenderer({
         // DEFAULT: plain value
         return (
           <div
-          key={idx}
-          className="whitespace-pre-line text-[var(--foreground)] w-full"
-          style={{
-            background: "none",
-            padding: 0,
-            border: "none",
-            borderRadius: 0,
-            boxShadow: "none",
-            fontSize: "1rem",
-            lineHeight: "1.7",
-          }}
-        >
-          {val}
-        </div>
+            key={idx}
+            className={`
+              whitespace-pre-line text-[var(--foreground)] w-full
+              text-right
+            `}
+            style={{
+              background: "none",
+              padding: 0, 
+              border: "none",
+              borderRadius: 0,
+              boxShadow: "none",
+              fontSize: "1rem",
+              lineHeight: "1.7",
+            }}
+          >
+            {val}
+          </div>
         );
       })}
     </div>
   );
-}

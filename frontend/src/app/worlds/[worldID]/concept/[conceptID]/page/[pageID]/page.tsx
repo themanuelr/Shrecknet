@@ -214,6 +214,7 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                     {bodySectionValues.length > 0 && (
                       <BodySection values={bodySectionValues} worldId={world?.id} conceptid={concept?.id} />
                     )}
+                    
                   <EditableContent
                     id="world-content-editor"
                     content={page.content}

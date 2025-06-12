@@ -20,129 +20,62 @@ export default function BodySection({ values, worldId, conceptid }) {
 
   return (
     <section className="w-full mb-0">
-      <div className="flex flex-col gap-6 w-full">
-       
-       
+      <div className="flex flex-col gap-7 w-full">
         {values.map(({ characteristic, value }, idx) => {
           const key = `${characteristic.id}-${idx}`;
 
-          // List value
-          if (Array.isArray(value)) {
-            // For page_ref, show as grid of cards
-            if (characteristic.type === "page_ref") {
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full"
-                >
-                  {/* Accordion Header */}
-                  <button
-                    onClick={() => handleAccordionToggle(key)}
-                    className="flex items-center justify-between w-full mb-2 focus:outline-none"
-                  >
-                    <span className="text-lg font-semibold text-[var(--primary)]">
-                      {characteristic.name}
-                    </span>
-                    {openAccordions[key] ? (
-                      <ChevronUp className="text-[var(--primary)]" size={22} />
-                    ) : (
-                      <ChevronDown className="text-[var(--primary)]" size={22} />
-                    )}
-                  </button>
-                  <AnimatePresence>
-                    {openAccordions[key] && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
-                          {value.map((v, i) => (
-                            <PageValueRenderer
-                              key={i}
-                              characteristic={characteristic}
-                              value={v}  // pass a single value
-                              worldId={worldId}
-                              conceptid={conceptid}
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            }
-            // Generic list value
-            return (
-              <motion.div
-                key={key}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full"
-              >
-                {/* Accordion Header */}
-                <button
-                  onClick={() => handleAccordionToggle(key)}
-                  className="flex items-center justify-between w-full mb-2 focus:outline-none"
-                >
-                  <span className="text-lg font-semibold text-[var(--primary)]">
-                    {characteristic.name}
-                  </span>
-                  {openAccordions[key] ? (
-                    <ChevronUp className="text-[var(--primary)]" size={22} />
-                  ) : (
-                    <ChevronDown className="text-[var(--primary)]" size={22} />
-                  )}
-                </button>
-                <AnimatePresence>
-                  {openAccordions[key] && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
-                          {value.map((v, i) => (
-                            <li
-                              key={i}
-                              className="bg-[var(--surface-variant)]/30 rounded-xl border border-[var(--primary)]/10 px-4 py-2 shadow text-sm text-[var(--foreground)]"
-                            >
-                              {v}
-                            </li>
-                          ))}
-                        </ul>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          }
-
-          // Non-list values
           return (
-            <motion.div
-              key={key}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
-              className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full"
-            >
-              <h3 className="text-lg font-semibold text-[var(--primary)] mb-2">
+            <div key={key} className="w-full">
+              {/* Characteristic name above card */}
+              <h3 className="text-base md:text-lg font-medium text-[var(--primary)]/70 mb-1 px-1 select-none">
                 {characteristic.name}
               </h3>
 
-              <PageValueRenderer characteristic={characteristic} value={value} worldId={worldId} conceptid={conceptid} />
-              
-            </motion.div>
+              {/* Glassy value card (but soft and blended) */}
+              <div
+                className="
+                  w-full
+                  rounded-xl
+                  bg-white/5
+                  border border-white/10
+                  shadow-sm
+                  backdrop-blur-[6px]
+                  px-4 py-3
+                  transition
+                  text-[var(--foreground)]/90
+                "
+              >
+                {/* Render lists or single values */}
+                {Array.isArray(value) ? (
+                  <div className="flex flex-wrap gap-3">
+                    {value.length > 0 ? (
+                      value.map((v, i) =>
+                        characteristic.type === "page_ref" ? (
+                          <PageValueRenderer
+                            key={i}
+                            characteristic={characteristic}
+                            value={v}
+                            worldId={worldId}
+                            conceptid={conceptid}
+                          />
+                        ) : (
+                          <div
+                            key={i}
+                            className="bg-[var(--surface-variant)]/40 rounded-lg border border-[var(--primary)]/5 px-3 py-1 text-sm"
+                          >
+                            {v}
+                          </div>
+                        )
+                      )
+                    ) : (
+                      <span className="text-sm text-[var(--foreground)]/50 italic">None</span>
+                    )}
+                  </div>
+                ) : (
+                  <PageValueRenderer characteristic={characteristic} value={value} worldId={worldId} conceptid={conceptid} />
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
