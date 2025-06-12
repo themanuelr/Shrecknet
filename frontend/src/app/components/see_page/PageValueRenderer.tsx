@@ -277,7 +277,7 @@ export default function PageValueRenderer({
             `}
             style={{
               background: "none",
-              padding: 0, 
+              padding: 0,
               border: "none",
               borderRadius: 0,
               boxShadow: "none",
@@ -291,3 +291,4 @@ export default function PageValueRenderer({
       })}
     </div>
   );
+}
