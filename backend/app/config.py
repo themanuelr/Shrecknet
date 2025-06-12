@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "*"
     openai_api_key: str | None = None
     open_ai_model:str | None = None
-
+    vector_db_path: str = "data/vector_db"
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()

@@ -16,10 +16,11 @@ from app.models.model_page import Page, PageCharacteristicValue
 from app.models.model_concept import Concept
 from app.models.model_characteristic import Characteristic
 from app.models.model_agent import Agent
+from app.config import settings
 
 
 # Persistent client storing collections under ./vector_db
-_client = chromadb.PersistentClient(path=os.getenv("VECTOR_DB_PATH", "./vector_db"))
+_client = chromadb.PersistentClient(path=os.getenv(settings.vector_db_path))
 
 
 def _get_collection(world_id: int):
