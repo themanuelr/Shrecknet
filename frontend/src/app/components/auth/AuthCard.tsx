@@ -24,7 +24,7 @@ function M3TextField({
         onChange={onChange}
         required={required}
         autoComplete={autoComplete}
-        className="peer w-full px-4 pt-6 pb-2 text-white bg-white/90 border-2 border-[var(--primary)] rounded-xl outline-none focus:border-[var(--accent)] transition-colors placeholder-transparent backdrop-blur-lg shadow-inner"
+        className="peer w-full px-4 pt-6 pb-2 text-black bg-white/90 border-2 border-[var(--primary)] rounded-xl outline-none focus:border-[var(--accent)] transition-colors placeholder-transparent backdrop-blur-lg shadow-inner"
         placeholder=" "
       />
       <label

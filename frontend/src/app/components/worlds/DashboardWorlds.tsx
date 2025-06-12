@@ -194,7 +194,7 @@ export default function DashboardWorlds({
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-center text-[var(--primary)] mb-8 tracking-wide">
           {titleText}
         </h1>
-        <div className="grid gap-10 sm:gap-12 md:gap-14 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center w-full">
+        <div className="grid gap-10 sm:gap-12 md:gap-14 grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 justify-items-center w-full">
           {worlds.map((world) => (
             <WorldCard
               key={world.id}

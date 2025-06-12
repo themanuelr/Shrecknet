@@ -49,7 +49,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
       show: true,
     },
     {
-      label: "Elders & Sages",
+      label: "Talk to your Elders",
       icon: <GroupRoundedIcon fontSize="medium" />,
       href: "/elders",
       external: false,
@@ -103,7 +103,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
           transition-all
           md:block ${mobileOpen ? "block" : "hidden"}
         `}
-        style={{ minWidth: 220, maxWidth: 320 }}
+        style={{ minWidth: 120, maxWidth: 220 }}
       >
         {/* Logo only, fills width, with shadow/contrast */}
         <div className="flex items-center justify-center h-24 bg-transparent p-3 border-b border-[var(--border)]">
