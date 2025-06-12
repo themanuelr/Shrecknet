@@ -32,7 +32,7 @@ export default function WorldBreadcrumb({
     currentConcept?.id && concepts.find((c) => c.id === currentConcept.id);
 
   return (
-    <nav className="sticky top-[64px] z-[5] ml-0 md:ml-[256px] bg-[var(--surface-variant)] shadow-md border-b border-[var(--primary)]/10">
+    <nav className="sticky top-[64px] z-[5] ml-0 md:ml-[216px] bg-[var(--surface-variant)] shadow-md border-b border-[var(--primary)]/10">
       <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm md:text-base font-medium">
         {/* WORLD SELECTOR */}
         <div className="relative flex items-center">

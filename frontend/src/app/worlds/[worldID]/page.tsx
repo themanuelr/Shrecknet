@@ -10,7 +10,7 @@ import { useWorlds } from "../../lib/userWorlds";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useConcepts } from "../../lib/useConcept";
-// import WorldFormModal from "../../components/worlds/WorldFormModal";
+import WorldFormModal from "../../components/worlds/WorldFormModal";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
@@ -78,43 +78,56 @@ export default function WorldDetailPage({ params }) {
         onWorldSelect={(w) => router.push(`/worlds/${w.id}`)}
       />
       <DashboardLayout>
-        <div className="pt-2 w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] py-0 px-0">
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-4 mb-12">
-            <div className="relative flex-shrink-0" onClick={() => setZoomOpen(true)}>
-              <Image
-                width={400}
-                height={400}
-                src={world.logo || "/images/default/worlds/logo.png"}
-                alt={world.name}
-                className="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover border-2 border-[var(--primary)] shadow-md cursor-pointer hover:scale-105 transition"
-              />
-            </div>
-            <div className="flex flex-col items-center md:items-start text-center md:text-left gap-2 flex-1">
-              <h1 className="text-3xl font-extrabold text-[var(--primary)] tracking-tight">{world.name}</h1>
-              <p className="text-sm text-[var(--foreground)]/80" dangerouslySetInnerHTML={{ __html: world.description || "" }} />
-              <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2 text-[10px] md:text-xs font-semibold">
-                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                  System: {world.system}
-                </span>
-                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                  Created by: {creator ? creator.nickname || creator.email : world.created_by}
-                </span>
-                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                  Created: {new Date(world.created_at).toLocaleDateString()}
-                </span>
-                <span className="bg-[var(--primary)]/10 rounded-full px-2 py-0.5 border border-[var(--primary)]/20 text-[var(--primary)]">
-                  Edited: {world.edited_at ? new Date(world.edited_at).toLocaleDateString() : "-"}
-                </span>
-              </div>
-            </div>
+        <div className="pt-0 w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] py-0 px-0">
+
+        {/* HEADER */}
+
+        <div
+      className="relative w-full  mx-auto rounded-2xl md:rounded-3xl -mt-3 mb-14 p-4 md:p-2 shadow-2xl border border-white/20 backdrop-blur-[14px] bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15"
+
+      style={{ boxShadow: "0 6px 40px 0 #7b2ff225, 0 1.5px 8px #2e205933" }}
+    >
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10 w-full">
+        <div className="relative flex-shrink-0" onClick={() => setZoomOpen && setZoomOpen(true)}>
+          <Image
+            width={400}
+            height={400}
+            src={world.logo || "/images/default/worlds/logo.png"}
+            alt={world.name}
+            className="w-28 h-28 md:w-48 md:h-48 rounded-2xl object-cover border-2 border-[var(--primary)] shadow-xl cursor-pointer hover:scale-105 transition duration-200"
+          />
+        </div>
+        <div className="flex flex-col items-center md:items-start text-center md:text-left gap-3 flex-1">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-[var(--primary)] tracking-tight drop-shadow">
+            {world.name}
+          </h1>
+          <p className="text-base md:text-lg text-black/90 leading-relaxed font-normal" dangerouslySetInnerHTML={{ __html: world.description || "" }} />
+          <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2 text-xs font-semibold">
+            <span className="bg-[var(--primary)]/10 rounded-full px-3 py-1 border border-[var(--primary)]/20 text-[var(--primary)] shadow-sm">
+              System: {world.system}
+            </span>
+            <span className="bg-[var(--primary)]/10 rounded-full px-3 py-1 border border-[var(--primary)]/20 text-[var(--primary)] shadow-sm">
+              Created by: {creator ? creator.nickname || creator.email : world.created_by}
+            </span>
+            <span className="bg-[var(--primary)]/10 rounded-full px-3 py-1 border border-[var(--primary)]/20 text-[var(--primary)] shadow-sm">
+              Created on: {new Date(world.created_at).toLocaleDateString()}
+            </span>
+            <span className="bg-[var(--primary)]/10 rounded-full px-3 py-1 border border-[var(--primary)]/20 text-[var(--primary)] shadow-sm">
+              Edited on: {world.edited_at ? new Date(world.edited_at).toLocaleDateString() : "-"}
+            </span>
           </div>
+        </div>
+      </div>
+    </div>
+
+
 
         {/* Highlight Concepts */}
         {highlightConcepts.length > 0 && (
   <div className="max-w-6xl mx-auto px-4 md:px-0 mb-10">
     <h2 className="text-xl font-bold text-[var(--primary)] mb-3">Explore This World</h2>
     <div
-      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-2 gap-y-5"
+      className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-x-2 gap-y-5"
       style={{ justifyItems: "center" }}
     >
             {highlightConcepts.map((concept) => (
@@ -218,14 +231,14 @@ export default function WorldDetailPage({ params }) {
           />             */}
       
 
-          {/* <WorldFormModal
+          <WorldFormModal
             open={modalOpen}
             initialData={world}
             onSubmit={handleSaveWorld}
             loading={saving}
             worlds={[]}
             onClose={() => setModalOpen(false)}
-          /> */}
+          />
 
           {zoomOpen && (
             <ModalContainer title={world.name} onClose={() => setZoomOpen(false)}>
