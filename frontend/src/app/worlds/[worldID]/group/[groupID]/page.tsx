@@ -65,15 +65,15 @@ export default function GroupPage({ params }) {
       />
 
       <DashboardLayout>
-        <div className="pt-6 pb-10 px-4 md:px-12 text-[var(--foreground)]">
+        <div className="pt-6 pb-10 px-4 md:px-12 text-[var(--foreground)] max-w-5xl mx-auto">
           
         <div
       className="
-      rounded-2xl md:rounded-3xl -mt-3 mb-12 p-4 md:p-3
-      shadow-2xl border border-white/20
-      backdrop-blur-[14px]
-      bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15
-      flex flex-col md:flex-row items-center gap-8
+        rounded-2xl md:rounded-3xl -mt-3 mb-12 p-4 md:p-3
+        shadow-2xl border border-white/20
+        backdrop-blur-[14px]
+        bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15
+        flex flex-col md:flex-row items-center gap-8
     "
           style={{ boxShadow: "0 6px 40px 0 #7b2ff225, 0 1.5px 8px #2e205933" }}
         >

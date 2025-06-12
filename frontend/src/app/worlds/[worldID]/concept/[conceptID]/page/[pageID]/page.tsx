@@ -172,17 +172,7 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
             <div className="max-w-6xl mx-auto">
               {/* Tighter gap, stack controls compactly */}
               <div className="flex flex-col gap-2">
-                {hasRole(user?.role, "world builder") && (
-                  <div className="flex justify-start mb-1">
-                    <button
-                      onClick={() => setShowDeleteModal(true)}
-                      className="p-2 rounded-full bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-400 transition shadow-sm text-red-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-400"
-                      title="Delete Page"
-                    >
-                      <Trash2 className="w-5 h-5" /> Delete Page
-                    </button>
-                  </div>
-                )}
+
                 <PageTitleBar
                   logo={page?.logo || "/images/default/pages/logo.png"}
                   pageName={page?.name}
@@ -195,6 +185,18 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                   }}
                 />                
               </div>
+
+              {hasRole(user?.role, "world builder") && (
+                  <div className="flex justify-start mb-1">
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="p-2 rounded-full bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-400 transition shadow-sm text-red-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-400"
+                      title="Delete Page"
+                    >
+                      <Trash2 className="w-5 h-5" /> Delete Page
+                    </button>
+                  </div>
+                )}
 
               {/* --- Main content & details area, responsive grid --- */}
               <div className="mt-1 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 relative">

@@ -15,7 +15,7 @@ export default function CardScroller({
       scrollbar-thin scrollbar-thumb-[var(--primary)]/40
       bg-white/5 rounded-2xl backdrop-blur-md border border-white/15 shadow-md
   
-      md:grid md:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] md:gap-x-10 md:gap-y-6
+      md:grid md:grid-cols-4 md:gap-x-10 md:gap-y-6
       md:overflow-x-visible md:snap-none
     `}
     style={{
