@@ -3,14 +3,14 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useAuth } from "../../components/auth/AuthProvider";
-import EditableContent from "../../components/editor/EditableContent";
+// import EditableContent from "../../components/editor/EditableContent";
 import { updateGameWorld } from "../../lib/gameworldsAPI";
 import { useWorld } from "../../lib/useWorld";
 import { useWorlds } from "../../lib/userWorlds";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useConcepts } from "../../lib/useConcept";
-import WorldFormModal from "../../components/worlds/WorldFormModal";
+// import WorldFormModal from "../../components/worlds/WorldFormModal";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
@@ -207,7 +207,7 @@ export default function WorldDetailPage({ params }) {
 
           {/* Full Width Editable Content */}
           
-          <EditableContent
+          {/* <EditableContent
             id="world-content-editor"
             content={world.content}
             canEdit={canEditWorld}
@@ -215,17 +215,17 @@ export default function WorldDetailPage({ params }) {
             pageType="worlds"
             pageName={world.name}
             className="w-full min-h-[300px] text-base md:text-lg prose prose-invert max-w-none"          
-          />            
+          />             */}
       
 
-          <WorldFormModal
+          {/* <WorldFormModal
             open={modalOpen}
             initialData={world}
             onSubmit={handleSaveWorld}
             loading={saving}
             worlds={[]}
             onClose={() => setModalOpen(false)}
-          />
+          /> */}
 
           {zoomOpen && (
             <ModalContainer title={world.name} onClose={() => setZoomOpen(false)}>
