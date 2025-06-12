@@ -1,3 +1,4 @@
+// AuthCard.tsx — Improved: glassy, theme-matching, elegant but compatible
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,12 +7,12 @@ import { getUserCount, loginUser, registerUser, userExists } from "../../lib/use
 
 // Material 3 Floating Label Field
 function M3TextField({
-  label="",
-  name="",
+  label = "",
+  name = "",
   type = "text",
-  value="",
-  onChange= () => {} ,
-  autoComplete="",
+  value = "",
+  onChange = () => {},
+  autoComplete = "",
   required = false,
 }) {
   return (
@@ -23,15 +24,12 @@ function M3TextField({
         onChange={onChange}
         required={required}
         autoComplete={autoComplete}
-        className="peer w-full px-4 pt-6 pb-2 text-[var(--foreground)] bg-transparent border-2 border-[var(--primary)] rounded-xl outline-none focus:border-[var(--accent)] transition-colors placeholder-transparent"
+        className="peer w-full px-4 pt-6 pb-2 text-white bg-white/90 border-2 border-[var(--primary)] rounded-xl outline-none focus:border-[var(--accent)] transition-colors placeholder-transparent backdrop-blur-lg shadow-inner"
         placeholder=" "
       />
       <label
         htmlFor={name}
-        className="absolute left-3 top-1.5 text-sm text-[var(--primary)] font-medium
-          transition-all duration-200 pointer-events-none
-          peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-[var(--accent)]
-          peer-focus:top-1.5 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[var(--primary)]"
+        className="absolute left-3 top-1.5 text-sm text-[var(--primary)] font-medium transition-all duration-200 pointer-events-none peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-[var(--accent)] peer-focus:top-1.5 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[var(--primary)]"
       >
         {label}
       </label>
@@ -113,9 +111,7 @@ export default function AuthCard() {
             setInfo("Welcome to Shrecknet! First you have to create an account!");
             return;
           }
-        } catch (e) {
-          // ignore check errors and fall back to generic error handling
-        }
+        } catch (e) {}
       }
       if (typeof err === "object" && err !== null) {
         const errObj = err as Record<string, unknown>;
@@ -145,101 +141,102 @@ export default function AuthCard() {
     return <div className="text-white text-center py-8">Loading...</div>;
 
   return (
-    <div className="auth-card bg-[var(--card-bg)]  rounded-[2.5rem] shadow-2xl p-6 sm:p-10 max-w-[400px] w-full border border-[var(--accent)]/40 animate-fadeIn transition-all duration-200 backdrop-blur-[6px]">
-      <div className="absolute inset-0 bg-white/10 rounded-[2.5rem] pointer-events-none" />
-      <div className="absolute inset-0 rounded-[2.5rem] bg-white/5 pointer-events-none" />
-      <h3 className="font-semibold text-xl mb-6 text-[var(--primary)] text-left">
-        {formMode === FormMode.LOGIN
-          ? "Sign in to your adventure"
-          : formMode === FormMode.REGISTER
-          ? "Create your account"
-          : "Welcome, World Builder!"}
-      </h3>
-
-      {formMode === FormMode.FIRST_USER && (
-        <div className="font-sans text-base text-[var(--accent)] mb-6 text-left">
-          No users found. <br />
-          <span className="font-semibold text-yellow-400">
-            Set up the first account as System Admin!
-          </span>
-        </div>
-      )}
-      {info && (
-        <div className="w-full mb-4 py-2 px-4 bg-green-600/90 rounded-lg text-white text-center text-sm">
-          {info}
-        </div>
-      )}
-      {error && (
-        <div className="w-full mb-4 py-2 px-4 bg-red-600/90 rounded-lg text-white text-center text-sm">
-          {error}
-        </div>
-      )}
-
-      <form className="w-full flex flex-col gap-5" onSubmit={handleSubmit}>
-        {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) && (
+    <div
+      className="relative bg-white/0 rounded-2xl shadow-2xl p-6 sm:p-9 max-w-[400px] w-full border border-white/0 animate-fadeIn transition-all duration-200 backdrop-blur-[16px]"
+      style={{ boxShadow: "0 8px 60px 0 #7b2ff244, 0 2px 10px #2e205988" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-[#29196655] via-[#7b2ff211] to-[#36205a44] rounded-2xl pointer-events-none z-0" />
+      <div className="relative z-10">
+        <h3 className="font-bold text-xl mb-7 text-white/90 text-left drop-shadow-sm">
+          {formMode === FormMode.LOGIN
+            ? "Sign in to your adventure"
+            : formMode === FormMode.REGISTER
+            ? "Create your account"
+            : "Welcome, World Builder!"}
+        </h3>
+        {formMode === FormMode.FIRST_USER && (
+          <div className="font-sans text-base text-[var(--accent)] mb-5 text-left">
+            No users found. <br />
+            <span className="font-semibold text-yellow-400">
+              Set up the first account as System Admin!
+            </span>
+          </div>
+        )}
+        {info && (
+          <div className="w-full mb-4 py-2 px-4 bg-green-600/90 rounded-lg text-white text-center text-sm">
+            {info}
+          </div>
+        )}
+        {error && (
+          <div className="w-full mb-4 py-2 px-4 bg-red-600/90 rounded-lg text-white text-center text-sm">
+            {error}
+          </div>
+        )}
+        <form className="w-full flex flex-col gap-5" onSubmit={handleSubmit}>
+          {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) && (
+            <M3TextField
+              label="Nickname"
+              name="nickname"
+              value={form.nickname}
+              onChange={handleChange}
+              autoComplete="nickname"
+              required
+            />
+          )}
           <M3TextField
-            label="Nickname"
-            name="nickname"
-            value={form.nickname}
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
             onChange={handleChange}
-            autoComplete="nickname"
+            autoComplete="email"
             required
           />
-        )}
-        <M3TextField
-          label="Email"
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-          autoComplete="email"
-          required
-        />
-        <M3TextField
-          label="Password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          autoComplete={
-            formMode === FormMode.LOGIN ? "current-password" : "new-password"
-          }
-          required
-        />
-        <button
-          className="relative w-full py-3 min-h-[48px] mt-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold text-lg shadow-md hover:bg-[var(--accent)] hover:text-[var(--background)] transition-all uppercase tracking-wide overflow-hidden ripple"
-          type="submit"
-          disabled={loading}
-        >
-          {loading
-            ? "Processing..."
-            : formMode === FormMode.LOGIN
-            ? "Sign In"
-            : "Create Account"}
-        </button>
-      </form>
-      <div className="flex justify-between w-full text-xs mt-4">
-        {formMode === FormMode.LOGIN && (
+          <M3TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            autoComplete={
+              formMode === FormMode.LOGIN ? "current-password" : "new-password"
+            }
+            required
+          />
           <button
-            className="text-[var(--accent)] hover:underline"
-            type="button"
-            onClick={switchMode}
+            className="relative w-full py-3 min-h-[48px] mt-2 rounded-xl bg-gradient-to-r from-[#7b2ff2] to-[#e0c3fc] text-white font-bold text-lg shadow-md hover:from-[#5f166e] hover:to-[#7b2ff2] hover:scale-[1.03] transition-all uppercase tracking-wide overflow-hidden"
+            type="submit"
+            disabled={loading}
           >
-            Create account
+            {loading
+              ? "Processing..."
+              : formMode === FormMode.LOGIN
+              ? "Sign In"
+              : "Create Account"}
           </button>
-        )}
-        {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) &&
-          usersExist && (
+        </form>
+        <div className="flex justify-between w-full text-xs mt-5">
+          {formMode === FormMode.LOGIN && (
             <button
-              className="text-[var(--accent)] hover:underline"
+              className="font-semibold text-[var(--accent)] hover:underline hover:text-white/90 transition"
               type="button"
               onClick={switchMode}
             >
-              Login as existing user
+              Create account
             </button>
           )}
+          {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) &&
+            usersExist && (
+              <button
+                className="font-semibold text-[var(--accent)] hover:underline hover:text-white/90 transition"
+                type="button"
+                onClick={switchMode}
+              >
+                Login as existing user
+              </button>
+            )}
+        </div>
       </div>
     </div>
-    
   );
 }

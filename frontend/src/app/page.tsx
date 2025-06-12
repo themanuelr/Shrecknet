@@ -1,3 +1,4 @@
+// Shrecknet hero with left-aligned true 2x2 grid, logo top, login+hero text right
 "use client";
 import { useAuth } from "./components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -24,77 +25,43 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-black">
-      
+      {/* Background + Starfield */}
       <Image
-        src="/images/background.png"  // use the correct static or public path
+        src="/images/background.png"
         alt="Galaxy background"
         fill
         priority
         className="object-cover object-center z-0 pointer-events-none"
-        style={{
-          filter: "brightness(0.9) blur(1.5px)", // adjust for darkening or softening
-        }}
+        style={{ filter: "brightness(0.90) blur(1.5px)" }}
       />
-      {/* <div className="absolute inset-0 bg-gradient-to-br from-[#291966cc] via-[#7b2ff299] to-[#222222bb] z-0 pointer-events-none" /> */}
-
-      {/* Sparkling stars! */}
       <Starfield numStars={300} />
       
-      {/* Login Card */}
-      <section
-  className="
-    relative z-10 flex flex-col items-center 
-    w-full max-w-md 
-    px-0 sm:px-8 pb-10
-    rounded-[2rem] 
-    bg-[var(--card-bg)]/20 
-    shadow-2xl border border-white/20 
-    backdrop-blur-[20px] 
-    animate-fadeIn
-  "
-  style={{
-    background: `radial-gradient(circle at 50% 35%, rgba(55, 22, 90, 0.10) 0%, rgba(55, 22, 90, 0.85) 40%, rgba(55, 22, 90, 0.5) 70%, rgba(55, 22, 90, 0.01) 100%)`,
-  }}
->
-    
-      {/* Logo and Tagline */}
-      <Image
-        src="/images/logo.svg"
-        alt="Shrecknet logo"
-        width={720}
-        height={720}
-        className="w-full max-w-full h-full mb-0 mt-4 drop-shadow-xl"
-        priority
-      />
-              {/* Dramatic tagline */}
-              <div
-  className="mt-4 mb-8 text-center"
-  style={{
-    fontFamily: "'Great Vibes', 'Cinzel', cursive, serif",
-    fontSize: "1.7rem",
-    fontWeight: 700,
-    color: "transparent",
-    background: "linear-gradient(90deg,#e0c3fc 25%,#7b2ff2 70%)",
-    backgroundClip: "text",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    textShadow: "0 1.5px 6px #36205a66, 0 2px 16px #cbb9fa33",
-    letterSpacing: ".03em",
-  }}
->
-                You Build, We Forge!
-              </div>
-      <div className="relative z-10 w-full flex flex-col items-center">
 
-      <AuthCard />
-      </div>
-      {/* Auth Form */}
-
-</section>
-
-      {/* Feature cards */}
-      <section className="relative z-10 w-full flex justify-center px-4 mt-6">
-        <Features />
+      <section className="relative z-10 w-full flex flex-col md:flex-row items-center justify-center gap-0 md:gap-8 lg:gap-16 px-2 md:px-10 py-12 animate-fadeIn">
+        {/* LEFT: Logo top, then true 2x2 features grid */}
+        <div className="hidden md:flex ">                    
+        <Features forceGrid />
+          
+        </div>
+        {/* RIGHT: Hero text + login */}
+        <div className="flex flex-col items-center w-full max-w-lg md:max-w-xl lg:max-w-2xl px-3 md:px-0">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-center bg-gradient-to-r from-[#e0c3fc] via-[#7b2ff2] to-[#5f166e] bg-clip-text text-transparent drop-shadow-lg mb-1 animate-fadeIn">
+            Welcome to <span className="text-white">Shrecknet</span>
+          </h1>
+          <div className="mb-3 text-lg md:text-xl font-semibold text-center text-[var(--primary)] animate-fadeIn">
+            You Build, We Forge!
+          </div>
+          <div className="mb-8 max-w-xl mx-auto text-base md:text-lg text-center text-white/90 animate-fadeIn">
+            Enter a universe of creation, collaboration, and discovery.<br />
+            <span className="text-white">Shrecknet</span> is your forge for worlds, characters, and adventures – powered by Generative AI and built for storytellers, worldbuilders, and game masters.
+          </div>
+          <div
+            className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-white/20 backdrop-blur-[18px] bg-white/10 p-7 animate-fadeIn flex flex-col gap-2"
+            style={{ boxShadow: "0 8px 60px 0 #7b2ff244, 0 2px 10px #2e205988" }}
+          >
+            <AuthCard />
+          </div>
+        </div>
       </section>
     </main>
   );
