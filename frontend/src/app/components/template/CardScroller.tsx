@@ -13,9 +13,10 @@ export default function CardScroller({
     className={`
       flex overflow-x-auto snap-x gap-x-7 py-2 px-1
       scrollbar-thin scrollbar-thumb-[var(--primary)]/40
-      md:gap-x-10 md:gap-y-6
-      md:overflow-x-visible md:snap-none
       bg-white/5 rounded-2xl backdrop-blur-md border border-white/15 shadow-md
+  
+      md:grid md:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] md:gap-x-10 md:gap-y-6
+      md:overflow-x-visible md:snap-none
     `}
     style={{
       maxWidth: "100vw",
