@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import AuthCard from "./components/auth/AuthCard";
 import Starfield from "./components/template/Starfield";
+import Features from "./components/landing/Features";
 
 export default function LoginPage() {
   const { user, loading } = useAuth();
@@ -84,12 +85,17 @@ export default function LoginPage() {
                 You Build, We Forge!
               </div>
       <div className="relative z-10 w-full flex flex-col items-center">
-      
-      <AuthCard />    
+
+      <AuthCard />
       </div>
       {/* Auth Form */}
-      
+
 </section>
+
+      {/* Feature cards */}
+      <section className="relative z-10 w-full flex justify-center px-4 mt-6">
+        <Features />
+      </section>
     </main>
   );
 }
