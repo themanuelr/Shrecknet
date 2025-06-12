@@ -11,8 +11,7 @@ import { useAuth } from "../auth/AuthProvider";
 import WorldFormModal from "./WorldFormModal";
 import ImportWorldModal from "../importexport/ImportWorldModal";
 import { ConfirmDeleteWorldModal } from "../template/ConfirmModal";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import Image from "next/image";
+import WorldCard from "./WorldCard";
 
 
 export default function DashboardWorlds({
@@ -197,66 +196,17 @@ export default function DashboardWorlds({
         </h1>
         <div className="grid gap-10 sm:gap-12 md:gap-14 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center w-full">
           {worlds.map((world) => (
-            <div
+            <WorldCard
               key={world.id}
-              className="
-                group relative w-[260px] sm:w-[330px] md:w-[380px] max-w-full
-                bg-[var(--card-bg)]/95 rounded-3xl shadow-2xl border border-[var(--border)]
-                flex flex-col items-center p-0 overflow-hidden
-                hover:shadow-3xl hover:scale-105 hover:border-[var(--primary)]/60
-                transition-all duration-200
-              "
-              style={{
-                backdropFilter: "blur(5px) saturate(1.1)",
+              world={world}
+              linkURL={linkURL}
+              showEdit={showEdit}
+              onEdit={(w) => {
+                setEditingWorld(w);
+                setEditModalOpen(true);
               }}
-            >
-              {/* Edit/Delete floating top-right */}
-              {showEdit && hasRole(user?.role, "world builder") && (
-                <div className="absolute right-5 top-5 z-30 flex flex-col gap-3 items-center">
-                  {/* Edit */}
-                  <button
-                    className="p-3 bg-white/70 border border-[var(--primary)] rounded-xl shadow hover:bg-[var(--primary)]/20 hover:scale-110 transition"
-                    title="Edit"
-                    onClick={() => {
-                      setEditingWorld(world);
-                      setEditModalOpen(true);
-                    }}
-                  >
-                    <FaEdit className="text-[var(--primary)]" />
-                  </button>
-                  {/* Delete */}
-                  <button
-                    className="p-3 bg-white/70 border border-red-300 rounded-xl shadow hover:bg-red-100 hover:scale-110 transition"
-                    title="Delete"
-                    onClick={() => setDeletingWorld(world)}
-                  >
-                    <FaTrash className="text-red-500" />
-                  </button>
-                </div>
-              )}
-              <a href={`/${linkURL}/${world.id}`} className="w-full block group">
-                <div className="relative w-full h-[220px] sm:h-[320px] md:h-[250px] overflow-hidden rounded-t-3xl">
-                  <Image
-                    src={world.logo || "/images/worlds/new_game.png"}
-                    alt={world.name}
-                    className="w-full h-full object-cover object-center rounded-t-3xl transition"
-                    width={400}
-                    height={400}
-                  />
-                  <div className="
-                    absolute bottom-0 left-0 w-full
-                    bg-[var(--background)]/55 backdrop-blur-xl
-                    py-4 px-3 flex items-center justify-center
-                    rounded-b-3xl z-10
-                    "
-                  >
-                    <span className="text-xl font-bold text-[var(--primary)] text-center drop-shadow">
-                      {world.name}
-                    </span>
-                  </div>
-                </div>
-              </a>
-            </div>
+              onDelete={(w) => setDeletingWorld(w)}
+            />
           ))}
         </div>
       </div>
