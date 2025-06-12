@@ -53,7 +53,7 @@ export default function LoginPage() {
           </div>
           <div className="mb-8 max-w-xl mx-auto text-base md:text-lg text-center text-white/90 animate-fadeIn">
             Enter a universe of creation, collaboration, and discovery.<br />
-            <span className="text-white">Shrecknet</span> is your forge for worlds, characters, and adventures – powered by Generative AI and built for storytellers, worldbuilders, and game masters.
+            <span className="text-white">Shrecknet</span> is your forge for worlds, characters, and adventures – powered by Generative AI and built for storytellers, players, and adventurers.
           </div>
           <div
             className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-white/20 backdrop-blur-[18px] bg-white/10 p-7 animate-fadeIn flex flex-col gap-2"
