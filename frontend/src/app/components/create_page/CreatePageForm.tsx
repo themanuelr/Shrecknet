@@ -161,52 +161,6 @@ export default function PageForm({
         {mode === "edit" ? "Edit Page Details" : "Final Step: Page Details"}
       </h2>
 
-      {/* PAGE NAME */}
-      <div>
-        <label className="block mb-1 font-semibold text-sm">
-          Page Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={pageName}
-          onChange={(e) => setPageName(e.target.value)}
-          placeholder="Enter a unique name for this page"
-          className="w-full px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:ring focus:border-[var(--primary)]"
-          required
-        />
-      </div>
-
-      {/* PAGE LOGO */}
-      <div>
-        <label className="block mb-1 font-semibold text-sm">
-          Page Logo (optional)
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            if (e.target.files[0]) {
-              setPageLogo(e.target.files[0]);
-              setPageLogoUrl(URL.createObjectURL(e.target.files[0]));
-            }
-          }}
-          className="w-full"
-        />
-        {pageLogoUrl && (
-          <Image
-            src={pageLogoUrl}
-            alt="Preview"
-            width={400}        // 24 * 4 (rem → px)
-            height={400}       // 24 * 4
-            className="mt-3 object-cover rounded-xl border border-[var(--primary)]"
-            style={{ width: "6rem", height: "6rem" }} // To ensure width/height in Tailwind
-          />
-        )}
-        <p className="text-xs mt-1 text-[var(--foreground)]/70">
-          This image helps distinguish this page in visual lists. Pick unknownthing that matches its theme!
-        </p>
-      </div>
-
       {/* PAGE LINKING & DISCOVERY OPTIONS */}
       <div className="border border-[var(--border)] bg-[var(--surface)] rounded-xl p-6 my-8">
         <h3 className="font-semibold text-[var(--primary)] mb-2 text-lg tracking-wide">
@@ -264,6 +218,54 @@ export default function PageForm({
           />
         </div>
       </div>
+      
+      {/* PAGE NAME */}
+      <div>
+        <label className="block mb-1 font-semibold text-sm">
+          Page Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={pageName}
+          onChange={(e) => setPageName(e.target.value)}
+          placeholder="Enter a unique name for this page"
+          className="w-full px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:ring focus:border-[var(--primary)]"
+          required
+        />
+      </div>
+
+      {/* PAGE LOGO */}
+      <div>
+        <label className="block mb-1 font-semibold text-sm">
+          Page Logo (optional)
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files[0]) {
+              setPageLogo(e.target.files[0]);
+              setPageLogoUrl(URL.createObjectURL(e.target.files[0]));
+            }
+          }}
+          className="w-full"
+        />
+        {pageLogoUrl && (
+          <Image
+            src={pageLogoUrl}
+            alt="Preview"
+            width={400}        // 24 * 4 (rem → px)
+            height={400}       // 24 * 4
+            className="mt-3 object-cover rounded-xl border border-[var(--primary)]"
+            style={{ width: "6rem", height: "6rem" }} // To ensure width/height in Tailwind
+          />
+        )}
+        <p className="text-xs mt-1 text-[var(--foreground)]/70">
+          This image helps distinguish this page in visual lists. Pick unknownthing that matches its theme!
+        </p>
+      </div>
+
+      
 
       {/* CHARACTERISTICS FIELDS */}
       {selectedConcept?.id && (
