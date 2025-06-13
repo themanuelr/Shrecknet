@@ -2,11 +2,20 @@ import os
 from typing import List, Dict
 
 import chromadb
-try:
-    from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-    _embedding_fn = SentenceTransformerEmbeddingFunction()
-except Exception:
-    _embedding_fn = None
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.docstore.document import Document
+
+_embedding_fn = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-mpnet-base-v2"
+)
+
+_text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=300,
+    chunk_overlap=50,
+    length_function=lambda txt: len(txt.split()),
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -52,8 +61,11 @@ def _delete_collection(name: str) -> None:
 
 def _get_collection(world_id: int):
     name = f"world_{world_id}"
-    kwargs = {"embedding_function": _embedding_fn} if _embedding_fn else {}
-    return _client.get_or_create_collection(name, **kwargs)
+    return Chroma(
+        client=_client,
+        collection_name=name,
+        embedding_function=_embedding_fn,
+    )
 
 
 async def add_page(session: AsyncSession, page_id: int):
@@ -102,7 +114,10 @@ async def add_page(session: AsyncSession, page_id: int):
     print (f" --- API VECTORDB - Adding this metadata: {metadata}")
 
     collection = _get_collection(page.gameworld_id)
-    collection.add(documents=[document], ids=[str(page.id)], metadatas=[metadata])
+    docs = _text_splitter.create_documents([document], metadatas=[metadata])
+    for i, doc in enumerate(docs):
+        doc.metadata["chunk_index"] = i
+    collection.add_documents(docs)
     try:
         _client.persist()
     except AttributeError:
@@ -150,35 +165,24 @@ async def rebuild_world(session: AsyncSession, world_id: int):
 def query_world(world_id: int, query: str, n_results: int = 5) -> List[Dict]:
     """Query the vector DB for documents related to the given query."""
     collection = _get_collection(world_id)
-    res = collection.query(query_texts=[query], n_results=n_results)
+    retrieved = collection.max_marginal_relevance_search(query, k=n_results * 4)
 
-    # ``chromadb`` has changed its return type across versions.  Older
-    # versions return a ``dict`` while newer ones return a dataclass-like
-    # object with attributes.  Support both formats and gracefully handle
-    # unexpected shapes.
-    documents = None
-    metadatas = None
+    pages: Dict[int, Dict] = {}
+    for doc in retrieved:
+        meta = doc.metadata or {}
+        page_id = meta.get("page_id")
+        if page_id is None:
+            continue
+        entry = pages.setdefault(
+            page_id,
+            {"document_parts": [], "metadata": {k: v for k, v in meta.items() if k != "chunk_index"}},
+        )
+        entry["document_parts"].append((meta.get("chunk_index", 0), doc.page_content))
 
-    if isinstance(res, dict):
-        documents = res.get("documents")
-        metadatas = res.get("metadatas")
-    else:  # newer versions expose attributes
-        documents = getattr(res, "documents", None)
-        metadatas = getattr(res, "metadatas", None)
+    results: List[Dict] = []
+    for page in pages.values():
+        parts = sorted(page["document_parts"], key=lambda x: x[0])
+        full_doc = " ".join(p[1] for p in parts)
+        results.append({"document": full_doc, **page["metadata"]})
 
-    if not documents or not metadatas:
-        return []
-
-    # Results may be wrapped in an extra list; unwrap if needed
-    if isinstance(documents, list) and documents and isinstance(documents[0], list):
-        documents = documents[0]
-    if isinstance(metadatas, list) and metadatas and isinstance(metadatas[0], list):
-        metadatas = metadatas[0]
-
-    docs = []
-    for doc, meta in zip(documents, metadatas):
-        if isinstance(meta, dict):
-            docs.append({"document": doc, **meta})
-        else:
-            docs.append({"document": doc})
-    return docs
+    return results[:n_results]
