@@ -102,6 +102,15 @@ export async function getChatHistory(agentId: number, token: string) {
   return data.messages || [];
 }
 
+export async function clearChatHistory(agentId: number, token: string) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/history`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
 export async function analyzePageWithAgent(
   agentId: number,
   pageId: number,
