@@ -16,7 +16,7 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
         vector_db_update_date = datetime.now(timezone.utc)
 
     async def fake_chat(session, agent_id, messages):
-        yield "Hi"
+        return "Hi"
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
@@ -46,7 +46,7 @@ async def test_chat_history_saved(async_client, create_user, login_and_get_token
         vector_db_update_date = datetime.now(timezone.utc)
 
     async def fake_chat(session, agent_id, messages):
-        yield "Hi"
+        return "Hi"
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
