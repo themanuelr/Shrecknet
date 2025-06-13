@@ -19,8 +19,16 @@ from app.models.model_agent import Agent
 from app.config import settings
 
 
-# Persistent client storing collections under ./vector_db
-_client = chromadb.PersistentClient(path=os.getenv(settings.vector_db_path))
+# Persistent client storing collections under ./vector_db. ``chromadb``
+# expects a filesystem path. ``settings.vector_db_path`` already contains
+# the default path, but the location can be overridden with the
+# ``VECTOR_DB_PATH`` environment variable.  The previous implementation
+# attempted to read an environment variable whose name was the path
+# itself which resulted in ``None`` being passed to ``PersistentClient``
+# and therefore created an in-memory database.  Use the provided setting
+# directly and fall back to it if the environment variable is not set.
+_db_path = os.getenv("VECTOR_DB_PATH", settings.vector_db_path)
+_client = chromadb.PersistentClient(path=_db_path)
 
 
 def _get_collection(world_id: int):
@@ -76,6 +84,11 @@ async def add_page(session: AsyncSession, page_id: int):
 
     collection = _get_collection(page.gameworld_id)
     collection.add(documents=[document], ids=[str(page.id)], metadatas=[metadata])
+    try:
+        _client.persist()
+    except AttributeError:
+        # The lightweight test stub does not implement ``persist``
+        pass
 
     print (f" --- API VECTORDB - Page added to the chromadb!")
     return True
@@ -86,6 +99,10 @@ async def rebuild_world(session: AsyncSession, world_id: int):
     try:
         _client.delete_collection(name)
         print (f" - API VECTORDB - Deleted the current collection!!")
+        try:
+            _client.persist()
+        except AttributeError:
+            pass
     except Exception:
         print (f" - API VECTORDB - Could not delete the current collection!")
         pass
@@ -100,6 +117,11 @@ async def rebuild_world(session: AsyncSession, world_id: int):
     for pid in page_ids:
         print (f" - API VECTORDB - Adding page: {pid}")
         await add_page(session, pid)
+
+    try:
+        _client.persist()
+    except AttributeError:
+        pass
 
     # update agents in this world with current time
     agent_result = await session.execute(select(Agent).where(Agent.world_id == world_id))
