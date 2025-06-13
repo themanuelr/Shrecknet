@@ -12,6 +12,12 @@ from httpx import AsyncClient, ASGITransport
 
 os.environ.setdefault("CELERY_BROKER_URL", "memory://")
 os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
+# Configure chat history location for tests
+from pathlib import Path
+from app.config import settings
+
+test_chat_dir = Path.cwd() / "test_chat_history"
+settings.chat_history_dir = str(test_chat_dir / "{user_id}")
 
 from app.main import app
 from app.database import get_session

@@ -12,7 +12,7 @@ from app.crud.crud_agent import (
     update_agent,
     delete_agent,
 )
-from app.crud import crud_vectordb
+from app.crud import crud_vectordb, crud_chat_history
 from app.schemas.schema_agent import AgentCreate, AgentRead, AgentUpdate
 from app.database import get_session
 from pydantic import BaseModel
@@ -39,11 +39,26 @@ async def chat(
     if not agent or agent.vector_db_update_date is None:
         raise HTTPException(status_code=400, detail="Agent unavailable")
 
+    history = crud_chat_history.load_history(user.id, agent_id)
+    user_msg = msgs[-1] if msgs else {"role": "user", "content": ""}
+    chat_messages = history + [user_msg]
+    assistant_text = ""
+
     async def stream():
-        async for token in chat_with_agent(session, agent_id, msgs):
+        nonlocal assistant_text
+        async for token in chat_with_agent(session, agent_id, chat_messages):
+            assistant_text += token
             yield token
+        new_history = (history + [user_msg, {"role": "assistant", "content": assistant_text}])[-20:]
+        crud_chat_history.save_history(user.id, agent_id, new_history)
 
     return StreamingResponse(stream(), media_type="text/plain")
+
+
+@router.get("/{agent_id}/history")
+async def chat_history(agent_id: int, user: User = Depends(get_current_user)):
+    messages = crud_chat_history.load_history(user.id, agent_id)
+    return {"messages": messages[-20:]}
 
 
 @router.post("/{agent_id}/chat_test")

@@ -6,6 +6,7 @@ from . import crud_page
 from . import crud_page_links_update
 from . import crud_users
 from . import crud_agent
+from . import crud_chat_history
 try:
     from . import crud_vectordb
 except Exception:  # pragma: no cover - optional dependency
@@ -24,6 +25,7 @@ __all__ = [
     "crud_page_links_update",
     "crud_users",
     "crud_agent",
+    "crud_chat_history",
 ]
 if crud_vectordb:
     __all__.append("crud_vectordb")

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     open_ai_model:str | None = None
     vector_db_path: str = "./data/vector_db"
+    chat_history_dir: str = "./data/chat/{user_id}"
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()

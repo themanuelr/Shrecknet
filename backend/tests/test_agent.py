@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 from datetime import datetime, timezone
+import json
 
 @pytest.mark.anyio
 async def test_chat_endpoint(async_client, create_user, login_and_get_token):
@@ -28,6 +29,53 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
             text = "".join([chunk async for chunk in resp.aiter_text()])
         assert resp.status_code == 200
         assert text == "Hi"
+
+
+@pytest.mark.anyio
+async def test_chat_history_saved(async_client, create_user, login_and_get_token, tmp_path):
+    from app.config import settings
+
+    settings.chat_history_dir = str(tmp_path / "{user_id}")
+
+    user = await create_user("history@test.com", "pass", "writer")
+    token = await login_and_get_token("history@test.com", "pass", "writer")
+
+    payload = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    class FakeAgent:
+        world_id = 1
+        personality = "kind"
+        vector_db_update_date = datetime.now(timezone.utc)
+
+    async def fake_chat(session, agent_id, messages):
+        yield "Hi"
+
+    with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
+         patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
+        async with async_client.stream(
+            "POST",
+            "/agents/1/chat",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        ) as resp:
+            text = "".join([chunk async for chunk in resp.aiter_text()])
+    assert resp.status_code == 200
+    assert text == "Hi"
+
+    hist_file = tmp_path / str(user["id"]) / "1.json"
+    with open(hist_file) as f:
+        data = json.load(f)
+    assert data[-2:] == [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi"},
+    ]
+
+    resp = await async_client.get(
+        "/agents/1/history",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["messages"][-1]["content"] == "Hi"
 
 
 @pytest.mark.anyio
