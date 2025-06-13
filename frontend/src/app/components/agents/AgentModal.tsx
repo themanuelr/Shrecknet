@@ -144,11 +144,21 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
           value={form.personality}
           onChange={e => setForm(f => ({ ...f, personality: e.target.value }))}
         />
-        <M3FloatingInput
-          label="Task"
-          value={form.task}
-          onChange={e => setForm(f => ({ ...f, task: e.target.value }))}
-        />
+        <div className="relative">
+          <select
+            className="peer w-full px-4 pt-6 pb-2 text-[var(--foreground)] bg-[var(--surface)] border-2 border-[var(--border)] rounded-xl outline-none focus:border-[var(--primary)] transition-colors text-base"
+            value={form.task}
+            onChange={e => setForm(f => ({ ...f, task: e.target.value }))}
+            required
+          >
+            <option value="conversational">conversational</option>
+            <option value="page writer">page writer</option>
+            <option value="story novelist">story novelist</option>
+          </select>
+          <label className="absolute left-3 top-1.5 text-base text-[var(--primary)] font-semibold pointer-events-none">
+            Task
+          </label>
+        </div>
         <div className="relative">
           <select
             className="peer w-full px-4 pt-6 pb-2 text-[var(--foreground)] bg-[var(--surface)] border-2 border-[var(--border)] rounded-xl outline-none focus:border-[var(--primary)] transition-colors text-base"

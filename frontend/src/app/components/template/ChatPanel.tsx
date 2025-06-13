@@ -27,7 +27,9 @@ export default function ChatPanel({ open, onOpen, onClose }) {
   const { agents, isLoading: agentsLoading } = useAgents();
   const { token } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const availableAgents = agents.filter(a => a.vector_db_update_date);
+  const availableAgents = agents.filter(
+    a => a.vector_db_update_date && a.task === "conversational"
+  );
   const selectedAgent =
     selectedAgentId !== null
       ? agents.find(a => a.id === selectedAgentId)
