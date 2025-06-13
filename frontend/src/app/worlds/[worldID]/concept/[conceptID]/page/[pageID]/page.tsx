@@ -61,6 +61,7 @@ export default function PageView() {
   const router = useRouter();
   const params = useParams();
   const pageId = Number(params?.pageID);
+    
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,7 +71,7 @@ export default function PageView() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"content" | "notes">("content");
 
-  const { agents } = useAgents(world?.id);
+  
 
   const { page, mutate: mutatePage, isLoading: pageLoading } = usePageById(pageId);
   const { concept, isLoading: conceptLoading } = useConceptById(page?.concept_id);
@@ -79,6 +80,8 @@ export default function PageView() {
   const { concepts, isLoading: conceptsLoading } = useConcepts(world?.id);
   const { characteristics, isLoading: charsLoading } = useCharacteristicsForConcept(page?.concept_id);
 
+  const { agents } = useAgents(page?.gameworld_id);
+  
   const loading = pageLoading || conceptLoading || worldLoading || worldsLoading || conceptsLoading || charsLoading;
 
 

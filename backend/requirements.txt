@@ -16,7 +16,7 @@ cryptography==45.0.2
 dnspython==2.7.0
 ecdsa==0.19.1
 email_validator==2.2.0
-fastapi==0.115.12
+fastapi
 fastapi-cli==0.0.7
 fastapi-users==14.0.1
 fastapi-users-db-sqlalchemy==7.0.0
