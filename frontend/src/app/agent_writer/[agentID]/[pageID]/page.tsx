@@ -43,6 +43,7 @@ export default function PageAnalyze() {
               <div className="flex items-center gap-3">
                 <Image src={agent.logo || "/images/default/avatars/logo.png"} alt={agent.name} width={40} height={40} className="w-10 h-10 rounded object-cover" />
                 <h1 className="text-xl font-bold text-[var(--primary)]">{agent.name}</h1>
+                <p>Now, this is the content you want me to read? Once you are ready, ask me to read it and I will prepare the new content suggestions!</p>
               </div>
             )}
             {page && (

@@ -44,6 +44,8 @@ export default function AgentWriterPage() {
           <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-8">
             <div className="mx-auto max-w-xl flex flex-col gap-4">
               <h1 className="text-xl font-bold text-[var(--primary)] text-center mb-4">Select a Scribe Agent</h1>
+              <p>Use of one of the existing scribes to help you to construct new pages!</p>
+              <p>These agents will read a page, and based on their knowledge of the whole world they are associated with, they can propose nwq pages, or update existing pages, helping to populate the world with more rich content! </p>
               {agentsLoading ? (
                 <div className="text-center">Loading agents...</div>
               ) : (
@@ -104,6 +106,7 @@ export default function AgentWriterPage() {
               <div className="flex flex-col">
                 <h2 className="text-xl font-bold text-[var(--primary)]">{selectedAgent.name}</h2>
                 <span className="text-sm text-[var(--foreground)]/70">{worldsMap[selectedAgent.world_id]?.name || ""}</span>
+                <p> Hi! My name is {selectedAgent.name}, and I am heere to help you create more content for {worldsMap[selectedAgent.world_id]?.name}! First, select which pages you want me to read, so we can start the scribing proccess!</p>
               </div>
               <button onClick={() => { setSelectedAgent(null); setSearch(""); }} className="ml-auto text-sm text-[var(--primary)] hover:underline">
                 Change Agent
