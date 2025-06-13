@@ -7,6 +7,7 @@ import { useAuth } from "../../../components/auth/AuthProvider";
 import { usePageById } from "../../../lib/usePageById";
 import { useAgentById } from "../../../lib/useAgentById";
 import { analyzePageWithAgent } from "../../../lib/agentAPI";
+import { useConcepts } from "../../../lib/useConcept";
 import Image from "next/image";
 import TabMenu from "../../../components/world_builder/TabMenu";
 import { Loader2 } from "lucide-react";
@@ -18,7 +19,9 @@ export default function PageAnalyze() {
   const { agent } = useAgentById(Number(agentID));
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"content" | "suggestions">("content");
+  const { concepts } = useConcepts(agent?.world_id);
 
   async function handleAnalyze() {
     if (!agentID || !pageID || !token) return;
@@ -27,11 +30,27 @@ export default function PageAnalyze() {
     try {
       const data = await analyzePageWithAgent(Number(agentID), Number(pageID), token);
       setResult(data);
+      setSuggestions(data.suggestions || []);
     } catch (err) {
       console.error(err);
       alert("Failed to analyze page");
     }
     setLoading(false);
+  }
+
+  function handleConceptChange(idx: number, conceptId: number) {
+    const concept = concepts?.find((c: any) => c.id === conceptId);
+    setSuggestions((s) => {
+      const copy = [...s];
+      if (copy[idx]) {
+        copy[idx] = { ...copy[idx], concept_id: conceptId, concept: concept?.name || "" };
+      }
+      return copy;
+    });
+  }
+
+  function handleRemove(idx: number) {
+    setSuggestions((s) => s.filter((_, i) => i !== idx));
   }
 
   return (
@@ -82,14 +101,58 @@ export default function PageAnalyze() {
                     )}
                     {!loading && result && (
                       <>
-                        <h3 className="font-semibold mb-1">Suggestions</h3>
-                        {result.suggestions?.map((s:any, idx:number) => (
-                          <div key={idx} className="flex items-center justify-between border-b border-[var(--border)] py-1">
-                            <span>{s.name} ({s.concept})</span>
-                            <span className="text-xs text-[var(--foreground)]/70">{s.exists ? "existing" : "new"}</span>
-                          </div>
-                        ))}
-                        {result.suggestions?.length === 0 && <div>No suggestions.</div>}
+                        <h3 className="font-semibold mb-2">Suggestions</h3>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-[var(--primary)]">
+                                <th className="py-1">Page Name</th>
+                                <th className="py-1">Concept</th>
+                                <th className="py-1">Status</th>
+                                <th className="py-1"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {suggestions.map((s: any, idx: number) => (
+                                <tr key={idx} className="border-b border-[var(--border)]">
+                                  <td className="py-1 font-semibold">{s.name}</td>
+                                  <td className="py-1">
+                                    <select
+                                      className="px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
+                                      value={s.concept_id}
+                                      onChange={(e) => handleConceptChange(idx, Number(e.target.value))}
+                                    >
+                                      {concepts?.map((c: any) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                  <td className="py-1 text-xs text-[var(--foreground)]/70">
+                                    {s.exists ? `Update existing` : `New`} ({agent?.name} suggestion)
+                                  </td>
+                                  <td className="py-1 text-right">
+                                    <button
+                                      onClick={() => handleRemove(idx)}
+                                      className="text-red-500 hover:underline text-xs"
+                                    >
+                                      Remove
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                              {suggestions.length === 0 && (
+                                <tr><td colSpan={4} className="text-center py-2">No suggestions.</td></tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="mt-3 text-right">
+                          <button
+                            className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--accent)]"
+                          >
+                            {`Ask ${agent?.name} to proceed with the suggestions!`}
+                          </button>
+                        </div>
                       </>
                     )}
                   </div>
