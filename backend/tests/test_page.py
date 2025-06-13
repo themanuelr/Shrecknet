@@ -113,3 +113,71 @@ async def test_page_create_update_delete_rbac(async_client):
     page_id2 = resp.json()["id"]
     resp = await async_client.delete(f"/pages/{page_id2}", headers={"Authorization": f"Bearer {player_token}"})
     assert resp.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_safe_delete_removes_page_refs(async_client):
+    sysadmin_token = await register_and_login(async_client, SYSTEM_ADMIN)
+    writer_token = await register_and_login(async_client, WRITER)
+
+    # Create world and concept
+    gw_payload = {"name": "SafeWorld", "system": "sys", "description": "d", "logo": "logo"}
+    resp = await async_client.post("/gameworlds/", json=gw_payload, headers={"Authorization": f"Bearer {sysadmin_token}"})
+    assert resp.status_code == 200
+    gw_id = resp.json()["id"]
+
+    concept_payload = {"gameworld_id": gw_id, "name": "Clan", "description": "c"}
+    resp = await async_client.post("/concepts/", json=concept_payload, headers={"Authorization": f"Bearer {sysadmin_token}"})
+    assert resp.status_code == 200
+    concept_id = resp.json()["id"]
+
+    # Create page_ref characteristic in this world
+    char_payload = {
+        "gameworld_id": gw_id,
+        "name": "ref",
+        "type": "page_ref",
+        "ref_concept_id": concept_id,
+        "is_list": True,
+    }
+    resp = await async_client.post("/characteristics/", json=char_payload, headers={"Authorization": f"Bearer {sysadmin_token}"})
+    assert resp.status_code == 200
+    char_id = resp.json()["id"]
+
+    resp = await async_client.post(
+        "/characteristics/link/",
+        params={"concept_id": concept_id, "characteristic_id": char_id, "order": 0},
+        headers={"Authorization": f"Bearer {sysadmin_token}"},
+    )
+    assert resp.status_code == 200
+
+    # Create two pages
+    page1 = {"gameworld_id": gw_id, "concept_id": concept_id, "name": "P1"}
+    resp = await async_client.post("/pages/", json=page1, headers={"Authorization": f"Bearer {writer_token}"})
+    assert resp.status_code == 200
+    p1_id = resp.json()["id"]
+
+    page2 = {
+        "gameworld_id": gw_id,
+        "concept_id": concept_id,
+        "name": "P2",
+        "values": [{"characteristic_id": char_id, "value": [str(p1_id)]}],
+    }
+    resp = await async_client.post("/pages/", json=page2, headers={"Authorization": f"Bearer {writer_token}"})
+    assert resp.status_code == 200
+    p2_id = resp.json()["id"]
+
+    # Ensure reference is stored
+    resp = await async_client.get(f"/pages/{p2_id}", headers={"Authorization": f"Bearer {writer_token}"})
+    assert resp.status_code == 200
+    vals = resp.json()["values"]
+    assert vals and str(p1_id) in vals[0]["value"]
+
+    # Delete first page
+    resp = await async_client.delete(f"/pages/{p1_id}", headers={"Authorization": f"Bearer {writer_token}"})
+    assert resp.status_code == 200
+
+    # Fetch second page again - reference should be removed
+    resp = await async_client.get(f"/pages/{p2_id}", headers={"Authorization": f"Bearer {writer_token}"})
+    assert resp.status_code == 200
+    vals = resp.json()["values"]
+    assert not vals or str(p1_id) not in (vals[0]["value"] or [])

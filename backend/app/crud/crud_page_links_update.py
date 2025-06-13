@@ -15,10 +15,8 @@ import re
 
 
 async def remove_page_refs_from_characteristics(deleted_page: Page | int):
-    """
-    Remove references to the deleted page in any PageCharacteristicValue
-    for characteristics of type 'page_ref' that point to the same concept as the deleted page.
-    """    
+    """Remove references to a deleted page from all page reference characteristics
+    within the same game world."""
     async with async_session_maker() as session:
         if isinstance(deleted_page, Page):
             deleted_page = await get_page(session, deleted_page.id)
@@ -31,7 +29,7 @@ async def remove_page_refs_from_characteristics(deleted_page: Page | int):
         result = await session.execute(
             select(Characteristic).where(
                 (Characteristic.type == "page_ref") &
-                (Characteristic.ref_concept_id == deleted_page.concept_id)
+                (Characteristic.gameworld_id == deleted_page.gameworld_id)
             )
         )
         page_ref_characteristics = result.scalars().all()

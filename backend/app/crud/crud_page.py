@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 from sqlalchemy import delete
 
 from app.models.model_page import Page, PageCharacteristicValue
+from app.models.model_characteristic import Characteristic
 from app.schemas.schema_page import PageCreate, PageUpdate
 from app.schemas.schema_page_characteristic_value import PageCharacteristicValueCreate
 
@@ -45,13 +46,35 @@ async def update_page(session: AsyncSession, page_id: int, updates: dict) -> Opt
 
 async def delete_page(session: AsyncSession, page_id: int) -> bool:
     page = await get_page(session, page_id)
-    if page:
-        await session.delete(page)
-        await session.commit()        
-        await session.flush()
-        return True
-    else:
+    if not page:
         return False
+
+    # Remove references to this page in page_ref characteristics within the same world
+    result = await session.execute(
+        select(Characteristic).where(
+            (Characteristic.type == "page_ref") &
+            (Characteristic.gameworld_id == page.gameworld_id)
+        )
+    )
+    page_ref_characteristics = result.scalars().all()
+    for char in page_ref_characteristics:
+        res_vals = await session.execute(
+            select(PageCharacteristicValue).where(
+                PageCharacteristicValue.characteristic_id == char.id
+            )
+        )
+        vals = res_vals.scalars().all()
+        for pcv in vals:
+            if not pcv.value:
+                continue
+            value_list = [str(v) for v in pcv.value]
+            if str(page_id) in value_list:
+                pcv.value = [v for v in value_list if v != str(page_id)]
+
+    await session.delete(page)
+    await session.commit()
+    await session.flush()
+    return True
 
 # --- PAGE CHARACTERISTIC VALUE CRUD ---
 
