@@ -18,6 +18,8 @@ type PageFormValues = {
   [key: string]: unknown;
 };
 
+const EMPTY_VALUES: PageFormValues = {};
+
 interface PageFormProps {
   selectedWorld: unknown;
   selectedConcept: unknown;
@@ -33,7 +35,7 @@ export default function PageForm({
   selectedConcept,
   token,
   onSuccess,
-  initialValues = {},
+  initialValues = EMPTY_VALUES,
   onSubmit,
   mode = "create"
 }: PageFormProps) {
