@@ -84,3 +84,12 @@ export async function chatTest(
   if (!res.ok) throw await res.json();
   return await res.json();
 }
+
+export async function getChatHistory(agentId: number, token: string) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/history`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  const data = await res.json();
+  return data.messages || [];
+}
