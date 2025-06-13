@@ -55,6 +55,23 @@ export default function PageForm({
     initialValues.allow_crossworld !== undefined ? initialValues.allow_crossworld : true
   );
 
+  // Reset fields when switching to a different initialValues (e.g., new suggestion)
+  useEffect(() => {
+    setPageName(initialValues.name || "");
+    setPageLogo(null);
+    setPageLogoUrl(initialValues.logo || "");
+    setAllowCrosslinks(
+      initialValues.allow_crosslinks !== undefined ? initialValues.allow_crosslinks : true
+    );
+    setIgnoreCrosslink(
+      initialValues.ignore_crosslink !== undefined ? initialValues.ignore_crosslink : false
+    );
+    setAllowCrossworld(
+      initialValues.allow_crossworld !== undefined ? initialValues.allow_crossworld : true
+    );
+    setFields({});
+  }, [initialValues]);
+
   // For edit: pre-fill characteristics fields if present
   useEffect(() => {
     if (
@@ -92,14 +109,17 @@ export default function PageForm({
       }
 
       // Map values into the payload format your API expects
-      const characteristicPayload = characteristics.map((c) => {
+      const characteristicPayload = characteristics.reduce((arr, c) => {
         const rawVal = fields[c.name];
         const list = Array.isArray(rawVal) ? rawVal : rawVal ? [rawVal] : [];
-        return {
-          characteristic_id: c.id,
-          value: list.map((v) => String(v)),
-        };
-      });
+        if (list.length > 0) {
+          arr.push({
+            characteristic_id: c.id,
+            value: list.map((v) => String(v)),
+          });
+        }
+        return arr;
+      }, [] as { characteristic_id: number; value: string[] }[]);
 
       console.log("Characteristics payload: " + characteristicPayload)
       const payload = {
