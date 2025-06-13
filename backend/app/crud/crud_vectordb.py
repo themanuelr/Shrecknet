@@ -28,7 +28,26 @@ from app.config import settings
 # and therefore created an in-memory database.  Use the provided setting
 # directly and fall back to it if the environment variable is not set.
 _db_path = os.getenv("VECTOR_DB_PATH", settings.vector_db_path)
+# Ensure the directory exists so ``chromadb`` can persist collections
+os.makedirs(_db_path, exist_ok=True)
+
 _client = chromadb.PersistentClient(path=_db_path)
+
+
+def _delete_collection(name: str) -> None:
+    """Delete a Chroma collection by name if it exists."""
+    try:
+        if hasattr(_client, "delete_collection"):
+            try:
+                _client.delete_collection(name)  # type: ignore[arg-type]
+            except TypeError:
+                # some versions require a keyword argument
+                _client.delete_collection(collection_name=name)  # type: ignore[arg-type]
+        else:
+            _client.get_collection(name).delete()
+    except Exception:
+        # Deleting should not fail the rebuild process
+        pass
 
 
 def _get_collection(world_id: int):
@@ -96,15 +115,10 @@ async def add_page(session: AsyncSession, page_id: int):
 
 async def rebuild_world(session: AsyncSession, world_id: int):
     name = f"world_{world_id}"
+    _delete_collection(name)
     try:
-        _client.delete_collection(name)
-        print (f" - API VECTORDB - Deleted the current collection!!")
-        try:
-            _client.persist()
-        except AttributeError:
-            pass
-    except Exception:
-        print (f" - API VECTORDB - Could not delete the current collection!")
+        _client.persist()
+    except AttributeError:
         pass
 
     collection = _get_collection(world_id)
