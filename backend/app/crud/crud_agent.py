@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,8 +17,8 @@ openai_model = settings.open_ai_model
 
 async def chat_with_agent(
     session: AsyncSession, agent_id: int, messages: list[dict], n_results: int = 4
-) -> AsyncGenerator[str, None]:
-    """Stream a chat response using OpenAI with world and agent context."""
+) -> str:
+    """Return a full chat response using OpenAI with world and agent context."""
 
     agent = await session.get(Agent, agent_id)
     if not agent or agent.vector_db_update_date is None:
@@ -73,7 +73,7 @@ async def chat_with_agent(
         ]
     )
 
-    llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model, streaming=True)
+    llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model)
     chain = prompt | llm
 
     builder = MessageGraph()
@@ -82,11 +82,13 @@ async def chat_with_agent(
     builder.set_finish_point("chat")
     graph = builder.compile()
 
-    async for step in graph.astream([HumanMessage(content=query)], {"input": query}):
-        messages_out = step.get("chat", [])
-        for msg in messages_out:
-            if getattr(msg, "content", None):
-                yield msg.content
+    step = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
+    messages_out = step.get("chat", [])
+    response_text = ""
+    for msg in messages_out:
+        if getattr(msg, "content", None):
+            response_text += msg.content
+    return response_text
 
 
 from sqlalchemy.future import select
