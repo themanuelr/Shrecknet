@@ -1,11 +1,16 @@
 "use client";
 import { FaComments } from "react-icons/fa";
-import { useState, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent, useEffect } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useAgents } from "../../lib/useAgents";
 import { useAuth } from "../auth/AuthProvider";
-import { chatWithAgent, ChatMessage } from "../../lib/agentAPI";
+import Link from "next/link";
+import {
+  chatWithAgent,
+  ChatMessage,
+  getChatHistory,
+} from "../../lib/agentAPI";
 
 export default function ChatPanel({ open, onOpen, onClose }) {
   const PANEL_WIDTH = 420; // px, can use % if preferred
@@ -27,6 +32,16 @@ export default function ChatPanel({ open, onOpen, onClose }) {
     selectedAgentId !== null
       ? agents.find(a => a.id === selectedAgentId)
       : null;
+
+  useEffect(() => {
+    if (selectedAgentId === null) return;
+    getChatHistory(selectedAgentId, token || "")
+      .then((msgs) => {
+        setMessages(msgs as ChatMessage[]);
+        scrollToBottom();
+      })
+      .catch(() => setMessages([]));
+  }, [selectedAgentId, token]);
 
   function scrollToBottom() {
     setTimeout(() => {
@@ -64,6 +79,34 @@ export default function ChatPanel({ open, onOpen, onClose }) {
       scrollToBottom();
     }
     setLoading(false);
+  }
+
+  function renderMessageContent(text: string) {
+    const regex = /\[([^\]]+)\]\s*\n?\[Link for this page:\s*([^\]]+)\]/g;
+    const nodes: React.ReactNode[] = [];
+    let last = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > last) nodes.push(text.slice(last, match.index));
+      nodes.push(
+        <Link key={nodes.length} href={match[2]} className="text-purple-600 underline">
+          {match[1]}
+        </Link>
+      );
+      last = match.index + match[0].length;
+    }
+    if (last < text.length) nodes.push(text.slice(last));
+
+    return nodes.flatMap((n, i) =>
+      typeof n === "string"
+        ? n.split(/\n/).map((l, j) => (
+            <span key={`${i}-${j}`}>
+              {l}
+              {j < l.split(/\n/).length - 1 && <br />}
+            </span>
+          ))
+        : [n]
+    );
   }
 
   const panelContent = !open ? null : (
@@ -138,7 +181,7 @@ export default function ChatPanel({ open, onOpen, onClose }) {
                       Wait a second, let me read about it...
                     </span>
                   ) : (
-                    m.content
+                    renderMessageContent(m.content)
                   )}
                 </div>
               </div>
