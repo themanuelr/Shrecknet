@@ -12,6 +12,7 @@ import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import CasinoRoundedIcon from "@mui/icons-material/CasinoRounded";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import PersonEditAlt1RoundedIcon from "@mui/icons-material/EditRounded";
+import { Bot } from "lucide-react";
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }) {
   const { user, token, isLoading: authLoading, refreshUser } = useAuth();
@@ -56,12 +57,20 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
       show: true,
     },
     {
+      label: "AI Writer",
+      icon: <Bot fontSize="medium" />,
+      href: "/agent_writer",
+      external: false,
+      show: user && ["writer", "system admin"].includes(user.role),
+    },       
+    {
       label: "World Builder",
       icon: <BuildRoundedIcon fontSize="medium" />,
       href: "/world_builder",
       external: false,
       show: user && ["world builder", "system admin"].includes(user.role),
     },
+ 
     
     {
       label: "System Settings",

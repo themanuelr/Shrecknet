@@ -58,7 +58,7 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
         prompt = ChatPromptTemplate.from_messages([
             (
                 "system",
-                f"List all unique {concept.name} mentioned in the text. {concept.description or ''} Return a comma separated list.",
+                f"List all unique {concept.name} mentioned in the text. {concept.description or ''} Return a comma separated list. If the concept is not present, do not include it to your list.",
             ),
             ("user", "{text}"),
         ])
