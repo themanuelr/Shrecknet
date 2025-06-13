@@ -19,6 +19,14 @@ export async function getAgents(
   return await res.json();
 }
 
+export async function getAgent(id: number, token: string) {
+  const res = await fetch(`${API_URL}/agents/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Agent not found");
+  return await res.json();
+}
+
 export async function createAgent(data: unknown, token: string) {
   const res = await fetch(`${API_URL}/agents/`, {
     method: "POST",
@@ -92,4 +100,17 @@ export async function getChatHistory(agentId: number, token: string) {
   if (!res.ok) throw await res.text();
   const data = await res.json();
   return data.messages || [];
+}
+
+export async function analyzePageWithAgent(
+  agentId: number,
+  pageId: number,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/pages/${pageId}/analyze`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
 }
