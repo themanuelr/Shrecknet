@@ -1,10 +1,16 @@
 from typing import AsyncGenerator
 
-from openai import OpenAI
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
+from langgraph.graph import MessageGraph
+
 from app.config import settings
 from app.crud import crud_vectordb
 from app.models.model_agent import Agent
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.model_gameworld import GameWorld
 
 openai_model = settings.open_ai_model
 
@@ -20,23 +26,53 @@ async def chat_with_agent(
 
     query = messages[-1].get("content", "") if messages else ""
     docs = crud_vectordb.query_world(agent.world_id, query, n_results)
-    context = "\n\n".join(d["document"] for d in docs)
+    world = await session.get(GameWorld, agent.world_id)
+
+    context_parts = []
+    for d in docs:
+        page_id = d.get("page_id")
+        concept_id = d.get("concept_id")
+        if page_id is None or concept_id is None:
+            continue
+        link = f"website/worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
+        context_parts.append(f"[{link}] {d['document']}")
+    context = "\n\n".join(context_parts)
+
+    history_txt = "\n".join(f"{m['role']}: {m['content']}" for m in messages[:-1])
     personality = agent.personality or "helpful NPC"
     system_prompt = (
-        f"You are an NPC with the following personality: {personality}. Use the following context to answer:\n"
-        + context
+        "The agent is a helper to consume data from the world.\n"
+        f"World system: {world.system}\n"
+        f"World description: {world.description}\n"
+        f"Personality: {personality}\n"
+        "Use the following context and chat history to answer the user's question.\n"
+        "When referencing information, cite the page link used.\n"
+        "If no relevant information is found in the documents, inform the user."
     )
-    chat_messages = [{"role": "system", "content": system_prompt}] + messages
 
-    client = OpenAI(api_key=settings.openai_api_key)
-    stream = client.chat.completions.create(
-        model=openai_model, messages=chat_messages, stream=True
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            ("system", f"Context:\n{context}" if context else "Context: none"),
+            ("system", f"Chat history:\n{history_txt}" if history_txt else "Chat history: none"),
+            ("user", "{input}"),
+        ]
     )
 
-    for chunk in stream:
-        content = chunk.choices[0].delta.content
-        if content:
-            yield content
+    llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model, streaming=True)
+    chain = prompt | llm
+
+    builder = MessageGraph()
+    builder.add_node("chat", chain)
+    builder.set_entry_point("chat")
+    builder.set_finish_point("chat")
+    graph = builder.compile()
+
+    async for step in graph.astream([HumanMessage(content=query)], {"input": query}):
+        messages_out = step.get("chat", [])
+        for msg in messages_out:
+            if getattr(msg, "content", None):
+                yield msg.content
 
 
 from sqlalchemy.future import select
