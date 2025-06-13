@@ -239,8 +239,8 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                     activeTab={activeTab}
                     onTabChange={(tab) => setActiveTab(tab as "content" | "notes")}
                     tabs={[
-                      { value: "content", label: "Content" },
-                      { value: "notes", label: agent ? `${agent.name} Notes` : "Other notes" },
+                      { value: "content", label: "Main Content" },
+                      { value: "notes", label: agent ? `Content by ${agent.name}` : "Other notes" },
                     ]}
                   />
                   {activeTab === "content" ? (
