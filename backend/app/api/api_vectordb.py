@@ -9,6 +9,7 @@ router = APIRouter(prefix="/vectordb", tags=["VectorDB"])
 
 @router.post("/{world_id}/rebuild")
 async def rebuild_world_vector(world_id: int, session: AsyncSession = Depends(get_session)):
+    print (f"REBUILDING VECTOR DB FOR: {world_id}")
     count = await crud_vectordb.rebuild_world(session, world_id)
     return {"pages_indexed": count}
 
