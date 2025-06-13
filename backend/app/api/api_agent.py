@@ -13,7 +13,7 @@ from app.crud.crud_agent import (
     delete_agent,
 )
 from app.crud import crud_vectordb, crud_chat_history
-from app.crud.crud_page_analysis import analyze_page
+from app.crud.crud_page_analysis import analyze_page, generate_pages
 from app.crud.crud_page import get_page
 from app.schemas.schema_agent import AgentCreate, AgentRead, AgentUpdate
 from app.database import get_session
@@ -149,5 +149,28 @@ async def analyze_page_endpoint(
         raise HTTPException(status_code=400, detail="Agent and page belong to different worlds")
 
     result = await analyze_page(session, agent, page)
+    return result
+
+
+class GeneratePagesRequest(BaseModel):
+    pages: List[dict]
+
+
+@router.post("/{agent_id}/pages/{page_id}/generate")
+async def generate_pages_endpoint(
+    agent_id: int,
+    page_id: int,
+    payload: GeneratePagesRequest,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    agent = await get_agent(session, agent_id)
+    page = await get_page(session, page_id)
+    if not agent or not page:
+        raise HTTPException(status_code=404, detail="Agent or page not found")
+    if agent.world_id != page.gameworld_id:
+        raise HTTPException(status_code=400, detail="Agent and page belong to different worlds")
+
+    result = await generate_pages(session, agent, page, payload.pages)
     return result
 

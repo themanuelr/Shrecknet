@@ -114,3 +114,20 @@ export async function analyzePageWithAgent(
   if (!res.ok) throw await res.text();
   return await res.json();
 }
+export async function generatePagesWithAgent(
+  agentId: number,
+  pageId: number,
+  pages: unknown[],
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/pages/${pageId}/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ pages }),
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
