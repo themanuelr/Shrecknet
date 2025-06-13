@@ -39,7 +39,7 @@ async def chat_with_agent(
         concept_id = d.get("concept_id")
         if page_id is None or concept_id is None:
             continue
-        link = f"/worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
+        link = f"Link for this page: /worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
         context_parts.append(f"[{link}] {d['document']}")
     context = "\n\n".join(context_parts)
       
@@ -58,7 +58,8 @@ async def chat_with_agent(
         f"World description: {world.description}\n"
         f"Personality: {personality}\n"
         "Use the following context and chat history to answer the user's question.\n"
-        "When referencing information, cite the page link used.\n"
+        "For every context, there is  [Link for this page] associated with it. \n"
+        "At the end of your message, always show this specific link of all pages you used to create your response!\n"
         "If no relevant information is found in the documents, inform the user."
     )
 
@@ -82,13 +83,13 @@ async def chat_with_agent(
     builder.set_finish_point("chat")
     graph = builder.compile()
 
-    step = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
-    messages_out = step.get("chat", [])
-    response_text = ""
-    for msg in messages_out:
-        if getattr(msg, "content", None):
-            response_text += msg.content
-    return response_text
+    response = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
+    # print (f"RESPONSE: {response}")
+    # print (f"RESPONSE[0]: {response[0]}")
+    # print (f"RESPONSE[1]: {response[1].content}")
+
+
+    return response[1].content    
 
 
 from sqlalchemy.future import select

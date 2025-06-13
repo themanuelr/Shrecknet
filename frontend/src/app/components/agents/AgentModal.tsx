@@ -129,15 +129,7 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
             className="block w-full rounded-xl border border-[var(--primary)] px-2 py-2 bg-[var(--surface-variant)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
             disabled={saving || uploading}
           />
-          {form.logoUrl && (
-            <Image
-              src={form.logoUrl}
-              alt="Agent logo"
-              width={80}
-              height={80}
-              className="mt-2 rounded-full border border-[var(--primary)] object-cover"
-            />
-          )}
+          
         </div>
         <M3FloatingInput
           label="Personality"
