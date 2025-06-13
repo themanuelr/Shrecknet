@@ -35,9 +35,31 @@ export default function PageAnalyze() {
     setActiveTab("suggestions");
     setLoading(true);
     try {
-      const data = await analyzePageWithAgent(Number(agentID), Number(pageID), token);
+      const data = await analyzePageWithAgent(
+        Number(agentID),
+        Number(pageID),
+        token
+      );
       setResult(data);
-      setSuggestions(data.suggestions || []);
+      let suggs: any[] = data.suggestions || [];
+      suggs = await Promise.all(
+        suggs.map(async (s: any) => {
+          if (s.exists) {
+            const pages = await getPagesForConcept(s.concept_id, token);
+            const existing = pages.find(
+              (p: any) => p.name.toLowerCase() === s.name.toLowerCase()
+            );
+            if (existing) {
+              s.concept_id = existing.concept_id;
+              const c = concepts?.find((c: any) => c.id === existing.concept_id);
+              if (c) s.concept = c.name;
+            }
+          }
+          return s;
+        })
+      );
+      suggs.sort((a, b) => (a.exists === b.exists ? 0 : a.exists ? -1 : 1));
+      setSuggestions(suggs);
     } catch (err) {
       console.error(err);
       alert("Failed to analyze page");
@@ -101,7 +123,10 @@ export default function PageAnalyze() {
 
   async function handleGenerate() {
     if (!agentID || !pageID || !token) return;
-    const pages = suggestions.map((s) => ({ name: s.name, concept_id: s.concept_id })).filter(Boolean);
+    const pages = suggestions
+      .filter((s) => !s.exists)
+      .map((s) => ({ name: s.name, concept_id: s.concept_id }))
+      .filter(Boolean);
     if (pages.length === 0) return;
     setLoading(true);
     try {
@@ -181,15 +206,19 @@ export default function PageAnalyze() {
                                 <tr key={idx} className="border-b border-[var(--border)]">
                                   <td className="py-1 font-semibold">{s.name}</td>
                                   <td className="py-1">
-                                    <select
-                                      className="px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
-                                      value={s.concept_id}
-                                      onChange={(e) => handleConceptChange(idx, Number(e.target.value))}
-                                    >
-                                      {concepts?.map((c: any) => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                      ))}
-                                    </select>
+                                    {s.exists ? (
+                                      <span>{s.concept}</span>
+                                    ) : (
+                                      <select
+                                        className="px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
+                                        value={s.concept_id}
+                                        onChange={(e) => handleConceptChange(idx, Number(e.target.value))}
+                                      >
+                                        {concepts?.map((c: any) => (
+                                          <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                      </select>
+                                    )}
                                   </td>
                                   <td className="py-1">
                                     <span
