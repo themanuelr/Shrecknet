@@ -86,3 +86,4 @@ langchain-core
 langchain-community
 langchain-huggingface
 langchain-text-splitters
+langchain_openai
