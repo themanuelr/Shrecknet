@@ -95,6 +95,22 @@ async def generate_pages(session: AsyncSession, agent: Agent, page: Page, page_s
     """Generate full page data for selected suggestions."""
     llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=settings.open_ai_model)
     generated = []
+
+    # Preload existing pages in the same world to resolve page_ref values
+    existing_pages = await crud_page.get_pages(session, gameworld_id=page.gameworld_id)
+
+    def find_page_id(name: str, ref_concept_id: int | None = None) -> int | None:
+        """Simple lookup for a page by (partial) name and optional concept."""
+        if not name:
+            return None
+        name_l = name.lower()
+        for p in existing_pages:
+            if ref_concept_id is not None and p.concept_id != ref_concept_id:
+                continue
+            if name_l in p.name.lower() or p.name.lower() in name_l:
+                return p.id
+        return None
+
     for spec in page_specs:
         concept = await crud_concept.get_concept(session, spec["concept_id"])
         if not concept:
@@ -121,8 +137,19 @@ async def generate_pages(session: AsyncSession, agent: Agent, page: Page, page_s
         vals = data.get("values", {}) if isinstance(data.get("values", {}), dict) else {}
         for c in characteristics:
             val = vals.get(c.name)
-            if val:
-                val_list = val if isinstance(val, list) else [val]
+            if not val:
+                continue
+            val_list = val if isinstance(val, list) else [val]
+
+            if c.type == "page_ref":
+                ref_ids: List[str] = []
+                for v in val_list:
+                    pid = find_page_id(str(v), c.ref_concept_id)
+                    if pid is not None:
+                        ref_ids.append(str(pid))
+                if ref_ids:
+                    values.append({"characteristic_id": c.id, "value": ref_ids})
+            else:
                 values.append({"characteristic_id": c.id, "value": [str(v) for v in val_list]})
         generated.append({
             "name": spec["name"],
