@@ -33,7 +33,7 @@ export default function AgentWriterPage() {
     );
   }
 
-  const writerAgents = agents.filter(a => a.task === "page_writer");
+  const writerAgents = agents.filter(a => a.task === "page writer");
   const worldsMap: Record<number, any> = {};
   worlds.forEach(w => { worldsMap[w.id] = w; });
 
