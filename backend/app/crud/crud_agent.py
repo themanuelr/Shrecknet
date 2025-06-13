@@ -24,9 +24,14 @@ async def chat_with_agent(
     if not agent or agent.vector_db_update_date is None:
         raise ValueError("Agent unavailable")
 
+    print (f" - AGENT CHAT: {agent.name}")
+
     query = messages[-1].get("content", "") if messages else ""
     docs = crud_vectordb.query_world(agent.world_id, query, n_results)
     world = await session.get(GameWorld, agent.world_id)
+    print (f" ---- Querry: {query}")
+    print (f" ---- Docs: {docs}")    
+    print (f" ---- world: {world}")        
 
     context_parts = []
     for d in docs:
@@ -34,12 +39,19 @@ async def chat_with_agent(
         concept_id = d.get("concept_id")
         if page_id is None or concept_id is None:
             continue
-        link = f"website/worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
+        link = f"/worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
         context_parts.append(f"[{link}] {d['document']}")
     context = "\n\n".join(context_parts)
+      
 
     history_txt = "\n".join(f"{m['role']}: {m['content']}" for m in messages[:-1])
     personality = agent.personality or "helpful NPC"
+
+    print (f" ---- Context: {context}")
+    print (f" ---- history_txt: {history_txt}")
+    print (f" ---- personality: {personality}")    
+
+
     system_prompt = (
         "The agent is a helper to consume data from the world.\n"
         f"World system: {world.system}\n"
@@ -49,6 +61,8 @@ async def chat_with_agent(
         "When referencing information, cite the page link used.\n"
         "If no relevant information is found in the documents, inform the user."
     )
+
+    print (f" ---- system_prompt: {system_prompt}") 
 
     prompt = ChatPromptTemplate.from_messages(
         [

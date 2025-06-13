@@ -74,14 +74,14 @@ async def add_page(session: AsyncSession, page_id: int):
     )
     page = result.scalar_one_or_none()
 
-    print (f" --- API VECTORDB - Adding this page: {page}")
+    # print (f" --- API VECTORDB - Adding this page: {page}")
 
     if not page:
         return None
 
     # Load related concept
     concept = await session.get(Concept, page.concept_id)
-    print (f" --- API VECTORDB - getting the concept of the page: {concept}")
+    # print (f" --- API VECTORDB - getting the concept of the page: {concept}")
 
     # Load characteristic values
     values = await session.execute(
@@ -110,8 +110,8 @@ async def add_page(session: AsyncSession, page_id: int):
         "concept_id": page.concept_id,
     }
 
-    print (f" --- API VECTORDB - Adding this document: {document}")
-    print (f" --- API VECTORDB - Adding this metadata: {metadata}")
+    # print (f" --- API VECTORDB - Adding this document: {document}")
+    # print (f" --- API VECTORDB - Adding this metadata: {metadata}")
 
     collection = _get_collection(page.gameworld_id)
     docs = _text_splitter.create_documents([document], metadatas=[metadata])
@@ -124,7 +124,7 @@ async def add_page(session: AsyncSession, page_id: int):
         # The lightweight test stub does not implement ``persist``
         pass
 
-    print (f" --- API VECTORDB - Page added to the chromadb!")
+    # print (f" --- API VECTORDB - Page added to the chromadb!")
     return True
 
 
@@ -138,13 +138,13 @@ async def rebuild_world(session: AsyncSession, world_id: int):
 
     collection = _get_collection(world_id)
 
-    print (f" - API VECTORDB - Collection: {collection}")
+    # print (f" - API VECTORDB - Collection: {collection}")
 
     result = await session.execute(select(Page.id).where(Page.gameworld_id == world_id))
     print (f" - API VECTORDB - Pages: {result}")
     page_ids = [row[0] for row in result.all()]
     for pid in page_ids:
-        print (f" - API VECTORDB - Adding page: {pid}")
+        # print (f" - API VECTORDB - Adding page: {pid}")
         await add_page(session, pid)
 
     try:

@@ -234,8 +234,8 @@ export default function PageValueRenderer({
                   : "#"
               }
               className={`
-                flex items-center gap-2 w-full
-                transition
+                flex items-center gap-5 w-full
+                transition                
                 hover:underline
                 ${isMini ? "text-xs" : ""}
                 justify-left

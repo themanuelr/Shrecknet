@@ -20,14 +20,14 @@ export default function BodySection({ values, worldId, conceptid }) {
 
   return (
     <section className="w-full mb-0">
-      <div className="flex flex-col gap-7 w-full">
+      <div className="flex flex-col gap-7 w-full mb-5">
         {values.map(({ characteristic, value }, idx) => {
           const key = `${characteristic.id}-${idx}`;
 
           return (
             <div key={key} className="w-full">
               {/* Characteristic name above card */}
-              <h3 className="text-base md:text-lg font-medium text-[var(--primary)]/70 mb-1 px-1 select-none">
+              <h3 className="text-base md:text-lg font-medium text-[var(--primary)]/100 mb-5 px-1 select-none">
                 {characteristic.name}
               </h3>
 
@@ -37,7 +37,7 @@ export default function BodySection({ values, worldId, conceptid }) {
                   w-full
                   rounded-xl
                   bg-white/5
-                  border border-white/10
+                  border border-white/50
                   shadow-sm
                   backdrop-blur-[6px]
                   px-4 py-3
@@ -47,7 +47,7 @@ export default function BodySection({ values, worldId, conceptid }) {
               >
                 {/* Render lists or single values */}
                 {Array.isArray(value) ? (
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap  gap-3">
                     {value.length > 0 ? (
                       value.map((v, i) =>
                         characteristic.type === "page_ref" ? (
