@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_current_user, require_role
 from app.models.model_user import User, UserRole
@@ -44,15 +44,15 @@ async def chat(
     chat_messages = history + [user_msg]
     assistant_text = ""
 
-    async def stream():
-        nonlocal assistant_text
-        async for token in chat_with_agent(session, agent_id, chat_messages):
-            assistant_text += token
-            yield token
-        new_history = (history + [user_msg, {"role": "assistant", "content": assistant_text}])[-20:]
-        crud_chat_history.save_history(user.id, agent_id, new_history)
+    async for token in chat_with_agent(session, agent_id, chat_messages):
+        assistant_text += token
 
-    return StreamingResponse(stream(), media_type="text/plain")
+    new_history = (
+        history + [user_msg, {"role": "assistant", "content": assistant_text}]
+    )[-20:]
+    crud_chat_history.save_history(user.id, agent_id, new_history)
+
+    return JSONResponse({"content": assistant_text})
 
 
 @router.get("/{agent_id}/history")

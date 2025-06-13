@@ -20,15 +20,13 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
-        async with async_client.stream(
-            "POST",
+        resp = await async_client.post(
             "/agents/1/chat",
             json=chat_payload,
             headers={"Authorization": f"Bearer {token}"},
-        ) as resp:
-            text = "".join([chunk async for chunk in resp.aiter_text()])
+        )
         assert resp.status_code == 200
-        assert text == "Hi"
+        assert resp.json()["content"] == "Hi"
 
 
 @pytest.mark.anyio
@@ -52,15 +50,13 @@ async def test_chat_history_saved(async_client, create_user, login_and_get_token
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
-        async with async_client.stream(
-            "POST",
+        resp = await async_client.post(
             "/agents/1/chat",
             json=payload,
             headers={"Authorization": f"Bearer {token}"},
-        ) as resp:
-            text = "".join([chunk async for chunk in resp.aiter_text()])
+        )
     assert resp.status_code == 200
-    assert text == "Hi"
+    assert resp.json()["content"] == "Hi"
 
     hist_file = tmp_path / str(user["id"]) / "1.json"
     with open(hist_file) as f:
