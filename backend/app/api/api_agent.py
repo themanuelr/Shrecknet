@@ -60,6 +60,13 @@ async def chat_history(agent_id: int, user: User = Depends(get_current_user)):
     return {"messages": messages[-20:]}
 
 
+@router.delete("/{agent_id}/history")
+async def clear_chat_history(agent_id: int, user: User = Depends(get_current_user)):
+    """Remove all stored chat messages between the current user and this agent."""
+    crud_chat_history.clear_history(user.id, agent_id)
+    return {"ok": True}
+
+
 @router.post("/{agent_id}/chat_test")
 async def chat_test(
     agent_id: int,

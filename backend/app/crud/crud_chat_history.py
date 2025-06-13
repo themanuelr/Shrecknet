@@ -29,3 +29,13 @@ def save_history(user_id: int, agent_id: int, messages: list[dict]) -> None:
     file_path = _history_path(user_id, agent_id)
     with open(file_path, "w") as f:
         json.dump(messages, f)
+
+
+def clear_history(user_id: int, agent_id: int) -> None:
+    """Delete chat history for a user and agent if it exists."""
+    file_path = _history_path(user_id, agent_id)
+    if file_path.is_file():
+        try:
+            file_path.unlink()
+        except Exception:
+            pass

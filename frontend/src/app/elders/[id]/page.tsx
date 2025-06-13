@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useAgentById } from "../../lib/useAgentById";
-import { chatWithAgent, getChatHistory, ChatMessage } from "../../lib/agentAPI";
+import { chatWithAgent, getChatHistory, clearChatHistory, ChatMessage } from "../../lib/agentAPI";
 import { useAuth } from "../../components/auth/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,8 +67,18 @@ export default function ElderChatPage() {
     setLoading(false);
   }
 
-  function clearMessages() {
-    setMessages([]);
+  async function clearMessages() {
+    if (!id) return;
+    const confirmed = window.confirm(
+      "This will permanently delete your chat history with this Elder. Continue?"
+    );
+    if (!confirmed) return;
+    try {
+      await clearChatHistory(id, token || "");
+      setMessages([]);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   function renderMessageContent(text: string) {
@@ -99,7 +109,7 @@ export default function ElderChatPage() {
     <AuthGuard>
       <DashboardLayout>
         <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-8">
-          <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-160px)]">
+          <div className="w-full sm:w-[80%] mx-auto flex flex-col h-[calc(100vh-160px)]">
             <div className="flex items-center gap-3 mb-4">
               {agent && (
                 <Image src={agent.logo || "/images/default/avatars/logo.png"} alt={agent.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-[var(--primary)]" />
@@ -107,7 +117,12 @@ export default function ElderChatPage() {
               <h1 className="text-2xl font-serif font-bold text-[var(--primary)] flex-1 truncate">
                 {agent ? agent.name : "..."}
               </h1>
-              <button onClick={clearMessages} className="text-sm text-[var(--primary)] hover:underline">Clear all</button>
+              <button
+                onClick={clearMessages}
+                className="ml-auto px-3 py-1 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Clear chat
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-4 mb-2 border border-[var(--border)] rounded-xl p-3 bg-[var(--surface)]">
               {messages.map((m, idx) => (
