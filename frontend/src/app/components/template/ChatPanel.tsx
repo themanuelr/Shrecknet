@@ -2,6 +2,7 @@
 import { FaComments } from "react-icons/fa";
 import { useState, useRef, FormEvent } from "react";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import { useAgents } from "../../lib/useAgents";
 import { useAuth } from "../auth/AuthProvider";
 import { chatWithAgent, ChatMessage } from "../../lib/agentAPI";
@@ -42,18 +43,19 @@ export default function ChatPanel({ open, onOpen, onClose }) {
     setInput("");
     scrollToBottom();
     setLoading(true);
-    let assistantText = "";
     setMessages(m => [...m, { role: "assistant", content: "" }]);
     try {
-      await chatWithAgent(selectedAgentId, updated, token || "", chunk => {
-        assistantText += chunk;
-        setMessages(m => {
-          const arr = [...m];
-          arr[arr.length - 1] = { role: "assistant", content: assistantText };
-          return arr;
-        });
-        scrollToBottom();
+      const assistantText = await chatWithAgent(
+        selectedAgentId,
+        updated,
+        token || ""
+      );
+      setMessages(m => {
+        const arr = [...m];
+        arr[arr.length - 1] = { role: "assistant", content: assistantText };
+        return arr;
       });
+      scrollToBottom();
     } catch {
       setMessages(m => [
         ...m.slice(0, -1),
@@ -127,7 +129,17 @@ export default function ChatPanel({ open, onOpen, onClose }) {
                       : "bg-white text-purple-800"
                   } rounded-xl px-3 py-2 shadow max-w-[80%] whitespace-pre-wrap`}
                 >
-                  {m.content}
+                  {loading &&
+                  idx === messages.length - 1 &&
+                  m.role === "assistant" &&
+                  m.content === "" ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="animate-spin w-4 h-4" />
+                      Wait a second, let me read about it...
+                    </span>
+                  ) : (
+                    m.content
+                  )}
                 </div>
               </div>
             ))}

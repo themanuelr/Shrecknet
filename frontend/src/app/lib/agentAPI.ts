@@ -51,8 +51,7 @@ export async function deleteAgent(id: number, token: string) {
 export async function chatWithAgent(
   agentId: number,
   messages: ChatMessage[],
-  token: string,
-  onToken?: (chunk: string) => void
+  token: string
 ) {
   const res = await fetch(`${API_URL}/agents/${agentId}/chat`, {
     method: "POST",
@@ -65,18 +64,8 @@ export async function chatWithAgent(
 
   if (!res.ok) throw await res.text();
 
-  const reader = res.body?.getReader();
-  if (!reader) return "";
-  const decoder = new TextDecoder();
-  let result = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value);
-    result += chunk;
-    onToken?.(chunk);
-  }
-  return result;
+  const data = await res.json();
+  return data.content || "";
 }
 
 export async function chatTest(
