@@ -4,10 +4,10 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useAgentById } from "../../lib/useAgentById";
-import { chatWithAgent, getChatHistory, clearChatHistory, ChatMessage, SourceLink } from "../../lib/agentAPI";
+import { chatWithAgent, getChatHistory, clearChatHistory, ChatMessage } from "../../lib/agentAPI";
 import { useAuth } from "../../components/auth/AuthProvider";
 import Image from "next/image";
-import Link from "next/link";
+import WikiLinkHoverCard from "../../components/editor/WikiLinkHoverCard";
 import { Loader2 } from "lucide-react";
 
 interface Message extends ChatMessage { time: Date }
@@ -96,12 +96,12 @@ export default function ElderChatPage() {
           </span>
         ))}
         {msg.sources && msg.sources.length > 0 && (
-          <ul className="mt-1 text-xs text-[var(--primary)] underline space-y-1">
+          <ul className="mt-1 text-xs space-y-1">
             {msg.sources.map((s) => (
               <li key={s.url}>
-                <Link href={s.url} className="wiki-link">
-                  {s.title}
-                </Link>
+                <WikiLinkHoverCard href={s.url}>
+                  {`<link ${s.title}>`}
+                </WikiLinkHoverCard>
               </li>
             ))}
           </ul>
