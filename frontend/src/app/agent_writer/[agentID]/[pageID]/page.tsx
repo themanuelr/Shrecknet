@@ -559,6 +559,24 @@ export default function PageAnalyze() {
                         </div>
                       )}
 
+                    {concepts && (
+                        (() => {
+                          const c = concepts.find((con: any) => con.id === generatedPages[activeGen].concept_id);
+                          return c ? (
+                            <div className="flex items-center gap-3 mb-4">
+                              <Image
+                                src={c.logo || "/images/default/concepts/logo.png"}
+                                alt={c.name}
+                                width={48}
+                                height={48}
+                                className="rounded border border-[var(--primary)] object-cover"
+                              />
+                              <span className="font-semibold text-lg text-[var(--primary)]">{c.name}</span>
+                            </div>
+                          ) : null;
+                        })()
+                      )}
+
                     <CreatePageForm
                         selectedWorld={world}
                         selectedConcept={concepts?.find((c: any) => c.id === generatedPages[activeGen].concept_id)}
