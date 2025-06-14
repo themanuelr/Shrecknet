@@ -1,8 +1,11 @@
 import { API_URL } from "./config";
 
+export type SourceLink = { title: string; url: string };
+
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
+  sources?: SourceLink[];
 };
 
 export async function getAgents(
@@ -73,7 +76,7 @@ export async function chatWithAgent(
   if (!res.ok) throw await res.text();
 
   const data = await res.json();
-  return data.content || "";
+  return data as { answer: string; sources: SourceLink[] };
 }
 
 export async function chatTest(

@@ -16,13 +16,15 @@ openai_model = settings.open_ai_model
 
 
 async def chat_with_agent(
-    session: AsyncSession, agent_id: int, messages: list[dict], n_results: int = 4
-) -> str:
-    """Return a full chat response using OpenAI with world and agent context."""
+    session: AsyncSession, agent_id: int, messages: list[dict], n_results: int = 5
+) -> dict:
+    """Return a chat response and source links using OpenAI with world and agent context."""
 
     agent = await session.get(Agent, agent_id)
     if not agent or agent.vector_db_update_date is None:
         raise ValueError("Agent unavailable")
+
+    n_results = max(n_results, 5)
 
     print (f" - AGENT CHAT: {agent.name}")
 
@@ -33,14 +35,17 @@ async def chat_with_agent(
     print (f" ---- Docs: {docs}")    
     print (f" ---- world: {world}")        
 
+    sources = []
     context_parts = []
     for d in docs:
         page_id = d.get("page_id")
         concept_id = d.get("concept_id")
+        title = d.get("title") or f"Page {page_id}" if page_id else "Unknown page"
         if page_id is None or concept_id is None:
             continue
-        link = f"Link for this page: /worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
-        context_parts.append(f"[{link}] {d['document']}")
+        url = f"/worlds/{agent.world_id}/concept/{concept_id}/page/{page_id}"
+        sources.append({"title": title, "url": url})
+        context_parts.append(f"[{title}]\n{d['document']}")
     context = "\n\n".join(context_parts)
       
 
@@ -58,8 +63,7 @@ async def chat_with_agent(
         f"World description: {world.description}\n"
         f"Personality: {personality}\n"
         "Use the following context and chat history to answer the user's question.\n"
-        "For every context, there is  [Link for this page] associated with it. \n"
-        "At the end of your message, always show this specific link of all pages you used to create your response!\n"
+        "Do not mention any links in your answer.\n"
         "If no relevant information is found in the documents, inform the user."
     )
 
@@ -84,12 +88,8 @@ async def chat_with_agent(
     graph = builder.compile()
 
     response = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
-    # print (f"RESPONSE: {response}")
-    # print (f"RESPONSE[0]: {response[0]}")
-    # print (f"RESPONSE[1]: {response[1].content}")
 
-
-    return response[1].content    
+    return {"answer": response[1].content, "sources": sources}
 
 
 from sqlalchemy.future import select

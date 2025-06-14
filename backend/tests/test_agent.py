@@ -16,7 +16,7 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
         vector_db_update_date = datetime.now(timezone.utc)
 
     async def fake_chat(session, agent_id, messages):
-        return "Hi"
+        return {"answer": "Hi", "sources": []}
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
@@ -26,7 +26,7 @@ async def test_chat_endpoint(async_client, create_user, login_and_get_token):
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
-        assert resp.json()["content"] == "Hi"
+        assert resp.json()["answer"] == "Hi"
 
 
 @pytest.mark.anyio
@@ -46,7 +46,7 @@ async def test_chat_history_saved(async_client, create_user, login_and_get_token
         vector_db_update_date = datetime.now(timezone.utc)
 
     async def fake_chat(session, agent_id, messages):
-        return "Hi"
+        return {"answer": "Hi", "sources": []}
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):
@@ -56,7 +56,7 @@ async def test_chat_history_saved(async_client, create_user, login_and_get_token
             headers={"Authorization": f"Bearer {token}"},
         )
     assert resp.status_code == 200
-    assert resp.json()["content"] == "Hi"
+    assert resp.json()["answer"] == "Hi"
 
     hist_file = tmp_path / str(user["id"]) / "1.json"
     with open(hist_file) as f:
@@ -91,7 +91,7 @@ async def test_clear_chat_history(async_client, create_user, login_and_get_token
         vector_db_update_date = datetime.now(timezone.utc)
 
     async def fake_chat(session, agent_id, messages):
-        return "Hi"
+        return {"answer": "Hi", "sources": []}
 
     with patch("app.api.api_agent.get_agent", return_value=FakeAgent()), \
          patch("app.api.api_agent.chat_with_agent", side_effect=fake_chat):

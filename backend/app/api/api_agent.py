@@ -44,14 +44,22 @@ async def chat(
     history = crud_chat_history.load_history(user.id, agent_id)
     user_msg = msgs[-1] if msgs else {"role": "user", "content": ""}
     chat_messages = history + [user_msg]
-    assistant_text = await chat_with_agent(session, agent_id, chat_messages)
+    assistant_resp = await chat_with_agent(session, agent_id, chat_messages)
 
     new_history = (
-        history + [user_msg, {"role": "assistant", "content": assistant_text}]
+        history
+        + [
+            user_msg,
+            {
+                "role": "assistant",
+                "content": assistant_resp["answer"],
+                "sources": assistant_resp["sources"],
+            },
+        ]
     )[-20:]
     crud_chat_history.save_history(user.id, agent_id, new_history)
 
-    return JSONResponse({"content": assistant_text})
+    return JSONResponse(assistant_resp)
 
 
 @router.get("/{agent_id}/history")
