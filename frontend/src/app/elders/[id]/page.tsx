@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useAgentById } from "../../lib/useAgentById";
-import { chatWithAgent, getChatHistory, clearChatHistory, ChatMessage } from "../../lib/agentAPI";
+import { chatWithAgent, getChatHistory, clearChatHistory, ChatMessage, SourceLink } from "../../lib/agentAPI";
 import { useAuth } from "../../components/auth/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
@@ -49,10 +49,14 @@ export default function ElderChatPage() {
     setLoading(true);
     setMessages(m => [...m, { role: "assistant", content: "", time: new Date() }]);
     try {
-      const assistantText = await chatWithAgent(id, updated.map(({role,content})=>({role,content})), token || "");
+      const { answer, sources } = await chatWithAgent(
+        id,
+        updated.map(({ role, content }) => ({ role, content })),
+        token || ""
+      );
       setMessages(m => {
         const arr = [...m];
-        arr[arr.length - 1] = { role: "assistant", content: assistantText, time: new Date() };
+        arr[arr.length - 1] = { role: "assistant", content: answer, sources, time: new Date() };
         return arr;
       });
       scrollToBottom();
@@ -81,27 +85,28 @@ export default function ElderChatPage() {
     }
   }
 
-  function renderMessageContent(text: string) {
-    const regex = /\[([^\]]+)\]\s*\n?\[Link for this page:\s*([^\]]+)\]/g;
-    const nodes: React.ReactNode[] = [];
-    let last = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > last) nodes.push(text.slice(last, match.index));
-      nodes.push(
-        <Link key={nodes.length} href={match[2]} className="wiki-link">
-          {match[1]}
-        </Link>
-      );
-      last = match.index + match[0].length;
-    }
-    if (last < text.length) nodes.push(text.slice(last));
-    return nodes.flatMap((n, i) =>
-      typeof n === "string"
-        ? n.split(/\n/).map((l, j) => (
-            <span key={`${i}-${j}`}>{l}{j < l.split(/\n/).length - 1 && <br />}</span>
-          ))
-        : [n]
+  function renderMessageContent(msg: ChatMessage) {
+    const lines = msg.content.split(/\n/);
+    return (
+      <>
+        {lines.map((l, i) => (
+          <span key={i}>
+            {l}
+            {i < lines.length - 1 && <br />}
+          </span>
+        ))}
+        {msg.sources && msg.sources.length > 0 && (
+          <ul className="mt-1 text-xs text-[var(--primary)] underline space-y-1">
+            {msg.sources.map((s) => (
+              <li key={s.url}>
+                <Link href={s.url} className="wiki-link">
+                  {s.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
     );
   }
 
@@ -134,7 +139,7 @@ export default function ElderChatPage() {
                     {loading && idx === messages.length - 1 && m.role === "assistant" && m.content === "" ? (
                       <span className="flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" /> Thinking...</span>
                     ) : (
-                      renderMessageContent(m.content)
+                      renderMessageContent(m)
                     )}
                     <div className="text-[10px] text-right text-[var(--foreground)]/50 mt-1">
                       {m.time.toLocaleTimeString()}

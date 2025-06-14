@@ -110,6 +110,7 @@ async def add_page(session: AsyncSession, page_id: int):
         "page_id": page.id,
         "gameworld_id": page.gameworld_id,
         "concept_id": page.concept_id,
+        "title": page.name,
     }
 
     # print (f" --- API VECTORDB - Adding this document: {document}")
