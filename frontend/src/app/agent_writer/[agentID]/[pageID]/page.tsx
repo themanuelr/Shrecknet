@@ -7,7 +7,9 @@ import { useAuth } from "../../../components/auth/AuthProvider";
 import { usePageById } from "../../../lib/usePageById";
 import { useAgentById } from "../../../lib/useAgentById";
 import { analyzePageWithAgent, generatePagesWithAgent } from "../../../lib/agentAPI";
-import { updatePage, createPage, getPagesForConcept } from "../../../lib/pagesAPI";
+import { updatePage, createPage, getPagesForConcept, getPage } from "../../../lib/pagesAPI";
+import { usePages } from "../../../lib/usePage";
+import { Combobox } from "@headlessui/react";
 import { useConcepts } from "../../../lib/useConcept";
 import { useWorld } from "../../../lib/useWorld";
 import CreatePageForm from "../../../components/create_page/CreatePageForm";
@@ -89,9 +91,11 @@ export default function PageAnalyze() {
   const [activeGen, setActiveGen] = useState(0);
   const [editingPage, setEditingPage] = useState<any | null>(null);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [pageFilters, setPageFilters] = useState<Record<number, string>>({});
 
   const { concepts } = useConcepts(agent?.world_id);
   const { world } = useWorld(agent?.world_id);
+  const { pages: allPages } = usePages(agent?.world_id ? { gameworld_id: agent.world_id } : {});
 
   // Helper: flavor text
   function getPersonality() {
@@ -141,7 +145,27 @@ export default function PageAnalyze() {
     setSelectedSuggestions((s) => {
       const copy = [...s];
       if (copy[idx]) {
-        copy[idx] = { ...copy[idx], concept_id: conceptId, concept: concept?.name || "" };
+        copy[idx] = { ...copy[idx], concept_id: conceptId, concept: concept?.name || "", target_page_id: undefined };
+      }
+      return copy;
+    });
+  }
+
+  function handleModeChange(idx: number, mode: string) {
+    setSelectedSuggestions((s) => {
+      const copy = [...s];
+      if (copy[idx]) {
+        copy[idx] = { ...copy[idx], mode, target_page_id: undefined };
+      }
+      return copy;
+    });
+  }
+
+  function handleTargetPageChange(idx: number, pageId: number) {
+    setSelectedSuggestions((s) => {
+      const copy = [...s];
+      if (copy[idx]) {
+        copy[idx] = { ...copy[idx], target_page_id: pageId };
       }
       return copy;
     });
@@ -150,6 +174,11 @@ export default function PageAnalyze() {
   // Remove a suggestion
   function handleRemove(idx: number) {
     setSelectedSuggestions((s) => s.filter((_, i) => i !== idx));
+    setPageFilters((f) => {
+      const copy = { ...f };
+      delete copy[idx];
+      return copy;
+    });
   }
 
   // Step 4: Generate final pages
@@ -159,11 +188,11 @@ export default function PageAnalyze() {
     setLoading(true);
     try {
       // Split into new and existing
-      const newPages = selectedSuggestions.filter((s) => !s.exists)
+      const newPages = selectedSuggestions.filter((s) => !s.exists && s.mode !== "update")
         .map((s) => ({ name: s.name, concept_id: s.concept_id }))
         .filter(Boolean);
-      const updatePages = selectedSuggestions.filter((s) => s.exists)
-        .map((s) => ({ name: s.name, concept_id: s.concept_id }))
+      const updatePages = selectedSuggestions.filter((s) => s.exists || s.mode === "update")
+        .map((s) => ({ name: s.name, concept_id: s.concept_id, target_page_id: s.target_page_id }))
         .filter(Boolean);
       
        let generatedNewPages = [];
@@ -180,8 +209,13 @@ export default function PageAnalyze() {
   
       // 2. Generate updated content for existing pages
       if (updatePages.length > 0) {
-        
-        const data = await generatePagesWithAgent(Number(agentID), Number(pageID), updatePages, token);
+
+        const data = await generatePagesWithAgent(
+          Number(agentID),
+          Number(pageID),
+          updatePages.map((u) => ({ name: u.name, concept_id: u.concept_id })),
+          token
+        );
         
         generatedUpdateSuggestions = data.pages;
         // console.log("Generated old: "+generatedUpdateSuggestions)
@@ -196,9 +230,13 @@ export default function PageAnalyze() {
         );
         
         // Fetch the actual current page data
-        const pages = await getPagesForConcept(upd.concept_id, token);
-        // console.log( "Current Page: " + JSON.stringify(pages))
-        const existing = pages.find((p: any) => p.name.toLowerCase() === upd.name.toLowerCase());
+        let existing: any = null;
+        if (upd.target_page_id) {
+          existing = await getPage(upd.target_page_id, token);
+        } else {
+          const pages = await getPagesForConcept(upd.concept_id, token);
+          existing = pages.find((p: any) => p.name.toLowerCase() === upd.name.toLowerCase());
+        }
 
         
         if (existing) {
@@ -342,6 +380,7 @@ export default function PageAnalyze() {
         <th className="py-1 px-2">Page Name</th>
         <th className="py-1 px-2">Concept</th>
         <th className="py-1 px-2">Status</th>
+        <th className="py-1 px-2">Action</th>
         <th className="py-1 px-2 text-right">
           <button
             disabled={selectedRows.length === 0}
@@ -399,6 +438,46 @@ export default function PageAnalyze() {
               {s.exists ? "Update" : "New"}
             </span>
           </td>
+          <td className="py-1 px-2">
+            {s.exists ? (
+              <span className="text-xs">Update Existing</span>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <select
+                  className="px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
+                  value={s.mode || "create"}
+                  onChange={e => handleModeChange(idx, e.target.value)}
+                >
+                  <option value="create">Create New</option>
+                  <option value="update">Add Updates</option>
+                </select>
+                {s.mode === "update" && (
+                  <Combobox value={s.target_page_id ?? ""} onChange={val => handleTargetPageChange(idx, val)}>
+                    <div className="relative">
+                      <Combobox.Input
+                        className="w-full rounded border border-[var(--primary)] px-2 py-1 bg-[var(--surface)] text-[var(--foreground)]"
+                        placeholder="Search page..."
+                        onChange={e => setPageFilters(f => ({ ...f, [idx]: e.target.value }))}
+                        displayValue={(id: number) => {
+                          const p = allPages.find(p => p.id === id);
+                          return p ? p.name : "";
+                        }}
+                      />
+                      <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-xl bg-[var(--surface)] shadow-lg z-20 border border-[var(--primary)]">
+                        {allPages
+                          .filter(p => p.concept_id === s.concept_id && p.name.toLowerCase().includes((pageFilters[idx] || "").toLowerCase()))
+                          .map(page => (
+                            <Combobox.Option key={page.id} value={page.id} className="px-2 py-1 cursor-pointer hover:bg-[var(--accent)]/20">
+                              {page.name}
+                            </Combobox.Option>
+                          ))}
+                      </Combobox.Options>
+                    </div>
+                  </Combobox>
+                )}
+              </div>
+            )}
+          </td>
           <td className="py-1 px-2 text-right">
             <button
               onClick={() => {
@@ -413,7 +492,7 @@ export default function PageAnalyze() {
         </tr>
       ))}
       {selectedSuggestions.length === 0 && (
-        <tr><td colSpan={5} className="text-center py-2">No legends remain. Go back and review!</td></tr>
+        <tr><td colSpan={6} className="text-center py-2">No legends remain. Go back and review!</td></tr>
       )}
     </tbody>
   </table>
@@ -427,7 +506,7 @@ export default function PageAnalyze() {
                   </button>
                   <button
                       onClick={handleGenerate}
-                      disabled={loading}
+                      disabled={loading || selectedSuggestions.some(s => s.mode === "update" && !s.target_page_id)}
                       className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] font-bold shadow hover:bg-[var(--accent)] transition disabled:opacity-50"
                     >
                       {loading ? (
