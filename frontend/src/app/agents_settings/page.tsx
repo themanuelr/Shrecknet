@@ -20,6 +20,8 @@ export default function AgentsSettingsPage() {
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [success, setSuccess] = useState("");
   const [updatingAgentId, setUpdatingAgentId] = useState<number | null>(null);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<string[]>([]);
 
   if (!hasRole(user?.role, "world builder") && !hasRole(user?.role, "system admin")) {
     return (
@@ -81,6 +83,29 @@ export default function AgentsSettingsPage() {
     }
   }
 
+  async function handleRebuildAll() {
+    const conversational = agents.filter(a => a.task === "conversational");
+    const worldIds = Array.from(new Set(conversational.map(a => a.world_id)));
+    if (worldIds.length === 0) return;
+    setBulkUpdating(true);
+    setBulkStatus([]);
+    for (const wid of worldIds) {
+      const worldName = worlds.find(w => w.id === wid)?.name || `World ${wid}`;
+      setBulkStatus(s => [...s, `Updating ${worldName}...`]);
+      try {
+        const res = await rebuildVectorDB(token || "", wid);
+        setBulkStatus(s => [
+          ...s,
+          `✅ ${worldName}: ${res.pages_indexed} pages indexed.`,
+        ]);
+      } catch (err) {
+        setBulkStatus(s => [...s, `❌ ${worldName}: failed to update.`]);
+      }
+    }
+    mutate();
+    setBulkUpdating(false);
+  }
+
   return (
     <AuthGuard>
       <DashboardLayout>
@@ -90,12 +115,21 @@ export default function AgentsSettingsPage() {
               <h1 className="text-xl sm:text-2xl font-serif font-bold text-[var(--primary)] tracking-tight">
                 Agents Settings
               </h1>
-              <button
-                className="px-4 py-2 rounded-xl font-bold bg-[var(--primary)] text-[var(--primary-foreground)] shadow"
-                onClick={handleCreate}
-              >
-                + Add Agent
-              </button>
+              <div className="flex gap-3">
+                <button
+                  className="px-4 py-2 rounded-xl font-bold bg-[var(--primary)] text-[var(--primary-foreground)] shadow"
+                  onClick={handleCreate}
+                >
+                  + Add Agent
+                </button>
+                <button
+                  className="px-4 py-2 rounded-xl font-bold border border-[var(--primary)] text-[var(--primary)] shadow"
+                  onClick={handleRebuildAll}
+                  disabled={bulkUpdating}
+                >
+                  {bulkUpdating ? "Updating..." : "Update All Vectors"}
+                </button>
+              </div>
             </div>
             <input
               className="px-4 py-2 rounded-xl border border-[var(--primary)] bg-[var(--card-bg)] text-[var(--foreground)] placeholder-[var(--primary)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-base mb-6 w-full"
@@ -106,6 +140,13 @@ export default function AgentsSettingsPage() {
             {success && (
               <div className="bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded-xl shadow mb-4 text-sm">
                 {success}
+              </div>
+            )}
+            {bulkStatus.length > 0 && (
+              <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2 mb-4 text-sm space-y-1">
+                {bulkStatus.map((msg, i) => (
+                  <div key={i}>{msg}</div>
+                ))}
               </div>
             )}
             {isLoading ? (
