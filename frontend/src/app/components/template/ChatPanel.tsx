@@ -5,12 +5,11 @@ import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useAgents } from "../../lib/useAgents";
 import { useAuth } from "../auth/AuthProvider";
-import Link from "next/link";
+import WikiLinkHoverCard from "../editor/WikiLinkHoverCard";
 import {
   chatWithAgent,
   ChatMessage,
   getChatHistory,
-  SourceLink,
 } from "../../lib/agentAPI";
 
 export default function ChatPanel({ open, onOpen, onClose }) {
@@ -95,10 +94,12 @@ export default function ChatPanel({ open, onOpen, onClose }) {
           </span>
         ))}
         {msg.sources && msg.sources.length > 0 && (
-          <ul className="mt-1 text-xs text-purple-600 underline space-y-1">
+          <ul className="mt-1 text-xs space-y-1">
             {msg.sources.map((s) => (
               <li key={s.url}>
-                <Link href={s.url}>{s.title}</Link>
+                <WikiLinkHoverCard href={s.url}>
+                  {`<link ${s.title}>`}
+                </WikiLinkHoverCard>
               </li>
             ))}
           </ul>
