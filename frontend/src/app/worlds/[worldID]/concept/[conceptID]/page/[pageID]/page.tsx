@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthGuard from "@/app/components/auth/AuthGuard";
 import DashboardLayout from "@/app/components/DashboardLayout";
 import { useAuth } from "@/app/components/auth/AuthProvider";
@@ -81,8 +81,19 @@ export default function PageView() {
   const { characteristics, isLoading: charsLoading } = useCharacteristicsForConcept(page?.concept_id);
 
   const { agents } = useAgents(page?.gameworld_id);
-  
+
   const loading = pageLoading || conceptLoading || worldLoading || worldsLoading || conceptsLoading || charsLoading;
+
+  // If there is no main content, default to showing the Notes tab
+  useEffect(() => {
+    if (
+      page &&
+      (!page.content || page.content.trim() === "") &&
+      activeTab === "content"
+    ) {
+      setActiveTab("notes");
+    }
+  }, [page]);
 
 
   const getSectionValues = (type) => {
