@@ -202,6 +202,7 @@ export default function CreatePage() {
                         router.push(`/worlds/${selectedWorld.id}/concept/${selectedConcept.id}/page/${page.id}`);
                       }}
                       token={token}
+                      mode="create"
                     />
                   </motion.div>
                 )}
