@@ -23,7 +23,7 @@ export default function AgentGrid({
           className="relative bg-[var(--card-bg)] rounded-2xl border border-[var(--border)] shadow-xl flex flex-col items-center p-6"
         >
           <Image
-            src={agent.logo || "/images/default/avatars/logo.png"}
+            src={agent.logo || "/uploads/default/avatars/logo.png"}
             alt={agent.name}
             width={400}
             height={400}

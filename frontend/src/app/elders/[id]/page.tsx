@@ -100,7 +100,7 @@ export default function ElderChatPage() {
             {msg.sources.map((s) => (
               <li key={s.url}>
                 <WikiLinkHoverCard href={s.url}>
-                  {`<link ${s.title}>`}
+                  {`${s.title}`}
                 </WikiLinkHoverCard>
               </li>
             ))}
