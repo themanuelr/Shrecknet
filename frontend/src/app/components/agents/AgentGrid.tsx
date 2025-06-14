@@ -13,6 +13,7 @@ export default function AgentGrid({
   onDelete: (a: any) => void;
   onRebuild: (a: any) => void;
   updatingAgentId?: number | null;
+
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -34,7 +35,7 @@ export default function AgentGrid({
           <div className="text-xs text-[var(--foreground)]/70 mb-2">
             World ID: {agent.world_id}
           </div>
-          {agent.vector_db_update_date && (
+          {agent.vector_db_update_date && agent.task === "conversational" && (
             <div className="text-xs text-[var(--foreground)]/70 mb-2">
               Vector DB updated: {new Date(agent.vector_db_update_date).toLocaleString()}
             </div>
@@ -53,7 +54,9 @@ export default function AgentGrid({
               Delete
             </button>
           </div>
-          {agent.task === "conversational" && (
+          {console.log("agent task:"+agent.task)}
+          {          
+          agent.task === "conversational" && (
             updatingAgentId === agent.id ? (
               <div className="mt-3 flex items-center gap-2 text-sm text-[var(--primary)]">
                 <Loader2 className="w-4 h-4 animate-spin" />
