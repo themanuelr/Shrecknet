@@ -19,6 +19,12 @@ def _migrate(conn):
 
     inspector = inspect(conn)
     columns = [c["name"] for c in inspector.get_columns("agent")]
+    if "task" not in columns:
+        conn.execute(text("ALTER TABLE agent ADD COLUMN task TEXT"))
+    if "logo" not in columns:
+        conn.execute(text("ALTER TABLE agent ADD COLUMN logo TEXT"))
+    if "personality" not in columns:
+        conn.execute(text("ALTER TABLE agent ADD COLUMN personality TEXT"))
     if "vector_db_update_date" not in columns:
         conn.execute(text("ALTER TABLE agent ADD COLUMN vector_db_update_date DATETIME"))
 
