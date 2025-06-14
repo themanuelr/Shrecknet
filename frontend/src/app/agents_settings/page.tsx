@@ -19,7 +19,7 @@ export default function AgentsSettingsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [success, setSuccess] = useState("");
-  const [vdbLoading, setVdbLoading] = useState(false);
+  const [updatingAgentId, setUpdatingAgentId] = useState<number | null>(null);
 
   if (!hasRole(user?.role, "world builder") && !hasRole(user?.role, "system admin")) {
     return (
@@ -58,7 +58,7 @@ export default function AgentsSettingsPage() {
   }
 
   async function handleRebuild(agent) {
-    setVdbLoading(true);
+    setUpdatingAgentId(agent.id);
     try {
       const pages = await getPagesForWorld(agent.world_id, token || "");
       const pageCount = pages.length;
@@ -67,7 +67,7 @@ export default function AgentsSettingsPage() {
         `Rebuilding the vector DB will add ${pageCount} pages and may take around ${estimated} seconds. Continue?`
       );
       if (!proceed) {
-        setVdbLoading(false);
+        setUpdatingAgentId(null);
         return;
       }
       const res = await rebuildVectorDB(token || "", agent.world_id);
@@ -76,7 +76,7 @@ export default function AgentsSettingsPage() {
     } catch (err) {
       setSuccess("Failed to rebuild vector DB");
     } finally {
-      setVdbLoading(false);
+      setUpdatingAgentId(null);
       setTimeout(() => setSuccess(""), 2000);
     }
   }
@@ -121,6 +121,7 @@ export default function AgentsSettingsPage() {
                   setModalOpen(true);
                 }}
                 onRebuild={handleRebuild}
+                updatingAgentId={updatingAgentId}
               />
             )}
           </div>
