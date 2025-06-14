@@ -1,6 +1,19 @@
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
-export default function AgentGrid({ agents, onEdit, onDelete, onRebuild }) {
+export default function AgentGrid({
+  agents,
+  onEdit,
+  onDelete,
+  onRebuild,
+  updatingAgentId,
+}: {
+  agents: any[];
+  onEdit: (a: any) => void;
+  onDelete: (a: any) => void;
+  onRebuild: (a: any) => void;
+  updatingAgentId?: number | null;
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {agents.map(agent => (
@@ -40,12 +53,21 @@ export default function AgentGrid({ agents, onEdit, onDelete, onRebuild }) {
               Delete
             </button>
           </div>
-          <button
-            className="mt-3 px-4 py-1 rounded-lg border border-[var(--primary)] text-[var(--primary)] text-sm hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition"
-            onClick={() => onRebuild(agent)}
-          >
-            Update Vector DB
-          </button>
+          {agent.task === "conversational" && (
+            updatingAgentId === agent.id ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-[var(--primary)]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Wait, I am updating the vector db...
+              </div>
+            ) : (
+              <button
+                className="mt-3 px-4 py-1 rounded-lg border border-[var(--primary)] text-[var(--primary)] text-sm hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition"
+                onClick={() => onRebuild(agent)}
+              >
+                Update Vector DB
+              </button>
+            )
+          )}
         </div>
       ))}
     </div>
