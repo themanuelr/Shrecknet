@@ -38,6 +38,39 @@ export default function AgentWriterPage() {
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const { jobs: writerJobs } = useWriterJobs();
+  const [completedJobs, setCompletedJobs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("writer_completed_jobs");
+    if (stored) {
+      try {
+        setCompletedJobs(JSON.parse(stored));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  const markJobCompleted = (job: any) => {
+    const entry = {
+      job_id: job.job_id || job.id,
+      agent_id: job.agent_id,
+      page_id: job.page_id,
+      page_name: pages.find((p) => p.id === job.page_id)?.name || (job.pages ? job.pages.join(', ') : ''),
+      job_type: job.job_type || 'bulk_analyze',
+      start_time: job.start_time,
+      end_time: job.end_time,
+      completed_at: new Date().toISOString(),
+    };
+    const filtered = completedJobs.filter((j) => j.job_id !== entry.job_id);
+    const updated = [...filtered, entry];
+    saveCompleted(updated);
+  };
+
+  const saveCompleted = (data: any[]) => {
+    setCompletedJobs(data);
+    localStorage.setItem("writer_completed_jobs", JSON.stringify(data));
+  };
 
 
   useEffect(() => {
@@ -120,6 +153,17 @@ export default function AgentWriterPage() {
   const conceptMap: Record<number, any> = {};
   concepts.forEach(c => { conceptMap[c.id] = c; });
 
+  const pageMap: Record<number, any> = {};
+  pages.forEach(p => { pageMap[p.id] = p; });
+
+  const agentWriterJobs = writerJobs.filter(j => j.agent_id === selectedAgent.id);
+  const runningJobs = agentWriterJobs.filter(j => j.status !== 'done');
+  const waitingJobs = agentWriterJobs.filter(j => j.status === 'done' && !completedJobs.find(c => c.job_id === j.job_id));
+  const doneJobs = completedJobs
+    .filter(c => c.agent_id === selectedAgent.id)
+    .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())
+    .slice(0, 3);
+
   let filtered = pages.filter(
     p => p.name?.toLowerCase().includes(search.toLowerCase()) && p.content && p.content.trim() !== ""
   );
@@ -166,33 +210,66 @@ export default function AgentWriterPage() {
               </button>
             </div>
 
-            {jobs.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-900">
-                {jobs.map(job => (
-                  <div key={job.id} className="mb-1">
-                    {job.status !== "done" ? (
-                      <>I am currently occupied creating suggestions for these pages: {job.pages.join(", ")}...</>
-                    ) : (
-                      <>Suggestions ready for {job.pages.join(", ")} - <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.id}`}>review these pages</Link></>
+            {(runningJobs.length > 0 || waitingJobs.length > 0 || doneJobs.length > 0) && (
+              <div className="overflow-x-auto border border-[var(--border)] rounded-xl bg-[var(--card)] shadow-sm">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[var(--primary)]">
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Page</th>
+                      <th className="p-2">Type</th>
+                      <th className="p-2">Started</th>
+                      <th className="p-2">Ended</th>
+                      <th className="p-2">Duration</th>
+                      <th className="p-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {runningJobs.map(job => (
+                      <tr key={job.job_id} className="border-t border-[var(--border)]">
+                        <td className="p-2 text-yellow-600">Running</td>
+                        <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
+                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">-</td>
+                        <td className="p-2">-</td>
+                        <td className="p-2"></td>
+                      </tr>
+                    ))}
+                    {waitingJobs.map(job => (
+                      <tr key={job.job_id} className="border-t border-[var(--border)]">
+                        <td className="p-2 text-blue-600">Waiting Review</td>
+                        <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
+                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
+                        <td className="p-2">
+                          {job.job_type === 'analyze_page' ? (
+                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review suggestions</Link>
+                          ) : (
+                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review pages</Link>
+                          )}
+                          <button onClick={() => markJobCompleted(job)} className="ml-2 text-xs text-[var(--foreground)] border border-[var(--border)] px-2 py-1 rounded">Mark done</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {doneJobs.map(job => (
+                      <tr key={job.job_id} className="border-t border-[var(--border)] text-[var(--muted-foreground)]">
+                        <td className="p-2">Done</td>
+                        <td className="p-2">{job.page_name}</td>
+                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
+                        <td className="p-2"></td>
+                      </tr>
+                    ))}
+                    {runningJobs.length === 0 && waitingJobs.length === 0 && doneJobs.length === 0 && (
+                      <tr><td colSpan={7} className="p-2 text-center">No jobs</td></tr>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {writerJobs.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-900 mt-2">
-                {writerJobs.map(job => (
-                  <div key={job.job_id} className="mb-1">
-                    {job.status !== "done" ? (
-                      <>Processing {job.job_type} for page {job.page_id}...</>
-                    ) : job.job_type === "analyze_page" ? (
-                      <>Suggestions ready - <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review suggestions</Link></>
-                    ) : (
-                      <>Pages generated - <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review pages</Link></>
-                    )}
-                  </div>
-                ))}
+                  </tbody>
+                </table>
               </div>
             )}
 
