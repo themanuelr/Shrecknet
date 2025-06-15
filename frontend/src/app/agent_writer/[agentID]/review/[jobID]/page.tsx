@@ -1,16 +1,16 @@
 "use client";
 import { useParams } from "next/navigation";
-import DashboardLayout from "../../../components/DashboardLayout";
-import AuthGuard from "../../../components/auth/AuthGuard";
-import { useAuth } from "../../../components/auth/AuthProvider";
+import DashboardLayout from "@/app/components/DashboardLayout";
+import AuthGuard from "@/app/components/auth/AuthGuard";
+import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useState } from "react";
-import { getWriterJob } from "../../../lib/agentAPI";
-import { useAgentById } from "../../../lib/useAgentById";
-import { useConcepts } from "../../../lib/useConcept";
-import { useWorld } from "../../../lib/useWorld";
+import { getWriterJob } from "@/app/lib/agentAPI";
+import { useAgentById } from "@/app/lib/useAgentById";
+import { useConcepts } from "@/app/lib/useConcept";
+import { useWorld } from "@/app/lib/useWorld";
 import { Loader2 } from "lucide-react";
-import { getPage, getPagesForConcept, updatePage, createPage } from "../../../lib/pagesAPI";
-import CreatePageForm from "../../../components/create_page/CreatePageForm";
+import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
+import CreatePageForm from "@/app/components/create_page/CreatePageForm";
 import Image from "next/image";
 import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 

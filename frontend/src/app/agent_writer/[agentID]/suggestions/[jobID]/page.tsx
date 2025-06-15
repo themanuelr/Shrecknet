@@ -1,19 +1,16 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import DashboardLayout from "../../../components/DashboardLayout";
-import AuthGuard from "../../../components/auth/AuthGuard";
-import { useAuth } from "../../../components/auth/AuthProvider";
+import DashboardLayout from "@/app/components/DashboardLayout";
+import AuthGuard from "@/app/components/auth/AuthGuard";
+import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import SuggestionCard from "../../../components/agents/SuggestionCard";
-import {
-  getWriterJob,
-  startGenerateJob,
-} from "../../../lib/agentAPI";
-import { useAgentById } from "../../../lib/useAgentById";
-import { useConcepts } from "../../../lib/useConcept";
-import { useWorld } from "../../../lib/useWorld";
-import { usePages } from "../../../lib/usePage";
+import SuggestionCard from "@/app/components/agents/SuggestionCard";
+import { getWriterJob,startGenerateJob } from "@/app/lib/agentAPI";
+import { useAgentById } from "@/app/lib/useAgentById";
+import { useConcepts } from "@/app/lib/useConcept";
+import { useWorld } from "@/app/lib/useWorld";
+import { usePages } from "@/app/lib/usePage";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 
