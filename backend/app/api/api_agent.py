@@ -317,6 +317,8 @@ async def analyze_page_job_endpoint(
 
 class GenerateJobRequest(BaseModel):
     pages: List[dict]
+    suggestions: Optional[List[dict]] = None
+    merge_groups: Optional[List[List[str]]] = None
 
 
 @router.post("/{agent_id}/pages/{page_id}/generate_job")
@@ -336,14 +338,26 @@ async def generate_pages_job_endpoint(
     job_dir.mkdir(parents=True, exist_ok=True)
     job_path = job_dir / f"{job_id}.json"
     with open(job_path, "w") as f:
-        json.dump({
-            "status": "queued",
-            "agent_id": agent_id,
-            "page_id": page_id,
-            "job_type": "generate_pages",
-        }, f)
+        json.dump(
+            {
+                "status": "queued",
+                "agent_id": agent_id,
+                "page_id": page_id,
+                "job_type": "generate_pages",
+                "merge_groups": payload.merge_groups or [],
+                "suggestions": payload.suggestions or [],
+            },
+            f,
+        )
 
-    task_generate_pages_job.delay(agent_id, page_id, payload.pages, job_id)
+    task_generate_pages_job.delay(
+        agent_id,
+        page_id,
+        payload.pages,
+        job_id,
+        payload.merge_groups or [],
+        payload.suggestions or [],
+    )
     return {"job_id": job_id}
 
 
