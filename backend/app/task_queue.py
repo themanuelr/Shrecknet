@@ -109,7 +109,19 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                     }, ff)
                 return
 
-            count = await crud_vectordb.rebuild_world(session, agent.world_id)
+            try:
+                count = await crud_vectordb.rebuild_world(session, agent.world_id)
+            except Exception as exc:  # pragma: no cover - defensive
+                with open(job_path, "w") as ff:
+                    json.dump(
+                        {
+                            "status": "error",
+                            "error": str(exc),
+                            "start_time": start_time,
+                        },
+                        ff,
+                    )
+                raise
 
         end_time = datetime.now(timezone.utc).isoformat()
         with open(job_path, "w") as f:
