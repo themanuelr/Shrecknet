@@ -167,3 +167,41 @@ async def generate_pages(session: AsyncSession, agent: Agent, page: Page, page_s
         })
         print (f" -- GENERATING PAGE! + {generated}")
     return {"pages": generated}
+
+
+async def analyze_pages_bulk(
+    session: AsyncSession, agent: Agent, pages: List[Page]
+) -> List[dict]:
+    """Analyze multiple pages and merge suggestions by fuzzy page name."""
+
+    all_suggestions: List[dict] = []
+    for page in pages:
+        result = await analyze_page(session, agent, page)
+        for s in result.get("suggestions", []):
+            s["source_page_id"] = page.id
+            s["source_page_name"] = page.name
+            s["source_page_updated"] = (
+                page.updated_at.isoformat() if page.updated_at else ""
+            )
+            all_suggestions.append(s)
+
+    def _similar(a: str, b: str) -> bool:
+        from difflib import SequenceMatcher
+
+        return SequenceMatcher(None, a.lower(), b.lower()).ratio() >= 0.6
+
+    merged: List[dict] = []
+    for sugg in all_suggestions:
+        found = None
+        for m in merged:
+            if _similar(m["name"], sugg["name"]):
+                found = m
+                break
+        if found:
+            cur_dt = sugg.get("source_page_updated", "")
+            if cur_dt and cur_dt > found.get("source_page_updated", ""):
+                found.update(sugg)
+        else:
+            merged.append(sugg)
+
+    return merged

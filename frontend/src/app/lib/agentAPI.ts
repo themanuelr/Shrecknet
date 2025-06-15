@@ -143,3 +143,28 @@ export async function generatePagesWithAgent(
   if (!res.ok) throw await res.text();
   return await res.json();
 }
+
+export async function startBulkAnalyze(
+  agentId: number,
+  pageIds: number[],
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/bulk_analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ page_ids: pageIds }),
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function getBulkJob(jobId: string, token: string) {
+  const res = await fetch(`${API_URL}/agents/bulk_jobs/${jobId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
