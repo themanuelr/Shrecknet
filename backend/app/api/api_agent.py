@@ -94,6 +94,35 @@ async def list_vector_jobs():
         jobs.append(data)
     return jobs
 
+
+@router.get("/writer_jobs/{job_id}")
+async def writer_job_status(job_id: str):
+    from pathlib import Path
+    from app.config import settings
+
+    job_path = Path(settings.writer_job_dir) / f"{job_id}.json"
+    if not job_path.is_file():
+        raise HTTPException(status_code=404, detail="Job not found")
+    with open(job_path) as f:
+        data = json.load(f)
+    return data
+
+
+@router.get("/writer_jobs")
+async def list_writer_jobs():
+    from pathlib import Path
+    from app.config import settings
+
+    job_dir = Path(settings.writer_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    jobs = []
+    for p in job_dir.glob("*.json"):
+        with open(p) as f:
+            data = json.load(f)
+        data["job_id"] = p.stem
+        jobs.append(data)
+    return jobs
+
 @router.post("/{agent_id}/chat")
 async def chat(
     agent_id: int,
@@ -253,6 +282,69 @@ async def generate_pages_endpoint(
 
     result = await generate_pages(session, agent, page, payload.pages)
     return result
+
+
+class AnalyzeJobRequest(BaseModel):
+    pass
+
+
+@router.post("/{agent_id}/pages/{page_id}/analyze_job")
+async def analyze_page_job_endpoint(
+    agent_id: int,
+    page_id: int,
+    user: User = Depends(get_current_user),
+):
+    from uuid import uuid4
+    from pathlib import Path
+    from app.config import settings
+    from app.task_queue import task_analyze_page_job
+
+    job_id = uuid4().hex
+    job_dir = Path(settings.writer_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    job_path = job_dir / f"{job_id}.json"
+    with open(job_path, "w") as f:
+        json.dump({
+            "status": "queued",
+            "agent_id": agent_id,
+            "page_id": page_id,
+            "job_type": "analyze_page",
+        }, f)
+
+    task_analyze_page_job.delay(agent_id, page_id, job_id)
+    return {"job_id": job_id}
+
+
+class GenerateJobRequest(BaseModel):
+    pages: List[dict]
+
+
+@router.post("/{agent_id}/pages/{page_id}/generate_job")
+async def generate_pages_job_endpoint(
+    agent_id: int,
+    page_id: int,
+    payload: GenerateJobRequest,
+    user: User = Depends(get_current_user),
+):
+    from uuid import uuid4
+    from pathlib import Path
+    from app.config import settings
+    from app.task_queue import task_generate_pages_job
+
+    job_id = uuid4().hex
+    job_dir = Path(settings.writer_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    job_path = job_dir / f"{job_id}.json"
+    with open(job_path, "w") as f:
+        json.dump({
+            "status": "queued",
+            "agent_id": agent_id,
+            "page_id": page_id,
+            "job_type": "generate_pages",
+        }, f)
+
+    task_generate_pages_job.delay(agent_id, page_id, payload.pages, job_id)
+    return {"job_id": job_id}
 
 
 class BulkAnalyzeRequest(BaseModel):
