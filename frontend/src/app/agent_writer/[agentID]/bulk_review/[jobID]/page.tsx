@@ -1,10 +1,10 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import DashboardLayout from "../../../components/DashboardLayout";
-import AuthGuard from "../../../components/auth/AuthGuard";
-import { useAuth } from "../../../components/auth/AuthProvider";
-import { getBulkJob } from "../../../lib/agentAPI";
+import DashboardLayout from "@/app/components/DashboardLayout";
+import AuthGuard from "@/app/components/auth/AuthGuard";
+import { useAuth } from "@/app/components/auth/AuthProvider";
+import { getBulkJob } from "@/app/lib/agentAPI";
 
 export default function BulkReview() {
   const { agentID, jobID } = useParams();
