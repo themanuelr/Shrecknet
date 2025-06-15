@@ -1,6 +1,9 @@
 import os
 import asyncio
 from celery import Celery
+import multiprocessing
+multiprocessing.set_start_method("spawn", force=True)
+
 
 celery_app = Celery(
     'shrecknet',
