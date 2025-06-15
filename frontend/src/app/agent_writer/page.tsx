@@ -10,6 +10,10 @@ import { usePages } from "../lib/usePage";
 import { useConcepts } from "../lib/useConcept";
 import { startBulkAnalyze, getBulkJob, startAnalyzeJob } from "../lib/agentAPI";
 import { useWriterJobs } from "../lib/useWriterJobs";
+import {
+  loadCompletedJobs as loadCompletedWriterJobs,
+  markWriterJobCompleted,
+} from "../lib/writerJobsStorage";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -20,6 +24,11 @@ const AGENT_PERSONALITIES: Record<string, string> = {
   "Chronicle": "“Let us chronicle your world for generations of adventurers!”",
   // fallback or generic:
   "default": "“I will help you turn knowledge into stories!”"
+};
+
+const JOB_LABELS: Record<string, string> = {
+  analyze_page: "Suggest Pages",
+  generate_pages: "Update/Create Pages",
 };
 
 export default function AgentWriterPage() {
@@ -41,35 +50,15 @@ export default function AgentWriterPage() {
   const [completedJobs, setCompletedJobs] = useState<any[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("writer_completed_jobs");
-    if (stored) {
-      try {
-        setCompletedJobs(JSON.parse(stored));
-      } catch {
-        /* ignore */
-      }
-    }
+    setCompletedJobs(loadCompletedWriterJobs());
   }, []);
 
   const markJobCompleted = (job: any) => {
-    const entry = {
-      job_id: job.job_id || job.id,
-      agent_id: job.agent_id,
-      page_id: job.page_id,
-      page_name: pages.find((p) => p.id === job.page_id)?.name || (job.pages ? job.pages.join(', ') : ''),
-      job_type: job.job_type || 'bulk_analyze',
-      start_time: job.start_time,
-      end_time: job.end_time,
-      completed_at: new Date().toISOString(),
-    };
-    const filtered = completedJobs.filter((j) => j.job_id !== entry.job_id);
-    const updated = [...filtered, entry];
-    saveCompleted(updated);
-  };
-
-  const saveCompleted = (data: any[]) => {
-    setCompletedJobs(data);
-    localStorage.setItem("writer_completed_jobs", JSON.stringify(data));
+    const pageName =
+      pages.find((p) => p.id === job.page_id)?.name ||
+      (job.pages ? job.pages.join(', ') : '');
+    const updated = markWriterJobCompleted(job, pageName);
+    setCompletedJobs(updated);
   };
 
 
@@ -229,7 +218,7 @@ export default function AgentWriterPage() {
                       <tr key={job.job_id} className="border-t border-[var(--border)]">
                         <td className="p-2 text-yellow-600">Running</td>
                         <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
-                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">-</td>
                         <td className="p-2">-</td>
@@ -240,7 +229,7 @@ export default function AgentWriterPage() {
                       <tr key={job.job_id} className="border-t border-[var(--border)]">
                         <td className="p-2 text-blue-600">Waiting Review</td>
                         <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
-                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
@@ -258,7 +247,7 @@ export default function AgentWriterPage() {
                       <tr key={job.job_id} className="border-t border-[var(--border)] text-[var(--muted-foreground)]">
                         <td className="p-2">Done</td>
                         <td className="p-2">{job.page_name}</td>
-                        <td className="p-2">{job.job_type}</td>
+                        <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>

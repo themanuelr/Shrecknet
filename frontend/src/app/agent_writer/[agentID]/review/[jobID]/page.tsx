@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { getPage, getPagesForConcept, updatePage, createPage } from "../../../lib/pagesAPI";
 import CreatePageForm from "../../../components/create_page/CreatePageForm";
 import Image from "next/image";
+import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 
 function buildMergeGroups(suggestions: any[]) {
   const graph = new Map<string, Set<string>>();
@@ -52,6 +53,13 @@ export default function ReviewPage() {
   const { agent } = useAgentById(Number(agentID));
   const { concepts } = useConcepts(agent?.world_id);
   const { world } = useWorld(agent?.world_id);
+
+  useEffect(() => {
+    if (job && generatedPages.length === 0) {
+      const pageName = job.pages ? job.pages.map((p: any) => p.name).join(', ') : '';
+      markWriterJobCompleted(job as any, pageName);
+    }
+  }, [generatedPages, job]);
 
   useEffect(() => {
     if (!jobID || !token) return;
@@ -203,7 +211,14 @@ export default function ReviewPage() {
                           token
                         );
                       }
-                      setGeneratedPages((g) => g.filter((_, i) => i !== idx));
+                      setGeneratedPages((g) => {
+                        const updated = g.filter((_, i) => i !== idx);
+                        if (updated.length === 0) {
+                          const pageName = g.map((pg) => pg.name).join(', ');
+                          markWriterJobCompleted(job as any, pageName);
+                        }
+                        return updated;
+                      });
                     }}
                   />
                 </div>
