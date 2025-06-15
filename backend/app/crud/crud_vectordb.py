@@ -45,17 +45,28 @@ _client = chromadb.PersistentClient(path=_db_path)
 
 def _delete_collection(name: str) -> None:
     """Delete a Chroma collection by name if it exists."""
+    print (f" --- DELETING COLLECTION!")
     try:
+        print (f" --- TRYING TO DELETING COLLECTION!")
         if hasattr(_client, "delete_collection"):
+            print (f" --- HAS ATTRIBUTE!")
             try:
+                print (f" --- LAST TRIAL FOR THE DELETING!")
                 _client.delete_collection(name)  # type: ignore[arg-type]
+                print (f" --- DELETED!")
             except TypeError:
                 # some versions require a keyword argument
+                print (f" --- WE NEEDED THE TYPE ERROR!")
                 _client.delete_collection(collection_name=name)  # type: ignore[arg-type]
+                print (f" --- DONE!!")
         else:
+            print (f" --- HAS NO ATTRIBUTE!!")
             _client.get_collection(name).delete()
+            print (f" --- DONE AGAIN!!!")
     except Exception:
         # Deleting should not fail the rebuild process
+
+        print (f" --- ERROR WHEN DELETING COLLECTION!")
         pass
 
 
@@ -133,13 +144,18 @@ async def add_page(session: AsyncSession, page_id: int):
 
 async def rebuild_world(session: AsyncSession, world_id: int):
     name = f"world_{world_id}"
+
+    print (f" --- INSIDE REBUILD WORKD: {world_id} --- ")
+
     _delete_collection(name)
+    print (f" --- COLLECTION DELETED!")
+
     try:
         _client.persist()
     except AttributeError:
         pass
 
-    collection = _get_collection(world_id)
+    # collection = _get_collection(world_id)
 
     # print (f" - API VECTORDB - Collection: {collection}")
 

@@ -12,5 +12,7 @@ class Settings(BaseSettings):
     bulk_job_dir: str = "./data/bulk_jobs"
     vectordb_job_dir: str = "./data/vector_jobs"
     model_config = SettingsConfigDict(env_file=".env")
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/0"
 
 settings = Settings()

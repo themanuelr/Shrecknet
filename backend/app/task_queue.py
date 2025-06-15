@@ -8,6 +8,13 @@ celery_app = Celery(
     backend=os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0'),
 )
 
+# celery_app = Celery(
+#     'shrecknet',
+#     broker=os.getenv('CELERY_BROKER_URL', 'memory://'),
+#     backend=os.getenv('CELERY_RESULT_BACKEND', 'cache+memory://'),
+# )
+
+
 celery_app.conf.task_serializer = 'json'
 celery_app.conf.result_serializer = 'json'
 celery_app.conf.accept_content = ['json']
@@ -67,6 +74,11 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
         with open(job_path, "w") as f:
             json.dump({"status": "processing"}, f)
 
+        print (f" --- CALCUALTING SUGGESIONTS --- ")
+        print (f" --- CALCUALTING SUGGESIONTS --- ")
+        print (f" --- CALCUALTING SUGGESIONTS --- ")
+        print (f" --- CALCUALTING SUGGESIONTS --- ")
+
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
             pages = []
@@ -75,6 +87,10 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                 if p and p.gameworld_id == agent.world_id:
                     pages.append(p)
 
+            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
+            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
+            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
+            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
             suggestions = await analyze_pages_bulk(session, agent, pages)
 
         with open(job_path, "w") as f:
@@ -98,6 +114,10 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                 "start_time": start_time,
             }, f)
 
+        print (f" --- CALCUALTING SUGGESTIONS --- ")
+        print (f" --- CALCUALTING SUGGESTIONS --- ")
+        print (f" --- CALCUALTING SUGGESTIONS --- ")
+        print (f" --- CALCUALTING SUGGESTIONS --- ")
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
             if not agent:
@@ -109,9 +129,27 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                     }, ff)
                 return
 
+            print (f" --- CALCUALTING SUGGESTIONS2 --- ")
+            print (f" --- CALCUALTING SUGGESTIONS2 --- ")
+            print (f" --- CALCUALTING SUGGESTIONS2 --- ")
+            print (f" --- CALCUALTING SUGGESTIONS2 --- ")
+            
             try:
+                print (f" --- CALCUALTING SUGGESTIONS3 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS3 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS3 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS3 --- ")
                 count = await crud_vectordb.rebuild_world(session, agent.world_id)
+                print (f" --- CALCUALTING SUGGESTIONS4 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS4 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS4 --- ")
+                print (f" --- CALCUALTING SUGGESTIONS4 --- ")
             except Exception as exc:  # pragma: no cover - defensive
+                print (f" --- CALCUALTING SUGGESTIONS5  ERROR {str(exc)} --- ")
+                print (f" --- CALCUALTING SUGGESTIONS5  ERROR {str(exc)} --- ")
+                print (f" --- CALCUALTING SUGGESTIONS5  ERROR {str(exc)} --- ")
+                print (f" --- CALCUALTING SUGGESTIONS5  ERROR {str(exc)} --- ")
+            
                 with open(job_path, "w") as ff:
                     json.dump(
                         {
