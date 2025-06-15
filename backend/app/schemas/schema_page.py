@@ -43,3 +43,15 @@ class PageRead(PageBase):
     updated_at: Optional[datetime]
     values: List["PageCharacteristicValueRead"] = []
 
+# resolve forward references on import
+from .schema_page_characteristic_value import (
+    PageCharacteristicValueCreate,
+    PageCharacteristicValueUpdate,
+    PageCharacteristicValueRead,
+)
+
+PageCreate.model_rebuild()
+PageUpdate.model_rebuild()
+PageRead.model_rebuild()
+
+

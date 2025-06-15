@@ -37,5 +37,9 @@ class ConceptUpdate(SQLModel):
 
 class ConceptRead(ConceptBase):
     id: int
-    pages_count: Optional[int] = 0    
+    pages_count: Optional[int] = 0
     characteristics: List["CharacteristicRead"] = []
+
+# ensure forward references are resolved at import time
+from app.schemas.schema_characteristic import CharacteristicRead
+ConceptRead.model_rebuild()
