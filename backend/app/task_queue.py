@@ -76,7 +76,17 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
         job_dir.mkdir(parents=True, exist_ok=True)
         job_path = job_dir / f"{job_id}.json"
         with open(job_path, "w") as f:
-            json.dump({"status": "processing"}, f)
+            json.dump(
+                {
+                    "status": "processing",
+                    "agent_id": agent_id,
+                    "job_type": "bulk_analyze",
+                    "page_ids": page_ids,
+                    "pages_total": len(page_ids),
+                    "pages_processed": 0,
+                },
+                f,
+            )
 
         print (f" --- CALCUALTING SUGGESIONTS --- ")
         print (f" --- CALCUALTING SUGGESIONTS --- ")
@@ -86,10 +96,24 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
             pages = []
+            processed = 0
             for pid in page_ids:
                 p = await get_page(session, pid)
                 if p and p.gameworld_id == agent.world_id:
                     pages.append(p)
+                processed += 1
+                with open(job_path, "w") as f:
+                    json.dump(
+                        {
+                            "status": "processing",
+                            "agent_id": agent_id,
+                            "job_type": "bulk_analyze",
+                            "page_ids": page_ids,
+                            "pages_total": len(page_ids),
+                            "pages_processed": processed,
+                        },
+                        f,
+                    )
 
             print (f" --- CALCUALTING SUGGESIONTS2 --- ")
             print (f" --- CALCUALTING SUGGESIONTS2 --- ")
@@ -98,7 +122,18 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
             suggestions = await analyze_pages_bulk(session, agent, pages)
 
         with open(job_path, "w") as f:
-            json.dump({"status": "done", "suggestions": suggestions}, f)
+            json.dump(
+                {
+                    "status": "done",
+                    "agent_id": agent_id,
+                    "job_type": "bulk_analyze",
+                    "page_ids": page_ids,
+                    "pages_total": len(page_ids),
+                    "pages_processed": len(page_ids),
+                    "suggestions": suggestions,
+                },
+                f,
+            )
 
     asyncio.run(run())
 

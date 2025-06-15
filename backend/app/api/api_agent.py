@@ -384,7 +384,17 @@ async def bulk_analyze_endpoint(
     job_dir.mkdir(parents=True, exist_ok=True)
     job_path = job_dir / f"{job_id}.json"
     with open(job_path, "w") as f:
-        json.dump({"status": "queued"}, f)
+        json.dump(
+            {
+                "status": "queued",
+                "agent_id": agent_id,
+                "job_type": "bulk_analyze",
+                "page_ids": payload.page_ids,
+                "pages_total": len(payload.page_ids),
+                "pages_processed": 0,
+            },
+            f,
+        )
 
     task_bulk_analyze.delay(agent_id, payload.page_ids, job_id)
     return {"job_id": job_id}

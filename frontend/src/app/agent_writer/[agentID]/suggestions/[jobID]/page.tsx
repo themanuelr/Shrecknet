@@ -6,7 +6,7 @@ import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SuggestionCard from "@/app/components/agents/SuggestionCard";
-import { getWriterJob,startGenerateJob } from "@/app/lib/agentAPI";
+import { getWriterJob, getBulkJob, startGenerateJob } from "@/app/lib/agentAPI";
 import { useAgentById } from "@/app/lib/useAgentById";
 import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
@@ -97,7 +97,14 @@ export default function SuggestionsPage() {
         setJob(data);
         setSelectedSuggestions(data.suggestions || []);
       })
-      .catch(() => {});
+      .catch(() => {
+        getBulkJob(jobID as string, token)
+          .then((data) => {
+            setJob(data);
+            setSelectedSuggestions(data.suggestions || []);
+          })
+          .catch(() => {});
+      });
   }, [jobID, token]);
 
   const scrollToCard = (idx: number) => {
@@ -150,24 +157,30 @@ export default function SuggestionsPage() {
     try {
       const mergeGroups = buildMergeGroups(selectedSuggestions);
       const allPages = mergeGroups.flatMap((names) =>
-        names.map((n) => {
-          const s = selectedSuggestions.find((ss) => ss.name === n);
-          return s ? { name: s.name, concept_id: s.concept_id } : null;
-        }).filter(Boolean)
+        names
+          .map((n) => {
+            const s = selectedSuggestions.find((ss) => ss.name === n);
+            return s
+              ? {
+                  name: s.name,
+                  concept_id: s.concept_id,
+                  source_page_ids: (s.source_pages || []).map((sp: any) => sp.id),
+                }
+              : null;
+          })
+          .filter(Boolean)
       );
+      const basePageId = job.page_id || (Array.isArray(job.page_ids) ? job.page_ids[0] : 0);
       const res = await startGenerateJob(
         Number(agentID),
-        job.page_id,
+        basePageId,
         allPages as any[],
         token || "",
         selectedSuggestions,
         mergeGroups,
         bulkAcceptUpdates
       );
-      markWriterJobCompleted(
-        job,
-        allPages.find((p) => p.id === job.page_id)?.name || ""
-      );
+      markWriterJobCompleted(job);
       router.push(`/agent_writer/${agentID}/review/${res.job_id}`);
     } catch (err) {
       console.error(err);
