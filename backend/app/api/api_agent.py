@@ -319,6 +319,7 @@ class GenerateJobRequest(BaseModel):
     pages: List[dict]
     suggestions: Optional[List[dict]] = None
     merge_groups: Optional[List[List[str]]] = None
+    bulk_accept_updates: Optional[bool] = False
 
 
 @router.post("/{agent_id}/pages/{page_id}/generate_job")
@@ -346,6 +347,7 @@ async def generate_pages_job_endpoint(
                 "job_type": "generate_pages",
                 "merge_groups": payload.merge_groups or [],
                 "suggestions": payload.suggestions or [],
+                "bulk_accept_updates": payload.bulk_accept_updates or False,
             },
             f,
         )
@@ -357,6 +359,7 @@ async def generate_pages_job_endpoint(
         job_id,
         payload.merge_groups or [],
         payload.suggestions or [],
+        payload.bulk_accept_updates or False,
     )
     return {"job_id": job_id}
 
