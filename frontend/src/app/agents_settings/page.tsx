@@ -8,13 +8,15 @@ import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
 import AgentGrid from "../components/agents/AgentGrid";
 import AgentModal from "../components/agents/AgentModal";
-import { rebuildVectorDB } from "../lib/vectordbAPI";
+import { startVectorUpdate } from "../lib/vectordbAPI";
 import { getPagesForWorld } from "../lib/pagesAPI";
+import { useVectorJobs } from "../lib/useVectorJobs";
 
 export default function AgentsSettingsPage() {
   const { user, token } = useAuth();
   const { agents, mutate, isLoading, error } = useAgents();
   const { worlds } = useWorlds();
+  const { jobs, mutate: refreshJobs } = useVectorJobs();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -72,9 +74,9 @@ export default function AgentsSettingsPage() {
         setUpdatingAgentId(null);
         return;
       }
-      const res = await rebuildVectorDB(token || "", agent.world_id);
-      setSuccess(`Vector DB updated! ${res.pages_indexed} pages indexed.`);
-      mutate();
+      await startVectorUpdate(token || "", agent.id);
+      setSuccess("Vector DB update started");
+      refreshJobs();
     } catch (err) {
       setSuccess("Failed to rebuild vector DB");
     } finally {
@@ -85,24 +87,19 @@ export default function AgentsSettingsPage() {
 
   async function handleRebuildAll() {
     const conversational = agents.filter(a => a.task === "conversational");
-    const worldIds = Array.from(new Set(conversational.map(a => a.world_id)));
-    if (worldIds.length === 0) return;
+    if (conversational.length === 0) return;
     setBulkUpdating(true);
     setBulkStatus([]);
-    for (const wid of worldIds) {
-      const worldName = worlds.find(w => w.id === wid)?.name || `World ${wid}`;
-      setBulkStatus(s => [...s, `Updating ${worldName}...`]);
+    for (const ag of conversational) {
+      setBulkStatus(s => [...s, `Updating ${ag.name}...`]);
       try {
-        const res = await rebuildVectorDB(token || "", wid);
-        setBulkStatus(s => [
-          ...s,
-          `✅ ${worldName}: ${res.pages_indexed} pages indexed.`,
-        ]);
+        await startVectorUpdate(token || "", ag.id);
+        setBulkStatus(s => [...s, `✅ ${ag.name}: job queued.`]);
       } catch (err) {
-        setBulkStatus(s => [...s, `❌ ${worldName}: failed to update.`]);
+        setBulkStatus(s => [...s, `❌ ${ag.name}: failed to queue.`]);
       }
     }
-    mutate();
+    refreshJobs();
     setBulkUpdating(false);
   }
 
@@ -137,6 +134,37 @@ export default function AgentsSettingsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            {jobs.length > 0 && (
+              <div className="mb-4">
+                <h2 className="font-bold mb-1">Background Jobs</h2>
+                <table className="w-full text-sm border border-[var(--border)]">
+                  <thead>
+                    <tr className="bg-[var(--surface)]">
+                      <th className="border px-2 py-1 text-left">Agent</th>
+                      <th className="border px-2 py-1 text-left">Working On</th>
+                      <th className="border px-2 py-1 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jobs.map(j => {
+                      const agent = agents.find(a => a.id === j.agent_id);
+                      let status = j.status;
+                      if (j.status === "done" && j.start_time && j.end_time) {
+                        const dur = Math.round((new Date(j.end_time).getTime() - new Date(j.start_time).getTime())/1000);
+                        status += ` (${dur}s)`;
+                      }
+                      return (
+                        <tr key={j.job_id}>
+                          <td className="border px-2 py-1">{agent ? agent.name : j.agent_id}</td>
+                          <td className="border px-2 py-1">{j.job_type}</td>
+                          <td className="border px-2 py-1">{status}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
             {success && (
               <div className="bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded-xl shadow mb-4 text-sm">
                 {success}

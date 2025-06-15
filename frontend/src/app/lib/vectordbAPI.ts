@@ -13,3 +13,20 @@ export async function rebuildVectorDB(token: string, worldId: number) {
   }
   return await res.json();
 }
+
+export async function startVectorUpdate(token: string, agentId: number) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/update_vector_db`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.json();
+  return await res.json();
+}
+
+export async function listVectorJobs(token: string) {
+  const res = await fetch(`${API_URL}/agents/vector_jobs`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.json();
+  return await res.json();
+}

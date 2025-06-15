@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     vector_db_path: str = "./data/vector_db"
     chat_history_dir: str = "./data/chat/{user_id}"
     bulk_job_dir: str = "./data/bulk_jobs"
+    vectordb_job_dir: str = "./data/vector_jobs"
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
