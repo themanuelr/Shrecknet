@@ -81,6 +81,7 @@ export default function SuggestionsPage() {
   const [selectedSuggestions, setSelectedSuggestions] = useState<any[]>([]);
   const [subStep, setSubStep] = useState<'a' | 'b' | 'c'>('a');
   const [loading, setLoading] = useState(false);
+  const [bulkAcceptUpdates, setBulkAcceptUpdates] = useState(false);
 
   const { agent } = useAgentById(Number(agentID));
   const { concepts } = useConcepts(agent?.world_id);
@@ -160,7 +161,8 @@ export default function SuggestionsPage() {
         allPages as any[],
         token || "",
         selectedSuggestions,
-        mergeGroups
+        mergeGroups,
+        bulkAcceptUpdates
       );
       markWriterJobCompleted(
         job,
@@ -295,6 +297,23 @@ export default function SuggestionsPage() {
               >
                 Back
               </button>
+
+              {subStep === 'c' && (
+                <div className="max-w-screen-2xl mx-auto px-4 mb-4">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                    <input
+                      type="checkbox"
+                      checked={bulkAcceptUpdates}
+                      onChange={(e) => setBulkAcceptUpdates(e.target.checked)}
+                      className="accent-[var(--primary)]"
+                    />
+                    Automatically apply all <span className="font-semibold text-blue-500">Update</span> suggestions without review
+                  </label>
+                  <p className="text-xs text-[var(--muted-foreground)] ml-6 mt-1">
+                    These pages will be directly updated and won’t appear in the next step.
+                  </p>
+                </div>
+              )}
 
               {subStep !== 'c' ? (
                 <button

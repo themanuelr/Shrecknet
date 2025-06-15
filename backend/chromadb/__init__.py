@@ -13,3 +13,11 @@ class PersistentClient:
             def query(self, *args, **kwargs):
                 return []
         return Collection()
+
+class HttpClient(PersistentClient):
+    pass
+
+import types, sys
+config = types.ModuleType("chromadb.config")
+config.Settings = object
+sys.modules[__name__ + ".config"] = config
