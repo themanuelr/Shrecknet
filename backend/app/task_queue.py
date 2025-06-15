@@ -46,3 +46,36 @@ def task_remove_crosslinks_to_page(page_id: int):
 @celery_app.task
 def task_remove_page_refs_from_characteristics(page_id: int):
     asyncio.run(remove_page_refs_from_characteristics(page_id))
+
+from app.crud.crud_page_analysis import analyze_pages_bulk
+from app.api.api_agent import get_agent
+from app.crud.crud_page import get_page
+from app.database import async_session_maker
+from app.config import settings
+import json
+from pathlib import Path
+
+
+@celery_app.task
+def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
+    async def run():
+        job_dir = Path(settings.bulk_job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / f"{job_id}.json"
+        with open(job_path, "w") as f:
+            json.dump({"status": "processing"}, f)
+
+        async with async_session_maker() as session:
+            agent = await get_agent(session, agent_id)
+            pages = []
+            for pid in page_ids:
+                p = await get_page(session, pid)
+                if p and p.gameworld_id == agent.world_id:
+                    pages.append(p)
+
+            suggestions = await analyze_pages_bulk(session, agent, pages)
+
+        with open(job_path, "w") as f:
+            json.dump({"status": "done", "suggestions": suggestions}, f)
+
+    asyncio.run(run())

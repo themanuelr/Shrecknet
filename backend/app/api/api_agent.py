@@ -19,6 +19,7 @@ from app.schemas.schema_agent import AgentCreate, AgentRead, AgentUpdate
 from app.database import get_session
 from pydantic import BaseModel
 from typing import List, Literal, Optional
+import json
 
 class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant"]
@@ -188,4 +189,43 @@ async def generate_pages_endpoint(
 
     result = await generate_pages(session, agent, page, payload.pages)
     return result
+
+
+class BulkAnalyzeRequest(BaseModel):
+    page_ids: List[int]
+
+
+@router.post("/{agent_id}/bulk_analyze")
+async def bulk_analyze_endpoint(
+    agent_id: int,
+    payload: BulkAnalyzeRequest,
+    user: User = Depends(get_current_user),
+):
+    from uuid import uuid4
+    from pathlib import Path
+    from app.config import settings
+    from app.task_queue import task_bulk_analyze
+
+    job_id = uuid4().hex
+    job_dir = Path(settings.bulk_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    job_path = job_dir / f"{job_id}.json"
+    with open(job_path, "w") as f:
+        json.dump({"status": "queued"}, f)
+
+    task_bulk_analyze.delay(agent_id, payload.page_ids, job_id)
+    return {"job_id": job_id}
+
+
+@router.get("/bulk_jobs/{job_id}")
+async def bulk_job_status(job_id: str):
+    from pathlib import Path
+    from app.config import settings
+
+    job_path = Path(settings.bulk_job_dir) / f"{job_id}.json"
+    if not job_path.is_file():
+        raise HTTPException(status_code=404, detail="Job not found")
+    with open(job_path) as f:
+        data = json.load(f)
+    return data
 

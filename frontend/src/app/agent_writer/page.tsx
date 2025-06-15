@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthGuard from "../components/auth/AuthGuard";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAuth } from "../components/auth/AuthProvider";
@@ -8,6 +8,7 @@ import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
 import { usePages } from "../lib/usePage";
 import { useConcepts } from "../lib/useConcept";
+import { startBulkAnalyze, getBulkJob } from "../lib/agentAPI";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -21,7 +22,7 @@ const AGENT_PERSONALITIES: Record<string, string> = {
 };
 
 export default function AgentWriterPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { agents, isLoading: agentsLoading } = useAgents();
   const { worlds } = useWorlds();
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
@@ -33,6 +34,25 @@ export default function AgentWriterPage() {
   const [sortAsc, setSortAsc] = useState(true);
   const [pageIndex, setPageIndex] = useState(0);
   const PAGE_SIZE = 10;
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      jobs.forEach((job) => {
+        if (job.status === "done") return;
+        getBulkJob(job.id, token)
+          .then((data) => {
+            setJobs((j) =>
+              j.map((jj) => (jj.id === job.id ? { ...jj, ...data } : jj))
+            );
+          })
+          .catch(() => {});
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [jobs, token]);
 
   if (!hasRole(user?.role, "world builder") && !hasRole(user?.role, "system admin")) {
     return (
@@ -144,6 +164,20 @@ export default function AgentWriterPage() {
               </button>
             </div>
 
+            {jobs.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-900">
+                {jobs.map(job => (
+                  <div key={job.id} className="mb-1">
+                    {job.status !== "done" ? (
+                      <>I am currently occupied creating suggestions for these pages: {job.pages.join(", ")}...</>
+                    ) : (
+                      <>Suggestions ready for {job.pages.join(", ")} - <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.id}`}>review these pages</Link></>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Pages = “Library of Lore” */}
             <div>
               <div className="flex flex-col sm:flex-row items-end gap-4 mt-10 mb-2">
@@ -159,12 +193,25 @@ export default function AgentWriterPage() {
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPageIndex(0); }}
                 />
+                <button
+                  disabled={selectedPages.length === 0}
+                  onClick={async () => {
+                    const res = await startBulkAnalyze(selectedAgent.id, selectedPages, token || "");
+                    const names = pages.filter(p => selectedPages.includes(p.id)).map(p => p.name);
+                    setJobs(j => [...j, { id: res.job_id, pages: names, status: "queued" }]);
+                    setSelectedPages([]);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] text-sm disabled:opacity-50"
+                >
+                  Process Selected
+                </button>
               </div>
 
               <div className="overflow-x-auto rounded-xl border border-[var(--border)] shadow-sm">
                 <table className="min-w-full text-sm bg-[var(--card)]">
                   <thead>
                     <tr className="text-left text-[var(--primary)]">
+                      <th className="w-8"></th>
                       <th className="w-25"></th>
                       {/* <th className="cursor-pointer">Image</th> */}
                       <th className="cursor-pointer" onClick={() => changeSort('name')}>Name</th>
@@ -178,6 +225,15 @@ export default function AgentWriterPage() {
                   <tbody>
                     {paginated.map(p => (
                       <tr key={p.id} className="border-b border-[var(--border)] hover:bg-[var(--surface)] transition">
+                        <td className="px-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedPages.includes(p.id)}
+                            onChange={e => {
+                              setSelectedPages(sp => e.target.checked ? [...sp, p.id] : sp.filter(id => id !== p.id));
+                            }}
+                          />
+                        </td>
                         <td className="py-2">
                           <Image src={p.logo || "/images/pages/concept/concept.png"} alt={p.name} width={64} height={64} className="w-20 h-20 rounded object-cover px-2" />
                         </td>
