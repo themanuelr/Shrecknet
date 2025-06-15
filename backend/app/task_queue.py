@@ -224,20 +224,32 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
 
 
 @celery_app.task
-def task_generate_pages_job(agent_id: int, page_id: int, pages: list[dict], job_id: str):
+def task_generate_pages_job(
+    agent_id: int,
+    page_id: int,
+    pages: list[dict],
+    job_id: str,
+    merge_groups: list[list[str]] | None = None,
+    suggestions: list[dict] | None = None,
+):
     async def run():
         job_dir = Path(settings.writer_job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
         job_path = job_dir / f"{job_id}.json"
         start_time = datetime.now(timezone.utc).isoformat()
         with open(job_path, "w") as f:
-            json.dump({
-                "status": "processing",
-                "agent_id": agent_id,
-                "page_id": page_id,
-                "job_type": "generate_pages",
-                "start_time": start_time,
-            }, f)
+            json.dump(
+                {
+                    "status": "processing",
+                    "agent_id": agent_id,
+                    "page_id": page_id,
+                    "job_type": "generate_pages",
+                    "start_time": start_time,
+                    "merge_groups": merge_groups or [],
+                    "suggestions": suggestions or [],
+                },
+                f,
+            )
 
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
@@ -254,14 +266,19 @@ def task_generate_pages_job(agent_id: int, page_id: int, pages: list[dict], job_
 
         end_time = datetime.now(timezone.utc).isoformat()
         with open(job_path, "w") as f:
-            json.dump({
-                "status": "done",
-                "agent_id": agent_id,
-                "page_id": page_id,
-                "job_type": "generate_pages",
-                "pages": result.get("pages", []),
-                "start_time": start_time,
-                "end_time": end_time,
-            }, f)
+            json.dump(
+                {
+                    "status": "done",
+                    "agent_id": agent_id,
+                    "page_id": page_id,
+                    "job_type": "generate_pages",
+                    "pages": result.get("pages", []),
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "merge_groups": merge_groups or [],
+                    "suggestions": suggestions or [],
+                },
+                f,
+            )
 
     asyncio.run(run())

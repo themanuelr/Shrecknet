@@ -161,15 +161,20 @@ export async function startGenerateJob(
   agentId: number,
   pageId: number,
   pages: any[],
-  token: string
+  token: string,
+  suggestions?: any[],
+  mergeGroups?: string[][]
 ) {
+  const body: any = { pages };
+  if (suggestions) body.suggestions = suggestions;
+  if (mergeGroups) body.merge_groups = mergeGroups;
   const res = await fetch(`${API_URL}/agents/${agentId}/pages/${pageId}/generate_job`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ pages }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw await res.text();
   return await res.json();
