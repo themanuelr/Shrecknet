@@ -144,6 +144,53 @@ export async function generatePagesWithAgent(
   return await res.json();
 }
 
+export async function startAnalyzeJob(
+  agentId: number,
+  pageId: number,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/pages/${pageId}/analyze_job`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function startGenerateJob(
+  agentId: number,
+  pageId: number,
+  pages: any[],
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/pages/${pageId}/generate_job`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ pages }),
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function getWriterJob(jobId: string, token: string) {
+  const res = await fetch(`${API_URL}/agents/writer_jobs/${jobId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function listWriterJobs(token: string) {
+  const res = await fetch(`${API_URL}/agents/writer_jobs`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
 export async function startBulkAnalyze(
   agentId: number,
   pageIds: number[],

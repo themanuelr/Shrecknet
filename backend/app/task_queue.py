@@ -66,6 +66,7 @@ from app.crud import crud_vectordb
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+from app.crud.crud_page_analysis import analyze_page, generate_pages
 
 
 @celery_app.task
@@ -171,6 +172,94 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                 "agent_id": agent_id,
                 "job_type": "update_vector_db",
                 "pages_indexed": count,
+                "start_time": start_time,
+                "end_time": end_time,
+            }, f)
+
+    asyncio.run(run())
+
+
+@celery_app.task
+def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
+    async def run():
+        job_dir = Path(settings.writer_job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / f"{job_id}.json"
+        start_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "processing",
+                "agent_id": agent_id,
+                "page_id": page_id,
+                "job_type": "analyze_page",
+                "start_time": start_time,
+            }, f)
+
+        async with async_session_maker() as session:
+            agent = await get_agent(session, agent_id)
+            page = await get_page(session, page_id)
+            if not agent or not page or agent.world_id != page.gameworld_id:
+                with open(job_path, "w") as ff:
+                    json.dump({
+                        "status": "error",
+                        "error": "Agent or page not found",
+                        "start_time": start_time,
+                    }, ff)
+                return
+            result = await analyze_page(session, agent, page)
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "done",
+                "agent_id": agent_id,
+                "page_id": page_id,
+                "job_type": "analyze_page",
+                "suggestions": result.get("suggestions", []),
+                "start_time": start_time,
+                "end_time": end_time,
+            }, f)
+
+    asyncio.run(run())
+
+
+@celery_app.task
+def task_generate_pages_job(agent_id: int, page_id: int, pages: list[dict], job_id: str):
+    async def run():
+        job_dir = Path(settings.writer_job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / f"{job_id}.json"
+        start_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "processing",
+                "agent_id": agent_id,
+                "page_id": page_id,
+                "job_type": "generate_pages",
+                "start_time": start_time,
+            }, f)
+
+        async with async_session_maker() as session:
+            agent = await get_agent(session, agent_id)
+            page = await get_page(session, page_id)
+            if not agent or not page or agent.world_id != page.gameworld_id:
+                with open(job_path, "w") as ff:
+                    json.dump({
+                        "status": "error",
+                        "error": "Agent or page not found",
+                        "start_time": start_time,
+                    }, ff)
+                return
+            result = await generate_pages(session, agent, page, pages)
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "done",
+                "agent_id": agent_id,
+                "page_id": page_id,
+                "job_type": "generate_pages",
+                "pages": result.get("pages", []),
                 "start_time": start_time,
                 "end_time": end_time,
             }, f)
