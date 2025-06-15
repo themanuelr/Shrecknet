@@ -37,6 +37,14 @@ export default function AgentsSettingsPage() {
     a.name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const jobsByAgent = jobs
+    .filter(j => j.job_type === "update_vector_db")
+    .reduce<Record<number, any[]>>((acc, j) => {
+      if (!acc[j.agent_id]) acc[j.agent_id] = [];
+      acc[j.agent_id].push(j);
+      return acc;
+    }, {});
+
   function handleCreate() {
     setSelectedAgent(null);
     setModalOpen(true);
@@ -134,37 +142,6 @@ export default function AgentsSettingsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
-            {jobs.length > 0 && (
-              <div className="mb-4">
-                <h2 className="font-bold mb-1">Background Jobs</h2>
-                <table className="w-full text-sm border border-[var(--border)]">
-                  <thead>
-                    <tr className="bg-[var(--surface)]">
-                      <th className="border px-2 py-1 text-left">Agent</th>
-                      <th className="border px-2 py-1 text-left">Working On</th>
-                      <th className="border px-2 py-1 text-left">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {jobs.map(j => {
-                      const agent = agents.find(a => a.id === j.agent_id);
-                      let status = j.status;
-                      if (j.status === "done" && j.start_time && j.end_time) {
-                        const dur = Math.round((new Date(j.end_time).getTime() - new Date(j.start_time).getTime())/1000);
-                        status += ` (${dur}s)`;
-                      }
-                      return (
-                        <tr key={j.job_id}>
-                          <td className="border px-2 py-1">{agent ? agent.name : j.agent_id}</td>
-                          <td className="border px-2 py-1">{j.job_type}</td>
-                          <td className="border px-2 py-1">{status}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
             {success && (
               <div className="bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded-xl shadow mb-4 text-sm">
                 {success}
@@ -182,16 +159,48 @@ export default function AgentsSettingsPage() {
             ) : error ? (
               <div className="text-lg text-red-500">Error loading agents.</div>
             ) : (
-              <AgentGrid
-                agents={filtered}
-                onEdit={handleEdit}
-                onDelete={a => {
-                  setSelectedAgent(a);
-                  setModalOpen(true);
-                }}
-                onRebuild={handleRebuild}
-                updatingAgentId={updatingAgentId}
-              />
+              <div className="space-y-10">
+                <div>
+                  <h2 className="font-semibold mb-3 text-[var(--primary)]">Conversational Agents</h2>
+                  <AgentGrid
+                    agents={filtered.filter(a => a.task === "conversational")}
+                    onEdit={handleEdit}
+                    onDelete={a => {
+                      setSelectedAgent(a);
+                      setModalOpen(true);
+                    }}
+                    onRebuild={handleRebuild}
+                    updatingAgentId={updatingAgentId}
+                    jobsByAgent={jobsByAgent}
+                  />
+                </div>
+                <div>
+                  <h2 className="font-semibold mb-3 text-[var(--primary)]">Page Writers</h2>
+                  <AgentGrid
+                    agents={filtered.filter(a => a.task === "page writer")}
+                    onEdit={handleEdit}
+                    onDelete={a => {
+                      setSelectedAgent(a);
+                      setModalOpen(true);
+                    }}
+                    onRebuild={handleRebuild}
+                    updatingAgentId={updatingAgentId}
+                  />
+                </div>
+                <div>
+                  <h2 className="font-semibold mb-3 text-[var(--primary)]">Story Novelists</h2>
+                  <AgentGrid
+                    agents={filtered.filter(a => a.task === "story novelist")}
+                    onEdit={handleEdit}
+                    onDelete={a => {
+                      setSelectedAgent(a);
+                      setModalOpen(true);
+                    }}
+                    onRebuild={handleRebuild}
+                    updatingAgentId={updatingAgentId}
+                  />
+                </div>
+              </div>
             )}
           </div>
           {modalOpen && (

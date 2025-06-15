@@ -7,12 +7,14 @@ export default function AgentGrid({
   onDelete,
   onRebuild,
   updatingAgentId,
+  jobsByAgent,
 }: {
   agents: any[];
   onEdit: (a: any) => void;
   onDelete: (a: any) => void;
   onRebuild: (a: any) => void;
   updatingAgentId?: number | null;
+  jobsByAgent?: Record<number, any[]>;
 
 }) {
   return (
@@ -54,9 +56,7 @@ export default function AgentGrid({
               Delete
             </button>
           </div>
-          {console.log("agent task:"+agent.task)}
-          {          
-          agent.task === "conversational" && (
+          {agent.task === "conversational" && (
             updatingAgentId === agent.id ? (
               <div className="mt-3 flex items-center gap-2 text-sm text-[var(--primary)]">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -70,6 +70,53 @@ export default function AgentGrid({
                 Update Vector DB
               </button>
             )
+          )}
+
+          {agent.task === "conversational" && jobsByAgent && (
+            (() => {
+              const jobs = jobsByAgent[agent.id] || [];
+              const running = jobs.filter(j => j.status !== "done");
+              const completed = jobs
+                .filter(j => j.status === "done")
+                .sort((a, b) =>
+                  new Date(b.end_time || b.start_time).getTime() -
+                  new Date(a.end_time || a.start_time).getTime(),
+                )
+                .slice(0, 3);
+              const allJobs = [...running, ...completed];
+              if (allJobs.length === 0) return null;
+              return (
+                <table className="mt-3 w-full text-xs border border-[var(--border)]">
+                  <thead>
+                    <tr className="bg-[var(--surface)]">
+                      <th className="border px-1 py-0.5 text-left">Job</th>
+                      <th className="border px-1 py-0.5 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allJobs.map(j => {
+                      let status = j.status;
+                      if (j.status === "done" && j.start_time && j.end_time) {
+                        const dur = Math.round(
+                          (new Date(j.end_time).getTime() -
+                            new Date(j.start_time).getTime()) /
+                            1000,
+                        );
+                        status += ` (${dur}s)`;
+                      }
+                      return (
+                        <tr key={j.job_id}>
+                          <td className="border px-1 py-0.5 truncate max-w-[80px]">
+                            {j.job_id.slice(0, 8)}
+                          </td>
+                          <td className="border px-1 py-0.5">{status}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              );
+            })()
           )}
         </div>
       ))}
