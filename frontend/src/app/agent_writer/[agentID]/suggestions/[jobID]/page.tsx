@@ -15,6 +15,7 @@ import { useConcepts } from "../../../lib/useConcept";
 import { useWorld } from "../../../lib/useWorld";
 import { usePages } from "../../../lib/usePage";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 
 const STEPS = [
   { label: "Review Lore" },
@@ -163,6 +164,10 @@ export default function SuggestionsPage() {
         token || "",
         selectedSuggestions,
         mergeGroups
+      );
+      markWriterJobCompleted(
+        job,
+        allPages.find((p) => p.id === job.page_id)?.name || ""
       );
       router.push(`/agent_writer/${agentID}/review/${res.job_id}`);
     } catch (err) {
