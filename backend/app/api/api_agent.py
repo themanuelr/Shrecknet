@@ -229,3 +229,53 @@ async def bulk_job_status(job_id: str):
         data = json.load(f)
     return data
 
+
+@router.post("/{agent_id}/update_vector_db")
+async def update_vector_job(
+    agent_id: int,
+    user: User = Depends(get_current_user),
+):
+    from uuid import uuid4
+    from pathlib import Path
+    from app.config import settings
+    from app.task_queue import task_rebuild_vectordb
+
+    job_id = uuid4().hex
+    job_dir = Path(settings.vectordb_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    job_path = job_dir / f"{job_id}.json"
+    with open(job_path, "w") as f:
+        json.dump({"status": "queued", "agent_id": agent_id, "job_type": "update_vector_db"}, f)
+
+    task_rebuild_vectordb.delay(agent_id, job_id)
+    return {"job_id": job_id}
+
+
+@router.get("/vector_jobs/{job_id}")
+async def vector_job_status(job_id: str):
+    from pathlib import Path
+    from app.config import settings
+
+    job_path = Path(settings.vectordb_job_dir) / f"{job_id}.json"
+    if not job_path.is_file():
+        raise HTTPException(status_code=404, detail="Job not found")
+    with open(job_path) as f:
+        data = json.load(f)
+    return data
+
+
+@router.get("/vector_jobs")
+async def list_vector_jobs():
+    from pathlib import Path
+    from app.config import settings
+
+    job_dir = Path(settings.vectordb_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    jobs = []
+    for p in job_dir.glob("*.json"):
+        with open(p) as f:
+            data = json.load(f)
+        data["job_id"] = p.stem
+        jobs.append(data)
+    return jobs
+
