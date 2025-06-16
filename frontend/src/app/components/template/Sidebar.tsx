@@ -12,7 +12,7 @@ import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import CasinoRoundedIcon from "@mui/icons-material/CasinoRounded";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import PersonEditAlt1RoundedIcon from "@mui/icons-material/EditRounded";
-import { Bot } from "lucide-react";
+import { Bot, BookOpenText } from "lucide-react";
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }) {
   const { user, token, isLoading: authLoading, refreshUser } = useAuth();
@@ -62,7 +62,14 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
       href: "/agent_writer",
       external: false,
       show: user && ["writer", "system admin"].includes(user.role),
-    },       
+    },
+    {
+      label: "All Pages",
+      icon: <BookOpenText fontSize="medium" />,
+      href: "/all_pages",
+      external: false,
+      show: user && ["writer", "system admin"].includes(user.role),
+    },
     {
       label: "World Builder",
       icon: <BuildRoundedIcon fontSize="medium" />,
