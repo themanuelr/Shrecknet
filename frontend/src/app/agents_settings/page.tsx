@@ -253,6 +253,9 @@ console.log("Agents:"+JSON.stringify(filtered))
                     <div className="text-sm text-indigo-700 opacity-70">
                       World: <span className="font-semibold">{worlds?.find(w => w.id === agent.world_id)?.name || "???"}</span>
                     </div>
+                    <div className="text-sm text-indigo-700 opacity-70">
+                      Updated the DB on: <span className="font-semibold">{agents.vector_db_update_date}</span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button

@@ -16,17 +16,16 @@ import {
 } from "../lib/writerJobsStorage";
 import Image from "next/image";
 import Link from "next/link";
+import { BookOpenText, Search, Sparkles, Feather, Undo2, ArrowLeftCircle } from "lucide-react";
 
-// Optional: agent "personalities" for flavor
-const AGENT_PERSONALITIES: Record<string, string> = {
+const AGENT_PERSONALITIES = {
   "Lorekeeper Lyra": "“A tale untold is a world unseen. Let’s fill these pages with legend!”",
   "Archivist Axion": "“Every great saga begins with a single spark. Shall we kindle it together?”",
   "Chronicle": "“Let us chronicle your world for generations of adventurers!”",
-  // fallback or generic:
   "default": "“I will help you turn knowledge into stories!”"
 };
 
-const JOB_LABELS: Record<string, string> = {
+const JOB_LABELS = {
   analyze_page: "Suggest Pages",
   bulk_analyze: "Bulk Suggestions",
   generate_pages: "Update/Create Pages",
@@ -49,6 +48,7 @@ export default function AgentWriterPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const { jobs: writerJobs } = useWriterJobs();
   const [completedJobs, setCompletedJobs] = useState<any[]>([]);
+  const [jobFeedback, setJobFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     setCompletedJobs(loadCompletedWriterJobs());
@@ -60,8 +60,9 @@ export default function AgentWriterPage() {
       (job.pages ? job.pages.join(', ') : '');
     const updated = markWriterJobCompleted(job, pageName);
     setCompletedJobs(updated);
+    setJobFeedback("Job marked as reviewed.");
+    setTimeout(() => setJobFeedback(null), 1200);
   };
-
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,30 +89,28 @@ export default function AgentWriterPage() {
   }
 
   const writerAgents = agents.filter(a => a.task === "page writer");
-  const worldsMap: Record<number, any> = {};
-  worlds.forEach(w => { worldsMap[w.id] = w; });
+  const worldsMap = Object.fromEntries(worlds.map(w => [w.id, w]));
 
-  // --- Welcome to Scriptorium (before agent selected) ---
+  // --- Scriptorium Welcome: Choose your Scribe ---
   if (!selectedAgent) {
     return (
       <AuthGuard>
         <DashboardLayout>
-          <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-12">
-            <div className="mx-auto max-2xl flex flex-col gap-6 items-center">
+          <div className="min-h-screen w-full text-indigo-900 px-2 sm:px-6 py-12">
+            <div className="mx-auto max-w-3xl flex flex-col gap-8 items-center">
               {/* Scriptorium Hero */}
-              <div className="w-full flex flex-col items-center gap-3 bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15 rounded-2xl shadow-xl p-8 border-1 border-[var(--primary)]">
-                <h1 className="text-3xl font-bold text-[var(--primary)] text-center">Welcome to the Scriptorium</h1>
-                <p className="text-center text-lg text-[var(--foreground)]/80 mb-2">
-                  Here, legendary AI Scribes await to help you <span className="font-semibold text-[var(--primary)]">craft new tales</span> and expand your tabletop world!
+              <div className="w-full flex flex-col items-center gap-4 bg-gradient-to-br from-indigo-100/70 via-fuchsia-100/80 to-white/80 rounded-2xl shadow-xl p-8 border border-indigo-200">
+                <BookOpenText className="w-12 h-12 text-indigo-400 mb-2" />
+                <h1 className="text-3xl font-bold text-indigo-700 text-center font-serif mb-1">Welcome to the Scriptorium</h1>
+                <p className="text-center text-lg text-indigo-900/80 mb-2">
+                  Legendary AI Scribes await to help you <span className="font-semibold text-fuchsia-600">craft new tales</span> and expand your world!
                 </p>
-                <p className="text-center text-[var(--foreground)]/80">
+                <p className="text-center text-indigo-800/70 text-base">
                   Select a Scribe below. Each Scribe will study the lore of your world and propose new stories, characters, or secrets to enrich your universe.<br/>
-                  <span className="italic text-[var(--accent)]">The pen is yours, but the Scribe brings it to life.</span>
+                  <span className="italic text-fuchsia-700">The pen is yours, but the Scribe brings it to life.</span>
                 </p>
               </div>
-              </div>
-              <div className="mx-auto max-w-2xl flex flex-col gap-6 items-center">
-              {/* Agent Cards */}
+              {/* Scribe Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-6 w-full">
                 {agentsLoading ? (
                   <div className="col-span-2 text-center text-lg">Summoning Scribes...</div>
@@ -120,31 +119,28 @@ export default function AgentWriterPage() {
                     <button
                       key={a.id}
                       onClick={() => setSelectedAgent(a)}
-                      className="flex flex-col items-center gap-2 p-6 rounded-2xl shadow-lg border-1 border-[var(--primary)] bg-[var(--card)] hover:scale-105 hover:shadow-2xl transition-all"
+                      className="flex flex-col items-center gap-2 p-6 rounded-2xl shadow-lg border border-indigo-200 bg-white hover:scale-105 hover:shadow-2xl transition-all"
                     >
-                      <Image src={a.logo || "/images/default/avatars/logo.png"} alt={a.name} width={100} height={100} className="rounded-full object-cover border-2 border-[var(--primary)] mb-2" />
-                      <span className="text-xl font-bold text-[var(--primary)]">{a.name}</span>
-                      <span className="text-sm text-[var(--foreground)]/70">{worldsMap[a.world_id]?.name}</span>
-                      <span className="italic text-xs text-[var(--accent)] text-center">
+                      <Image src={a.logo || "/images/default/avatars/logo.png"} alt={a.name} width={100} height={100} className="rounded-full object-cover border-2 border-fuchsia-300 shadow mb-2" />
+                      <span className="text-xl font-bold text-indigo-800">{a.name}</span>
+                      <span className="text-sm text-fuchsia-700">{worldsMap[a.world_id]?.name}</span>
+                      <span className="italic text-xs text-indigo-400 text-center">
                         {AGENT_PERSONALITIES[a.name] || AGENT_PERSONALITIES.default}
                       </span>
                     </button>
                   ))
                 )}
               </div>
-              </div>
-           
+            </div>
           </div>
         </DashboardLayout>
       </AuthGuard>
     );
   }
 
-  const conceptMap: Record<number, any> = {};
-  concepts.forEach(c => { conceptMap[c.id] = c; });
-
-  const pageMap: Record<number, any> = {};
-  pages.forEach(p => { pageMap[p.id] = p; });
+  // ---- After agent selected ----
+  const conceptMap = Object.fromEntries((concepts || []).map(c => [c.id, c]));
+  const pageMap = Object.fromEntries((pages || []).map(p => [p.id, p]));
 
   const agentWriterJobs = writerJobs.filter(j => j.agent_id === selectedAgent.id);
   const runningJobs = agentWriterJobs.filter(j => j.status !== 'done');
@@ -154,7 +150,7 @@ export default function AgentWriterPage() {
     .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())
     .slice(0, 3);
 
-  let filtered = pages.filter(
+  let filtered = (pages || []).filter(
     p => p.name?.toLowerCase().includes(search.toLowerCase()) && p.content && p.content.trim() !== ""
   );
 
@@ -177,34 +173,39 @@ export default function AgentWriterPage() {
     if (sortField === field) setSortAsc(!sortAsc); else { setSortField(field); setSortAsc(true); }
   }
 
-  // --- After agent selected: the Agent's Scriptorium ---
+  // ---- Main Render ----
   return (
     <AuthGuard>
       <DashboardLayout>
-        <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-10">
+        <div className="min-h-screen w-full text-indigo-900 px-2 sm:px-6 py-10">
           <div className="mx-auto max-w-5xl w-full flex flex-col gap-8">
 
-            {/* Agent Greeting */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15 p-6 rounded-2xl shadow-xl border-1 border-[var(--primary)]">
-              <Image src={selectedAgent.logo || "/images/default/avatars/logo.png"} alt={selectedAgent.name} width={160} height={160} className="w-50 h-50 rounded-full object-cover border-2 border-[var(--primary)] shadow" />
+            {/* Scribe Header */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-br from-indigo-100/80 via-fuchsia-100/80 to-white/80 p-6 rounded-2xl shadow-xl border border-fuchsia-200">
+              <Image src={selectedAgent.logo || "/images/default/avatars/logo.png"} alt={selectedAgent.name} width={160} height={160} className="w-40 h-40 rounded-full object-cover border-2 border-fuchsia-300 shadow" />
               <div className="flex-1 flex flex-col gap-1">
-                <h2 className="text-2xl font-extrabold text-[var(--primary)] mb-1">{selectedAgent.name}</h2>
-                <span className="text-md text-[var(--foreground)]/80 mb-1">{worldsMap[selectedAgent.world_id]?.name || ""}</span>
-                <div className="italic text-[var(--accent)] mb-1">{AGENT_PERSONALITIES[selectedAgent.name] || AGENT_PERSONALITIES.default}</div>
-                <p className="mb-1">I am your Scribe for <span className="font-semibold">{worldsMap[selectedAgent.world_id]?.name}</span>.  
-                  <br/>Show me which stories, chronicles, or pages to read, and together we’ll forge new legends for your world!
+                <h2 className="text-2xl font-extrabold text-fuchsia-800 mb-1">{selectedAgent.name}</h2>
+                <span className="text-md text-indigo-700 mb-1">{worldsMap[selectedAgent.world_id]?.name || ""}</span>
+                <div className="italic text-fuchsia-600 mb-1">{AGENT_PERSONALITIES[selectedAgent.name] || AGENT_PERSONALITIES.default}</div>
+                <p className="mb-1">I am your Scribe for <span className="font-semibold">{worldsMap[selectedAgent.world_id]?.name}</span>.<br />
+                  Show me which stories, chronicles, or pages to read, and together we’ll forge new legends for your world!
                 </p>
               </div>
-              <button onClick={() => { setSelectedAgent(null); setSearch(""); }} className="mt-4 sm:mt-0 sm:ml-auto px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold shadow hover:bg-[var(--accent)] transition">
-                Choose a Different Scribe
+              <button
+                onClick={() => { setSelectedAgent(null); setSearch(""); }}
+                className="mt-4 sm:mt-0 sm:ml-auto flex gap-2 items-center px-4 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold shadow hover:bg-fuchsia-800 transition"
+              >
+                <ArrowLeftCircle className="w-5 h-5" />
+                Back to Scribes
               </button>
             </div>
 
+            {/* Jobs Table */}
             {(runningJobs.length > 0 || waitingJobs.length > 0 || doneJobs.length > 0) && (
-              <div className="overflow-x-auto border border-[var(--border)] rounded-xl bg-[var(--card)] shadow-sm">
+              <div className="overflow-x-auto border border-indigo-200 rounded-xl bg-white/90 shadow">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-[var(--primary)]">
+                    <tr className="text-left text-indigo-800">
                       <th className="p-2">Status</th>
                       <th className="p-2">Page</th>
                       <th className="p-2">Type</th>
@@ -216,8 +217,8 @@ export default function AgentWriterPage() {
                   </thead>
                   <tbody>
                     {runningJobs.map(job => (
-                      <tr key={job.job_id} className="border-t border-[var(--border)]">
-                        <td className="p-2 text-yellow-600">Running</td>
+                      <tr key={job.job_id} className="border-t border-indigo-100 bg-yellow-50/70 animate-pulse">
+                        <td className="p-2 text-yellow-700 font-semibold">Running</td>
                         <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
                         <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
@@ -227,33 +228,35 @@ export default function AgentWriterPage() {
                       </tr>
                     ))}
                     {waitingJobs.map(job => (
-                      <tr key={job.job_id} className="border-t border-[var(--border)]">
-                        <td className="p-2 text-blue-600">Waiting Review</td>
+                      <tr key={job.job_id} className="border-t border-indigo-100 bg-indigo-50/80">
+                        <td className="p-2 text-fuchsia-700 font-semibold">Needs Review</td>
                         <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
                         <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
-                        <td className="p-2">
+                        <td className="p-2 flex gap-2">
                           {job.job_type === 'analyze_page' ? (
-                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review suggestions</Link>
+                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review</Link>
                           ) : job.job_type === 'bulk_analyze' ? (
-                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.job_id}`}>Review pages</Link>
+                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.job_id}`}>Review</Link>
                           ) : (
-                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review pages</Link>
+                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review</Link>
                           )}
-                          <button onClick={() => markJobCompleted(job)} className="ml-2 text-xs text-[var(--foreground)] border border-[var(--border)] px-2 py-1 rounded">Mark done</button>
+                          <button onClick={() => markJobCompleted(job)} className="ml-2 text-xs text-indigo-700 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-50 transition">
+                            Mark done
+                          </button>
                         </td>
                       </tr>
                     ))}
                     {doneJobs.map(job => (
-                      <tr key={job.job_id} className="border-t border-[var(--border)] text-[var(--muted-foreground)]">
+                      <tr key={job.job_id} className="border-t border-indigo-100 text-indigo-400 bg-white">
                         <td className="p-2">Done</td>
                         <td className="p-2">{job.page_name}</td>
                         <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
-                        <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
+                        <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.end_time).getTime())/1000) + 's' : '-'}</td>
                         <td className="p-2"></td>
                       </tr>
                     ))}
@@ -265,21 +268,31 @@ export default function AgentWriterPage() {
               </div>
             )}
 
-            {/* Pages = “Library of Lore” */}
+            {/* Job Feedback */}
+            {jobFeedback && (
+              <div className="bg-fuchsia-100 text-fuchsia-900 font-bold rounded-xl px-4 py-2 shadow mb-2 text-center">
+                {jobFeedback}
+              </div>
+            )}
+
+            {/* Library of Lore (Page Selector) */}
             <div>
               <div className="flex flex-col sm:flex-row items-end gap-4 mt-10 mb-2">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1 text-[var(--primary)]">Library of Lore</h3>
-                  <p className="text-[var(--foreground)]/80 mb-2">
-                    These are the tomes and scrolls I can study. Choose which tales inspire our next creation!
+                  <h3 className="text-xl font-bold mb-1 text-fuchsia-700">Library of Lore</h3>
+                  <p className="text-indigo-900/80 mb-2">
+                    Select tomes and scrolls for your Scribe to analyze and suggest new content!
                   </p>
                 </div>
-                <input
-                  className="px-3 py-2 rounded-xl border border-[var(--primary)] bg-[var(--card-bg)] text-sm w-full sm:w-64"
-                  placeholder="Search lore..."
-                  value={search}
-                  onChange={e => { setSearch(e.target.value); setPageIndex(0); }}
-                />
+                <div className="flex items-center gap-2 bg-white border border-indigo-200 px-4 py-2 rounded-xl shadow-inner w-full sm:w-[260px]">
+                  <Search className="w-5 h-5 text-indigo-400" />
+                  <input
+                    className="bg-transparent outline-none flex-1 text-base text-indigo-700 placeholder-indigo-400"
+                    placeholder="Search lore..."
+                    value={search}
+                    onChange={e => { setSearch(e.target.value); setPageIndex(0); }}
+                  />
+                </div>
                 <button
                   disabled={selectedPages.length === 0}
                   onClick={async () => {
@@ -288,31 +301,30 @@ export default function AgentWriterPage() {
                       setJobs(j => [...j, { id: res.job_id, pages: [pageMap[pid]?.name || pid], status: "queued" }]);
                     }
                     setSelectedPages([]);
+                    setJobFeedback("Processing selected pages...");
+                    setTimeout(() => setJobFeedback(null), 1200);
                   }}
-                  className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] text-sm disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold shadow hover:bg-fuchsia-800 transition text-sm disabled:opacity-50"
                 >
-                  Process Selected
+                  <Feather className="w-4 h-4 mr-1 inline" /> Process Selected
                 </button>
               </div>
-
-              <div className="overflow-x-auto rounded-xl border border-[var(--border)] shadow-sm">
-                <table className="min-w-full text-sm bg-[var(--card)]">
+              <div className="overflow-x-auto rounded-xl border border-indigo-100 shadow">
+                <table className="min-w-full text-sm bg-white/80">
                   <thead>
-                    <tr className="text-left text-[var(--primary)]">
+                    <tr className="text-left text-fuchsia-800">
                       <th className="w-8"></th>
                       <th className="w-25"></th>
-                      {/* <th className="cursor-pointer">Image</th> */}
                       <th className="cursor-pointer" onClick={() => changeSort('name')}>Name</th>
                       <th className="cursor-pointer" onClick={() => changeSort('concept')}>Concept</th>
-                      <th className="cursor-pointer" onClick={() => changeSort('autogenerated')}>Has AI Content?</th>
+                      <th className="cursor-pointer" onClick={() => changeSort('autogenerated')}>AI Content?</th>
                       <th className="cursor-pointer" onClick={() => changeSort('updated_at')}>Updated</th>
-                      {/* <th className="cursor-pointer" ></th> */}
                       <th className="w-48"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginated.map(p => (
-                      <tr key={p.id} className="border-b border-[var(--border)] hover:bg-[var(--surface)] transition">
+                      <tr key={p.id} className="border-b border-indigo-50 hover:bg-indigo-50 transition">
                         <td className="px-2 text-center">
                           <input
                             type="checkbox"
@@ -323,7 +335,7 @@ export default function AgentWriterPage() {
                           />
                         </td>
                         <td className="py-2">
-                          <Image src={p.logo || "/images/pages/concept/concept.png"} alt={p.name} width={64} height={64} className="w-20 h-20 rounded object-cover px-2" />
+                          <Image src={p.logo || "/images/pages/concept/concept.png"} alt={p.name} width={48} height={48} className="w-14 h-14 rounded object-cover" />
                         </td>
                         <td className="py-2 font-semibold">{p.name}</td>
                         <td className="py-2">{conceptMap[p.concept_id]?.name || ""}</td>
@@ -331,10 +343,12 @@ export default function AgentWriterPage() {
                         <td className="py-2">{p.updated_at ? new Date(p.updated_at).toLocaleDateString() : '-'}</td>
                         <td className="py-2 px-2 text-right">
                           <button
-                            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-semibold hover:bg-[var(--accent)] transition"
+                            className="px-3 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold text-xs hover:bg-fuchsia-700 transition"
                             onClick={async () => {
                               const res = await startAnalyzeJob(selectedAgent.id, p.id, token || "");
                               setJobs(j => [...j, { id: res.job_id, pages: [p.name], status: "queued" }]);
+                              setJobFeedback(`Started job for "${p.name}"!`);
+                              setTimeout(() => setJobFeedback(null), 1200);
                             }}
                           >
                             Start Job
@@ -343,18 +357,17 @@ export default function AgentWriterPage() {
                       </tr>
                     ))}
                     {paginated.length === 0 && (
-                      <tr><td colSpan={6} className="text-center py-4">No lore found. Try a different search.</td></tr>
+                      <tr><td colSpan={7} className="text-center py-4">No lore found. Try a different search.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
-
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <button
                   disabled={pageIndex === 0}
                   onClick={() => setPageIndex(p => Math.max(0, p - 1))}
-                  className="px-3 py-1 rounded-xl border border-[var(--primary)] text-[var(--primary)] disabled:opacity-50 font-semibold"
+                  className="px-3 py-1 rounded-xl border border-fuchsia-300 text-fuchsia-700 disabled:opacity-50 font-semibold"
                 >
                   Previous
                 </button>
@@ -362,7 +375,7 @@ export default function AgentWriterPage() {
                 <button
                   disabled={pageIndex >= totalPages - 1}
                   onClick={() => setPageIndex(p => Math.min(totalPages - 1, p + 1))}
-                  className="px-3 py-1 rounded-xl border border-[var(--primary)] text-[var(--primary)] disabled:opacity-50 font-semibold"
+                  className="px-3 py-1 rounded-xl border border-fuchsia-300 text-fuchsia-700 disabled:opacity-50 font-semibold"
                 >
                   Next
                 </button>
