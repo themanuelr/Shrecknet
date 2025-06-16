@@ -67,7 +67,12 @@ export default function ReviewPage() {
       .then(async (data) => {
         setJob(data);
         if (data.status === "done") {
-          const suggestions = data.suggestions || [];
+          let suggestions = data.suggestions || [];
+          if (data.bulk_accept_updates) {
+            suggestions = suggestions.filter(
+              (s: any) => !(s.exists || s.mode === "update")
+            );
+          }
           const mergeGroups = data.merge_groups || buildMergeGroups(suggestions);
 
           const fullGroups = mergeGroups.map((names: string[]) => {
