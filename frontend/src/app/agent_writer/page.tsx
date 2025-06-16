@@ -28,6 +28,7 @@ const AGENT_PERSONALITIES: Record<string, string> = {
 
 const JOB_LABELS: Record<string, string> = {
   analyze_page: "Suggest Pages",
+  bulk_analyze: "Bulk Suggestions",
   generate_pages: "Update/Create Pages",
 };
 
@@ -236,6 +237,8 @@ export default function AgentWriterPage() {
                         <td className="p-2">
                           {job.job_type === 'analyze_page' ? (
                             <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review suggestions</Link>
+                          ) : job.job_type === 'bulk_analyze' ? (
+                            <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.job_id}`}>Review pages</Link>
                           ) : (
                             <Link className="text-blue-600 underline" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review pages</Link>
                           )}
