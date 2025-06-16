@@ -33,9 +33,13 @@ export default function AgentsSettingsPage() {
     );
   }
 
+  console.log("Agent: " + JSON.stringify(agents))
+
   const filtered = agents.filter(a =>
     a.name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  console.log("Filtered: " + JSON.stringify(filtered))
 
   const jobsByAgent = jobs
     .filter(j => j.job_type === "update_vector_db")

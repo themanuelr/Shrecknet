@@ -26,10 +26,10 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
   useEffect(() => {
     setForm({
       name: agent?.name || "",
-      logoUrl: agent?.logo || "images/default/avatars/logo.png",
+      logoUrl: agent?.logo || "/uploads/default/avatars/logo.png",
       logoFile: null,
       personality: agent?.personality || "",
-      task: agent?.task || "",
+      task: agent?.task || "conversational",
       world_id: agent?.world_id || worlds?.[0]?.id || "",
     });
     setError("");
