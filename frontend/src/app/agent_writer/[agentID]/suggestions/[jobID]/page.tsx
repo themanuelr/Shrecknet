@@ -201,7 +201,8 @@ export default function SuggestionsPage() {
       );
       if (jobID)
         await updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
-      router.push(`/agent_writer/${agentID}/review/${res.job_id}`);
+      // router.push(`/agent_writer/${agentID}/review/${res.job_id}`);
+      router.push("/agent_writer");
     } catch (err) {
       console.error(err);
       alert("Failed to start generation");
