@@ -283,9 +283,10 @@ export default function AgentWriterPage() {
                 <button
                   disabled={selectedPages.length === 0}
                   onClick={async () => {
-                    const res = await startBulkAnalyze(selectedAgent.id, selectedPages, token || "");
-                    const names = pages.filter(p => selectedPages.includes(p.id)).map(p => p.name);
-                    setJobs(j => [...j, { id: res.job_id, pages: names, status: "queued" }]);
+                    for (const pid of selectedPages) {
+                      const res = await startAnalyzeJob(selectedAgent.id, pid, token || "");
+                      setJobs(j => [...j, { id: res.job_id, pages: [pageMap[pid]?.name || pid], status: "queued" }]);
+                    }
                     setSelectedPages([]);
                   }}
                   className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] text-sm disabled:opacity-50"
