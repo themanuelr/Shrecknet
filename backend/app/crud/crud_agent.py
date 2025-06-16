@@ -26,14 +26,14 @@ async def chat_with_agent(
 
     n_results = max(n_results, 5)
 
-    print (f" - AGENT CHAT: {agent.name}")
+    # print (f" - AGENT CHAT: {agent.name}")
 
     query = messages[-1].get("content", "") if messages else ""
     docs = crud_vectordb.query_world(agent.world_id, query, n_results)
     world = await session.get(GameWorld, agent.world_id)
-    print (f" ---- Querry: {query}")
-    print (f" ---- Docs: {docs}")    
-    print (f" ---- world: {world}")        
+    # print (f" ---- Querry: {query}")
+    # print (f" ---- Docs: {docs}")    
+    # print (f" ---- world: {world}")        
 
     sources = []
     context_parts = []
@@ -51,23 +51,26 @@ async def chat_with_agent(
 
     history_txt = "\n".join(f"{m['role']}: {m['content']}" for m in messages[:-1])
     personality = agent.personality or "helpful NPC"
+    agent_name = agent.name or "Agent"
 
-    print (f" ---- Context: {context}")
-    print (f" ---- history_txt: {history_txt}")
-    print (f" ---- personality: {personality}")    
+    # print (f" ---- Context: {context}")
+    # print (f" ---- history_txt: {history_txt}")
+    # print (f" ---- personality: {personality}")    
 
 
     system_prompt = (
         "The agent is a helper to consume data from the world.\n"
+        f"Agent name: {agent_name}\n"
         f"World system: {world.system}\n"
         f"World description: {world.description}\n"
-        f"Personality: {personality}\n"
+        f"Agent`s personality: {personality}\n"
         "Use the following context and chat history to answer the user's question.\n"
+        "Use the agent`s personality to give the tone of your responses. Stick to it, and make it creative!\n"
         "Do not mention any links in your answer.\n"
         "If no relevant information is found in the documents, inform the user."
     )
 
-    print (f" ---- system_prompt: {system_prompt}") 
+    # print (f" ---- system_prompt: {system_prompt}") 
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -97,6 +100,9 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 async def create_agent(session: AsyncSession, agent: Agent) -> Agent:
+
+    print (f"Creating this agent: {agent}")
+
     session.add(agent)
     await session.commit()
     await session.refresh(agent)
@@ -110,7 +116,9 @@ async def get_agents(session: AsyncSession, world_id: int | None = None) -> List
     if world_id:
         stmt = stmt.where(Agent.world_id == world_id)
     result = await session.execute(stmt)
-    return result.scalars().all()
+    return_result = result.scalars().all()
+    print (f"GOT THIS AGENTS: {return_result}")
+    return return_result
 
 async def update_agent(session: AsyncSession, agent_id: int, updates: dict) -> Optional[Agent]:
     db_agent = await session.get(Agent, agent_id)
