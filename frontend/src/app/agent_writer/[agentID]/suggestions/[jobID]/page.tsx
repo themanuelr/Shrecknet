@@ -45,6 +45,7 @@ function Stepper({ step }: { step: number }) {
 }
 
 function AgentBubble({ agent, children, loading = false }: any) {
+  if (!agent) return null;
   return (
     <div className="flex items-start gap-4 mb-4">
       <div className="relative">

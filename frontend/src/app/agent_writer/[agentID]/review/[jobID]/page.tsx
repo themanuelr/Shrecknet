@@ -1,243 +1,298 @@
-"use client";
-import { useParams } from "next/navigation";
-import DashboardLayout from "@/app/components/DashboardLayout";
-import AuthGuard from "@/app/components/auth/AuthGuard";
-import { useAuth } from "@/app/components/auth/AuthProvider";
-import { useEffect, useState } from "react";
-import { getWriterJob, updateWriterJob } from "@/app/lib/agentAPI";
-import { useAgentById } from "@/app/lib/useAgentById";
-import { useConcepts } from "@/app/lib/useConcept";
-import { useWorld } from "@/app/lib/useWorld";
-import { Loader2 } from "lucide-react";
-import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
-import CreatePageForm from "@/app/components/create_page/CreatePageForm";
-import Image from "next/image";
+  "use client";
+  import { useParams } from "next/navigation";
+  import DashboardLayout from "@/app/components/DashboardLayout";
+  import AuthGuard from "@/app/components/auth/AuthGuard";
+  import { useAuth } from "@/app/components/auth/AuthProvider";
+  import { useEffect, useState } from "react";
+  import { getWriterJob, updateWriterJob } from "@/app/lib/agentAPI";
+  import { useAgentById } from "@/app/lib/useAgentById";
+  import { useConcepts } from "@/app/lib/useConcept";
+  import { useWorld } from "@/app/lib/useWorld";
+  import { Loader2 } from "lucide-react";
+  import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
+  import CreatePageForm from "@/app/components/create_page/CreatePageForm";
+  import Image from "next/image";
+  import { useRouter } from "next/navigation";
 
-function buildMergeGroups(suggestions: any[]) {
-  const graph = new Map<string, Set<string>>();
-  suggestions.forEach((s) => {
-    if (!graph.has(s.name)) graph.set(s.name, new Set());
-    (s.merge_targets || []).forEach((t: string) => {
-      graph.get(s.name)!.add(t);
-      if (!graph.has(t)) graph.set(t, new Set());
-      graph.get(t)!.add(s.name);
+  function buildMergeGroups(suggestions: any[]) {
+    const graph = new Map<string, Set<string>>();
+    suggestions.forEach((s) => {
+      if (!graph.has(s.name)) graph.set(s.name, new Set());
+      (s.merge_targets || []).forEach((t: string) => {
+        graph.get(s.name)!.add(t);
+        if (!graph.has(t)) graph.set(t, new Set());
+        graph.get(t)!.add(s.name);
+      });
     });
-  });
-  const visited = new Set<string>();
-  const groups: string[][] = [];
-  for (const name of graph.keys()) {
-    if (visited.has(name)) continue;
-    const queue = [name];
-    const group = new Set<string>();
-    while (queue.length) {
-      const cur = queue.pop()!;
-      if (visited.has(cur)) continue;
-      visited.add(cur);
-      group.add(cur);
-      graph.get(cur)!.forEach((n) => queue.push(n));
+    const visited = new Set<string>();
+    const groups: string[][] = [];
+    for (const name of graph.keys()) {
+      if (visited.has(name)) continue;
+      const queue = [name];
+      const group = new Set<string>();
+      while (queue.length) {
+        const cur = queue.pop()!;
+        if (visited.has(cur)) continue;
+        visited.add(cur);
+        group.add(cur);
+        graph.get(cur)!.forEach((n) => queue.push(n));
+      }
+      groups.push(Array.from(group));
     }
-    groups.push(Array.from(group));
+    const independent = suggestions.filter((s) => !graph.has(s.name)).map((s) => [s.name]);
+    return [...groups, ...independent];
   }
-  const independent = suggestions.filter((s) => !graph.has(s.name)).map((s) => [s.name]);
-  return [...groups, ...independent];
-}
 
-export default function ReviewPage() {
-  const { agentID, jobID } = useParams();
-  const { token } = useAuth();
-  const [job, setJob] = useState<any>(null);
-  const [generatedPages, setGeneratedPages] = useState<any[]>([]);
-  const [activeGen, setActiveGen] = useState(0);
+  export default function ReviewPage() {
+    const { agentID, jobID } = useParams();
+    const { token } = useAuth();
+    const [job, setJob] = useState<any>(null);
+    const [generatedPages, setGeneratedPages] = useState<any[]>([]);
+    const [activeGen, setActiveGen] = useState(0);
 
-  const { agent } = useAgentById(Number(agentID));
-  const { concepts } = useConcepts(agent?.world_id);
-  const { world } = useWorld(agent?.world_id);
+    const { agent } = useAgentById(Number(agentID));
+    const { concepts } = useConcepts(agent?.world_id);
+    const { world } = useWorld(agent?.world_id);
+    const router = useRouter();
 
-  useEffect(() => {
-    if (job && generatedPages.length === 0 && jobID) {
-      updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
-    }
-  }, [generatedPages, job, jobID, token]);
 
-  useEffect(() => {
-    if (!jobID || !token) return;
-    getWriterJob(jobID as string, token)
-      .then(async (data) => {
-        setJob(data);
-        if (data.status === "done") {
-          let suggestions = data.suggestions || [];
-          if (data.bulk_accept_updates) {
-            suggestions = suggestions.filter(
-              (s: any) => !(s.exists || s.mode === "update")
-            );
-          }
-          const mergeGroups = data.merge_groups || buildMergeGroups(suggestions);
+    // Show "All done!" message and redirect if no pages left to review
+    // useEffect(() => {
+    //   if (job && job.status === "done" && generatedPages.length === 0) {
+    //     const timeout = setTimeout(() => {
+    //       router.push("/agent_writer");
+    //     }, 2000);
+    //     return () => clearTimeout(timeout);
+    //   }
+    // }, [job, generatedPages, router]);
 
-          const fullGroups = mergeGroups.map((names: string[]) => {
-            const group = suggestions.filter((s: any) => names.includes(s.name));
-            const base = group.find((s: any) => Array.isArray(s.merge_targets) && s.merge_targets.length > 0) || group[0];
-            const mergedItems = group.filter((s: any) => s !== base);
-            return { base, mergedItems, group };
-          });
 
-          const pagesMap = new Map((data.pages || []).map((p: any) => [p.name, p]));
-          const mergedResult: any[] = [];
 
-          for (const { base, mergedItems } of fullGroups) {
-            const generatedBase = pagesMap.get(base.name);
-            const mergedContents = [generatedBase?.autogenerated_content || base.autogenerated_content || ""];
+    useEffect(() => {
+      if (!jobID || !token) return;
+      getWriterJob(jobID as string, token)
+        .then(async (data) => {
+          setJob(data);
+          if (data.status === "done") {
+            let suggestions = data.suggestions || [];
+            console.log("Suggestions before filter:" +JSON.stringify(suggestions))
+            // if (data.bulk_accept_updates) {
+            //   suggestions = suggestions.filter(
+            //     (s: any) => !(s.exists || s.mode === "update")
+            //   );
+            // }
+            console.log("Suggestions after filter:" +JSON.stringify(suggestions))
 
-            for (const item of mergedItems) {
-              const generated = pagesMap.get(item.name);
-              if (generated?.autogenerated_content) {
-                mergedContents.push(generated.autogenerated_content);
-              } else if (item.autogenerated_content) {
-                mergedContents.push(item.autogenerated_content);
-              }
-            }
+            const mergeGroups = data.merge_groups || buildMergeGroups(suggestions);
+            console.log("mergeGroups:" +JSON.stringify(mergeGroups))
 
-            const combinedAutogen = mergedContents.filter(Boolean).join("\n\n---\n\n");
-
-            const srcPages: any[] = [];
-            [base, ...mergedItems].forEach((it: any) => {
-              (it.source_pages || []).forEach((sp: any) => {
-                if (!srcPages.find((p) => p.id === sp.id)) srcPages.push(sp);
-              });
+            const fullGroups = mergeGroups.map((names: string[]) => {
+              const group = suggestions.filter((s: any) => names.includes(s.name));
+              const base = group.find((s: any) => Array.isArray(s.merge_targets) && s.merge_targets.length > 0) || group[0];
+              const mergedItems = group.filter((s: any) => s !== base);
+              return { base, mergedItems, group };
             });
-            const headers = srcPages
-              .map((sp) => `<h2>Notes from ${sp.name}</h2>`) 
-              .join("\n");
 
-            if (base.exists || base.mode === "update") {
-              const backendPage = base.target_page_id
-                ? await getPage(base.target_page_id, token || "")
-                : (await getPagesForConcept(base.concept_id, token || "")).find((p: any) => p.name.toLowerCase() === base.name.toLowerCase());
-              const previousAutogen = backendPage?.autogenerated_content || "";
-              const fullAutogen = `${previousAutogen ? previousAutogen + "\n\n---\n\n" : ""}${headers}\n${combinedAutogen}`;
-              mergedResult.push({ ...backendPage, autogenerated_content: fullAutogen });
-            } else {
-              const created = pagesMap.get(base.name);
-              if (created) {
-                mergedResult.push({ ...created, autogenerated_content: combinedAutogen });
+            console.log("data.pages type:", typeof data.pages, Array.isArray(data.pages));
+            console.log("data.pages:", data.pages);
+            console.log("data.pages.length:", data.pages?.length);
+            
+            const pagesMap = new Map((data.pages || []).map((p: any) => [p.name, p]));
+            console.log("pagesMap.size:", pagesMap.size);
+                        console.log("pagesMap entries:", [...pagesMap.entries()]);
+            const mergedResult: any[] = [];
+            
+            console.log("pagesMap:" +JSON.stringify(pagesMap))
+            console.log("fullGroups:" +JSON.stringify(fullGroups))
+
+            for (const { base, mergedItems } of fullGroups) {
+              console.log(" --- HERE" + base)
+              const generatedBase = pagesMap.get(base.name);
+              console.log(" --- PageMap!")
+              const mergedContents = [generatedBase?.autogenerated_content || base.autogenerated_content || ""];
+              console.log(" --- generatedBase: " +JSON.stringify(generatedBase))
+              console.log(" --- mergedContents: " +JSON.stringify(mergedContents))
+
+              for (const item of mergedItems) {
+                const generated = pagesMap.get(item.name);
+                if (generated?.autogenerated_content) {
+                  mergedContents.push(generated.autogenerated_content);
+                } else if (item.autogenerated_content) {
+                  mergedContents.push(item.autogenerated_content);
+                }
+              }
+
+              const combinedAutogen = mergedContents.filter(Boolean).join("\n\n---\n\n");
+              
+              console.log("combinedAutogen:" +JSON.stringify(combinedAutogen))
+
+              const srcPages: any[] = [];
+              [base, ...mergedItems].forEach((it: any) => {
+                (it.source_pages || []).forEach((sp: any) => {
+                  if (!srcPages.find((p) => p.id === sp.id)) srcPages.push(sp);
+                });
+              });
+              const headers = srcPages
+                .map((sp) => `<h2>Notes from ${sp.name}</h2>`) 
+                .join("\n");
+              
+              console.log("headers:" +JSON.stringify(headers))
+
+              if (base.exists || base.mode === "update") {
+                const backendPage = base.target_page_id
+                  ? await getPage(base.target_page_id, token || "")
+                  : (await getPagesForConcept(base.concept_id, token || "")).find((p: any) => p.name.toLowerCase() === base.name.toLowerCase());
+                const previousAutogen = backendPage?.autogenerated_content || "";
+                const fullAutogen = `${previousAutogen ? previousAutogen + "\n\n---\n\n" : ""}${headers}\n${combinedAutogen}`;
+                mergedResult.push({ ...backendPage, autogenerated_content: fullAutogen });
+              } else {
+                const created = pagesMap.get(base.name);
+                if (created) {
+                  mergedResult.push({ ...created, autogenerated_content: combinedAutogen });
+                }
               }
             }
+            console.log("Merged results: " + JSON.stringify(mergedResult))
+            setGeneratedPages(mergedResult);
           }
+        })
+        .catch(() => {console.log("ERROR!")});
+    }, [jobID, token]);
 
-          setGeneratedPages(mergedResult);
-        }
-      })
-      .catch(() => {});
-  }, [jobID, token]);
+    if (!job) return (
+      <AuthGuard>
+        <DashboardLayout>
+          <div className="p-6 text-[var(--foreground)]">Loading...</div>
+        </DashboardLayout>
+      </AuthGuard>
+    );
 
-  if (!job) return (
-    <AuthGuard>
-      <DashboardLayout>
-        <div className="p-6 text-[var(--foreground)]">Loading...</div>
-      </DashboardLayout>
-    </AuthGuard>
-  );
+    if (job.status !== "done") 
+      return (
+        <AuthGuard>
+          <DashboardLayout>
+            <div className="p-6 text-[var(--foreground)] flex items-center gap-2">
+              <Loader2 className="animate-spin" /> Generating pages...
+            </div>
+          </DashboardLayout>
+        </AuthGuard>
+      );
 
-  if (job.status !== "done") {
+
+  // useEffect(() => {
+  //       if (job && generatedPages.length === 0 && jobID) {
+  //         updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
+  //       }
+  //     }, [generatedPages, job, jobID, token]);
+
+  // if (job && job.status === "done" && generatedPages.length === 0) {
+  //     return (
+  //       <AuthGuard>
+  //         <DashboardLayout>
+  //           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+  //             <div className="text-4xl font-bold text-green-600 mb-2">🎉 Well done!</div>
+  //             <div className="text-lg text-[var(--foreground)]">
+  //               All pages were reviewed and updated.<br />
+  //               You’ll be sent back to the Scriptorium in a moment...
+  //             </div>
+  //             <div className="mt-8 animate-bounce text-3xl">📚</div>
+  //           </div>
+  //         </DashboardLayout>
+  //       </AuthGuard>
+  //     );
+  //   }
+
+
+
     return (
       <AuthGuard>
         <DashboardLayout>
-          <div className="p-6 text-[var(--foreground)] flex items-center gap-2">
-            <Loader2 className="animate-spin" /> Generating pages...
+          <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-10 flex justify-center">
+            <div className="w-full max-w-screen-2xl mx-auto px-4">
+              <div className="flex flex-col items-center gap-2 mb-6">
+                {agent && (
+                  <div className="flex items-center gap-4 mb-4">
+                    <Image src={agent.logo || "/images/default/avatars/logo.png"} alt={agent.name} width={64} height={64} className="rounded-full border-2 border-[var(--primary)] shadow-lg" />
+                    <h1 className="text-2xl font-extrabold text-[var(--primary)]">Review Legends</h1>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-2 mb-6">
+                  {generatedPages.map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveGen(idx)}
+                      className={`px-4 py-2 rounded-t-lg text-sm font-bold border-b-2 transition-all ${
+                        activeGen === idx
+                          ? "border-[var(--primary)] text-[var(--primary)] bg-[var(--card)]"
+                          : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--primary)]"
+                      }`}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              { generatedPages.map((p, idx) =>
+                activeGen === idx ? (
+                  <div key={idx} className="border border-[var(--border)] rounded-xl p-6 bg-[var(--card)] shadow-sm mb-12">
+                    <div className="flex items-center gap-4 mb-4">
+                      {concepts?.find((c) => c.id === p.concept_id)?.logo && (
+                        <img src={concepts.find((c) => c.id === p.concept_id)!.logo} alt="concept logo" className="w-10 h-10 rounded-full border border-[var(--border)]" />
+                      )}
+                      <h3 className="text-xl font-bold text-[var(--primary)]">
+                        {concepts?.find((c) => c.id === p.concept_id)?.name || "Unknown Concept"}
+                      </h3>
+                    </div>
+
+                    <div className="prose prose-invert max-w-none mb-6 border-l-4 border-yellow-400 pl-4">
+                      <div dangerouslySetInnerHTML={{ __html: p.autogenerated_content }} />
+                    </div>
+
+                    <CreatePageForm
+                      selectedWorld={world}
+                      selectedConcept={concepts?.find((c) => c.id === p.concept_id)}
+                      token={token}
+                      initialValues={p}
+                      mode={p?.id ? "edit" : "create"}
+                      onSubmit={async (payload) => {
+                        if (!token) return;
+                        if (p?.id) {
+                          await updatePage(
+                            p.id,
+                            {
+                              ...payload,
+                              autogenerated_content: p.autogenerated_content,
+                              updated_by_agent_id: Number(agentID),
+                            },
+                            token
+                          );
+                        } else {
+                          const created = await createPage(payload, token);
+                          await updatePage(
+                            created.id,
+                            {
+                              autogenerated_content: p.autogenerated_content,
+                              updated_by_agent_id: Number(agentID),
+                            },
+                            token
+                          );
+                        }
+                        setGeneratedPages((g) => {
+                          const updated = g.filter((_, i) => i !== idx);
+                          if (updated.length === 0 && jobID) {
+                            updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
+                          }
+                          return updated;
+                        });
+                      }}
+                    />
+                  </div>
+                ) : null
+              )}
+            </div>
           </div>
         </DashboardLayout>
       </AuthGuard>
     );
   }
-
-  return (
-    <AuthGuard>
-      <DashboardLayout>
-        <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] px-2 sm:px-6 py-10 flex justify-center">
-          <div className="w-full max-w-screen-2xl mx-auto px-4">
-            <div className="flex flex-col items-center gap-2 mb-6">
-              {agent && (
-                <div className="flex items-center gap-4 mb-4">
-                  <Image src={agent.logo || "/images/default/avatars/logo.png"} alt={agent.name} width={64} height={64} className="rounded-full border-2 border-[var(--primary)] shadow-lg" />
-                  <h1 className="text-2xl font-extrabold text-[var(--primary)]">Review Legends</h1>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2 border-b border-[var(--border)] pb-2 mb-6">
-                {generatedPages.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveGen(idx)}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-bold border-b-2 transition-all ${
-                      activeGen === idx
-                        ? "border-[var(--primary)] text-[var(--primary)] bg-[var(--card)]"
-                        : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--primary)]"
-                    }`}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {generatedPages.map((p, idx) =>
-              activeGen === idx ? (
-                <div key={idx} className="border border-[var(--border)] rounded-xl p-6 bg-[var(--card)] shadow-sm mb-12">
-                  <div className="flex items-center gap-4 mb-4">
-                    {concepts?.find((c) => c.id === p.concept_id)?.logo && (
-                      <img src={concepts.find((c) => c.id === p.concept_id)!.logo} alt="concept logo" className="w-10 h-10 rounded-full border border-[var(--border)]" />
-                    )}
-                    <h3 className="text-xl font-bold text-[var(--primary)]">
-                      {concepts?.find((c) => c.id === p.concept_id)?.name || "Unknown Concept"}
-                    </h3>
-                  </div>
-
-                  <div className="prose prose-invert max-w-none mb-6 border-l-4 border-yellow-400 pl-4">
-                    <div dangerouslySetInnerHTML={{ __html: p.autogenerated_content }} />
-                  </div>
-
-                  <CreatePageForm
-                    selectedWorld={world}
-                    selectedConcept={concepts?.find((c) => c.id === p.concept_id)}
-                    token={token}
-                    initialValues={p}
-                    mode={p?.id ? "edit" : "create"}
-                    onSubmit={async (payload) => {
-                      if (!token) return;
-                      if (p?.id) {
-                        await updatePage(
-                          p.id,
-                          {
-                            ...payload,
-                            autogenerated_content: p.autogenerated_content,
-                            updated_by_agent_id: Number(agentID),
-                          },
-                          token
-                        );
-                      } else {
-                        const created = await createPage(payload, token);
-                        await updatePage(
-                          created.id,
-                          {
-                            autogenerated_content: p.autogenerated_content,
-                            updated_by_agent_id: Number(agentID),
-                          },
-                          token
-                        );
-                      }
-                      setGeneratedPages((g) => {
-                        const updated = g.filter((_, i) => i !== idx);
-                        if (updated.length === 0 && jobID) {
-                          updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
-                        }
-                        return updated;
-                      });
-                    }}
-                  />
-                </div>
-              ) : null
-            )}
-          </div>
-        </div>
-      </DashboardLayout>
-    </AuthGuard>
-  );
-}
