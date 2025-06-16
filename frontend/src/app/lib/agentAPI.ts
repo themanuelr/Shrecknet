@@ -198,6 +198,23 @@ export async function listWriterJobs(token: string) {
   return await res.json();
 }
 
+export async function updateWriterJob(
+  jobId: string,
+  data: any,
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/writer_jobs/${jobId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
 export async function startBulkAnalyze(
   agentId: number,
   pageIds: number[],

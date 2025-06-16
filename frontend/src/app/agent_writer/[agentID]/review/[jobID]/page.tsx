@@ -4,7 +4,7 @@ import DashboardLayout from "@/app/components/DashboardLayout";
 import AuthGuard from "@/app/components/auth/AuthGuard";
 import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useState } from "react";
-import { getWriterJob } from "@/app/lib/agentAPI";
+import { getWriterJob, updateWriterJob } from "@/app/lib/agentAPI";
 import { useAgentById } from "@/app/lib/useAgentById";
 import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
@@ -12,7 +12,6 @@ import { Loader2 } from "lucide-react";
 import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
 import CreatePageForm from "@/app/components/create_page/CreatePageForm";
 import Image from "next/image";
-import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 
 function buildMergeGroups(suggestions: any[]) {
   const graph = new Map<string, Set<string>>();
@@ -55,11 +54,10 @@ export default function ReviewPage() {
   const { world } = useWorld(agent?.world_id);
 
   useEffect(() => {
-    if (job && generatedPages.length === 0) {
-      const pageName = job.pages ? job.pages.map((p: any) => p.name).join(', ') : '';
-      markWriterJobCompleted(job as any, pageName);
+    if (job && generatedPages.length === 0 && jobID) {
+      updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
     }
-  }, [generatedPages, job]);
+  }, [generatedPages, job, jobID, token]);
 
   useEffect(() => {
     if (!jobID || !token) return;
@@ -227,9 +225,8 @@ export default function ReviewPage() {
                       }
                       setGeneratedPages((g) => {
                         const updated = g.filter((_, i) => i !== idx);
-                        if (updated.length === 0) {
-                          const pageName = g.map((pg) => pg.name).join(', ');
-                          markWriterJobCompleted(job as any, pageName);
+                        if (updated.length === 0 && jobID) {
+                          updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
                         }
                         return updated;
                       });

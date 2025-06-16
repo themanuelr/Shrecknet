@@ -10,10 +10,6 @@ import { usePages } from "../lib/usePage";
 import { useConcepts } from "../lib/useConcept";
 import { startBulkAnalyze, getBulkJob, startAnalyzeJob } from "../lib/agentAPI";
 import { useWriterJobs } from "../lib/useWriterJobs";
-import {
-  loadCompletedJobs as loadCompletedWriterJobs,
-  markWriterJobCompleted,
-} from "../lib/writerJobsStorage";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpenText, Search, Sparkles, Feather, Undo2, ArrowLeftCircle } from "lucide-react";
@@ -47,22 +43,7 @@ export default function AgentWriterPage() {
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const { jobs: writerJobs } = useWriterJobs();
-  const [completedJobs, setCompletedJobs] = useState<any[]>([]);
   const [jobFeedback, setJobFeedback] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCompletedJobs(loadCompletedWriterJobs());
-  }, []);
-
-  const markJobCompleted = (job: any) => {
-    const pageName =
-      pages.find((p) => p.id === job.page_id)?.name ||
-      (job.pages ? job.pages.join(', ') : '');
-    const updated = markWriterJobCompleted(job, pageName);
-    setCompletedJobs(updated);
-    setJobFeedback("Job marked as reviewed.");
-    setTimeout(() => setJobFeedback(null), 1200);
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -144,10 +125,10 @@ export default function AgentWriterPage() {
 
   const agentWriterJobs = writerJobs.filter(j => j.agent_id === selectedAgent.id);
   const runningJobs = agentWriterJobs.filter(j => j.status !== 'done');
-  const waitingJobs = agentWriterJobs.filter(j => j.status === 'done' && !completedJobs.find(c => c.job_id === j.job_id));
-  const doneJobs = completedJobs
-    .filter(c => c.agent_id === selectedAgent.id)
-    .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())
+  const waitingJobs = agentWriterJobs.filter(j => j.status === 'done' && j.action_needed === 'review');
+  const doneJobs = agentWriterJobs
+    .filter(j => j.status === 'done' && j.action_needed !== 'review')
+    .sort((a, b) => new Date(b.end_time || 0).getTime() - new Date(a.end_time || 0).getTime())
     .slice(0, 3);
 
   let filtered = (pages || []).filter(
@@ -243,9 +224,6 @@ export default function AgentWriterPage() {
                           ) : (
                             <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review</Link>
                           )}
-                          <button onClick={() => markJobCompleted(job)} className="ml-2 text-xs text-indigo-700 border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-50 transition">
-                            Mark done
-                          </button>
                         </td>
                       </tr>
                     ))}
