@@ -86,6 +86,7 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                     "pages_processed": 0,
                 },
                 f,
+                default=str,
             )
 
         print (f" --- CALCUALTING SUGGESIONTS --- ")
@@ -113,6 +114,7 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                             "pages_processed": processed,
                         },
                         f,
+                        default=str,
                     )
 
             print (f" --- CALCUALTING SUGGESIONTS2 --- ")
@@ -133,6 +135,7 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                     "suggestions": suggestions,
                 },
                 f,
+                default=str,
             )
 
     asyncio.run(run())
@@ -151,7 +154,7 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                 "agent_id": agent_id,
                 "job_type": "update_vector_db",
                 "start_time": start_time,
-            }, f)
+            }, f, default=str)
 
         print (f" --- CALCUALTING SUGGESTIONS --- ")
         print (f" --- CALCUALTING SUGGESTIONS --- ")
@@ -165,7 +168,7 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                         "status": "error",
                         "error": "Agent not found",
                         "start_time": start_time,
-                    }, ff)
+                    }, ff, default=str)
                 return
 
             print (f" --- CALCUALTING SUGGESTIONS2 --- ")
@@ -197,6 +200,7 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                             "start_time": start_time,
                         },
                         ff,
+                        default=str,
                     )
                 raise
 
@@ -209,7 +213,7 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                 "pages_indexed": count,
                 "start_time": start_time,
                 "end_time": end_time,
-            }, f)
+            }, f, default=str)
 
     asyncio.run(run())
 
@@ -229,7 +233,7 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
                 "job_type": "analyze_page",
                 "start_time": start_time,
                 "action_needed": None,
-            }, f)
+            }, f, default=str)
 
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
@@ -240,7 +244,7 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
                         "status": "error",
                         "error": "Agent or page not found",
                         "start_time": start_time,
-                    }, ff)
+                    }, ff, default=str)
                 return
             result = await analyze_page(session, agent, page)
 
@@ -255,7 +259,7 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
                 "start_time": start_time,
                 "end_time": end_time,
                 "action_needed": "review",
-            }, f)
+            }, f, default=str)
 
     asyncio.run(run())
 
@@ -289,6 +293,7 @@ def task_generate_pages_job(
                     "action_needed": None,
                 },
                 f,
+                default=str,
             )
 
         async with async_session_maker() as session:
@@ -300,7 +305,7 @@ def task_generate_pages_job(
                         "status": "error",
                         "error": "Agent or page not found",
                         "start_time": start_time,
-                    }, ff)
+                    }, ff, default=str)
                 return
             result = await generate_pages(session, agent, page, pages)
 
@@ -400,6 +405,7 @@ def task_generate_pages_job(
                     "action_needed": "review",
                 },
                 f,
+                default=str,
             )
 
     asyncio.run(run())
