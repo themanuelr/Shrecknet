@@ -156,27 +156,47 @@ export default function SuggestionsPage() {
     setLoading(true);
     try {
       const mergeGroups = buildMergeGroups(selectedSuggestions);
-      const allPages = mergeGroups.flatMap((names) =>
-        names
-          .map((n) => {
-            const s = selectedSuggestions.find((ss) => ss.name === n);
-            return s
-              ? {
-                  name: s.name,
-                  concept_id: s.concept_id,
-                  source_page_ids: (s.source_pages || []).map((sp: any) => sp.id),
-                }
-              : null;
-          })
-          .filter(Boolean)
-      );
+
+      // prepare suggestions with merged source pages
+      const prepared = selectedSuggestions.map((s) => ({ ...s }));
+      for (const names of mergeGroups) {
+        const group = names
+          .map((n) => prepared.find((ss) => ss.name === n))
+          .filter(Boolean) as any[];
+        if (group.length === 0) continue;
+        const sourcesMap: Record<number, any> = {};
+        group.forEach((g) => {
+          (g.source_pages || []).forEach((sp: any) => {
+            sourcesMap[sp.id] = sp;
+          });
+        });
+        const base =
+          group.find((g) => Array.isArray(g.merge_targets) && g.merge_targets.length > 0) ||
+          group[0];
+        base.source_pages = Object.values(sourcesMap);
+      }
+
+      const allPages = mergeGroups.map((names) => {
+        const group = names
+          .map((n) => prepared.find((ss) => ss.name === n))
+          .filter(Boolean) as any[];
+        const base =
+          group.find((g) => Array.isArray(g.merge_targets) && g.merge_targets.length > 0) ||
+          group[0];
+        const ids = Array.from(
+          new Set(
+            group.flatMap((g) => (g.source_pages || []).map((sp: any) => sp.id))
+          )
+        );
+        return { name: base.name, concept_id: base.concept_id, source_page_ids: ids };
+      });
       const basePageId = job.page_id || (Array.isArray(job.page_ids) ? job.page_ids[0] : 0);
       const res = await startGenerateJob(
         Number(agentID),
         basePageId,
         allPages as any[],
         token || "",
-        selectedSuggestions,
+        prepared,
         mergeGroups,
         bulkAcceptUpdates
       );

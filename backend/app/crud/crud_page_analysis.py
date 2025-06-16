@@ -82,11 +82,20 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
     final_suggestions: List[dict] = []
     for name, entries in suggestions_by_name.items():
         if len(entries) == 1:
-            final_suggestions.append(entries[0])
+            entry = entries[0]
+            entry["source_pages"] = [{"id": page.id, "name": page.name}]
+            entry["source_page_updated"] = (
+                page.updated_at.isoformat() if page.updated_at else ""
+            )
+            final_suggestions.append(entry)
             continue
         option_concepts = [concepts_by_id[e["concept_id"]] for e in entries]
         best = await _choose_concept(llm, name, page.content or "", option_concepts)
         chosen = next((e for e in entries if e["concept"] == best), entries[0])
+        chosen["source_pages"] = [{"id": page.id, "name": page.name}]
+        chosen["source_page_updated"] = (
+            page.updated_at.isoformat() if page.updated_at else ""
+        )
         final_suggestions.append(chosen)
 
     return {"suggestions": final_suggestions}
