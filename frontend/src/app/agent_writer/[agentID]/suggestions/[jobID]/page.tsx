@@ -6,13 +6,12 @@ import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SuggestionCard from "@/app/components/agents/SuggestionCard";
-import { getWriterJob, getBulkJob, startGenerateJob } from "@/app/lib/agentAPI";
+import { getWriterJob, getBulkJob, startGenerateJob, updateWriterJob } from "@/app/lib/agentAPI";
 import { useAgentById } from "@/app/lib/useAgentById";
 import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
 import { usePages } from "@/app/lib/usePage";
 import { Loader2, AlertTriangle } from "lucide-react";
-import { markWriterJobCompleted } from "../../../../lib/writerJobsStorage";
 
 const STEPS = [
   { label: "Review Lore" },
@@ -200,7 +199,8 @@ export default function SuggestionsPage() {
         mergeGroups,
         bulkAcceptUpdates
       );
-      markWriterJobCompleted(job);
+      if (jobID)
+        await updateWriterJob(jobID as string, { action_needed: "done" }, token || "");
       router.push(`/agent_writer/${agentID}/review/${res.job_id}`);
     } catch (err) {
       console.error(err);

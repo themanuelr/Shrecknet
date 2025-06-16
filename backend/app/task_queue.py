@@ -228,6 +228,7 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
                 "page_id": page_id,
                 "job_type": "analyze_page",
                 "start_time": start_time,
+                "action_needed": None,
             }, f)
 
         async with async_session_maker() as session:
@@ -253,6 +254,7 @@ def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
                 "suggestions": result.get("suggestions", []),
                 "start_time": start_time,
                 "end_time": end_time,
+                "action_needed": "review",
             }, f)
 
     asyncio.run(run())
@@ -284,6 +286,7 @@ def task_generate_pages_job(
                     "merge_groups": merge_groups or [],
                     "suggestions": suggestions or [],
                     "bulk_accept_updates": bulk_accept_updates,
+                    "action_needed": None,
                 },
                 f,
             )
@@ -394,6 +397,7 @@ def task_generate_pages_job(
                     "merge_groups": merge_groups or [],
                     "suggestions": suggestions or [],
                     "bulk_accept_updates": bulk_accept_updates,
+                    "action_needed": "review",
                 },
                 f,
             )
