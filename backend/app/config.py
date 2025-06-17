@@ -11,9 +11,9 @@ class Settings(BaseSettings):
     chat_history_dir: str = "./data/chat/{user_id}"
     bulk_job_dir: str = "./data/bulk_jobs"
     vectordb_job_dir: str = "./data/vector_jobs"
-    writer_job_dir: str = "./data/writer_jobs"
-    model_config = SettingsConfigDict(env_file=".env")
+    writer_job_dir: str = "./data/writer_jobs"    
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()

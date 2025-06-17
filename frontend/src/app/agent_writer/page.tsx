@@ -61,7 +61,7 @@ export default function AgentWriterPage() {
     return () => clearInterval(interval);
   }, [jobs, token]);
 
-  if (!hasRole(user?.role, "world builder") && !hasRole(user?.role, "system admin")) {
+  if (!hasRole(user?.role, "writer")) {
     return (
       <DashboardLayout>
         <div className="p-10 text-2xl text-red-600 font-bold">Not authorized</div>
