@@ -1,10 +1,14 @@
-FROM python:3.10-slim
+FROM python:3.11
 
 WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r requirements.txt
+
+RUN pip install --upgrade pip
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install  --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r requirements.txt
+RUN pip install chromadb==1.0.12
 
 
 # Copy the backend code
