@@ -87,6 +87,7 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
     )
     concepts_by_id: Dict[int, Concept] = {c.id: c for c in concepts}
     existing_pages = await crud_page.get_pages(session, gameworld_id=page.gameworld_id)
+    pages_by_id = {p.id: p for p in existing_pages}
     page_map = {_canonical(p.name): p.id for p in existing_pages}
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
@@ -122,11 +123,21 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
             }
             if exists_id is not None:
                 entry["target_page_id"] = exists_id
+                target_page = pages_by_id.get(exists_id)
+                if target_page:
+                    # Ensure the concept info for the target page is loaded
+                    if target_page.concept_id not in concepts_by_id:
+                        existing_concept = await crud_concept.get_concept(session, target_page.concept_id)
+                        if existing_concept:
+                            concepts_by_id[target_page.concept_id] = existing_concept
+                    entry["concept_id"] = target_page.concept_id
+                    entry["concept"] = concepts_by_id[target_page.concept_id].name
             suggestions_by_name.setdefault(key, []).append(entry)
 
     final_suggestions: List[dict] = []
     for name, entries in suggestions_by_name.items():
-        if len(entries) == 1:
+        same_concept = len({e["concept_id"] for e in entries}) == 1
+        if len(entries) == 1 or same_concept:
             entry = entries[0]
             entry["source_pages"] = [{"id": page.id, "name": page.name}]
             entry["source_page_updated"] = (
@@ -134,9 +145,16 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
             )
             final_suggestions.append(entry)
             continue
-        option_concepts = [concepts_by_id[e["concept_id"]] for e in entries]
-        best = await _choose_concept(llm, name, page.content or "", option_concepts)
-        chosen = next((e for e in entries if e["concept"] == best), entries[0])
+
+        option_concepts = [concepts_by_id[e["concept_id"]] for e in entries if e["concept_id"] in concepts_by_id]
+        if option_concepts:
+            best = await _choose_concept(llm, name, page.content or "", option_concepts)
+            chosen = next(
+                (e for e in entries if e["concept_id"] in concepts_by_id and concepts_by_id[e["concept_id"]].name == best),
+                entries[0],
+            )
+        else:
+            chosen = entries[0]
         chosen["source_pages"] = [{"id": page.id, "name": page.name}]
         chosen["source_page_updated"] = (
             page.updated_at.isoformat() if page.updated_at else ""
