@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     writer_job_dir: str = "./data/writer_jobs"    
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"
+    vector_db_url :str ="localhost"
+    vector_db_port :str = "8001"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    
 
 settings = Settings()

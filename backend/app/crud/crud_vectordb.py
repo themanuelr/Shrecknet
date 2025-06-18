@@ -39,8 +39,8 @@ from app.config import settings
 # directly and fall back to it if the environment variable is not set.
 _db_path = os.getenv("VECTOR_DB_PATH", settings.vector_db_path)
 
-chromadbURL = os.getenv("VECTOR_DB_URL", settings.vector_db_path)
-chromadbPort = int(os.getenv("VECTOR_DB_PORT", settings.vector_db_path))
+chromadbURL = os.getenv("VECTOR_DB_URL", settings.vector_db_url)
+chromadbPort = int(os.getenv("VECTOR_DB_PORT", settings.vector_db_port))
 
 # Ensure the directory exists so ``chromadb`` can persist collections
 os.makedirs(_db_path, exist_ok=True)
