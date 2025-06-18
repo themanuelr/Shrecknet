@@ -33,6 +33,39 @@ def _normalize(text: str) -> str:
     return " ".join(text.lower().split())
 
 
+def _canonical(name: str) -> str:
+    """Return a normalized version of the name without honorifics."""
+    n = _normalize(name)
+    titles = {"lord", "lady", "sir", "dame", "mr", "mrs", "ms"}
+    words = [w for w in n.split() if w not in titles]
+    return " ".join(words)
+
+
+def _select_key(name: str, groups: Dict[str, List[dict]]) -> str:
+    """Return the canonical key for grouping similar names."""
+    canonical = _canonical(name)
+    for k in list(groups.keys()):
+        if k.startswith(canonical):
+            groups[canonical] = groups.pop(k)
+            return canonical
+        if canonical.startswith(k):
+            return k
+    return canonical
+
+
+def _find_existing_page(name: str, page_map: Dict[str, int]) -> int | None:
+    """Find existing page id by canonical or fuzzy match."""
+    key = _canonical(name)
+    if key in page_map:
+        return page_map[key]
+    for k, pid in page_map.items():
+        if key.startswith(k) or k.startswith(key):
+            return pid
+        if SequenceMatcher(None, key, k).ratio() > 0.85:
+            return pid
+    return None
+
+
 async def _choose_concept(llm: ChatOpenAI, name: str, content: str, options: List[Concept]) -> str:
     prompt = ChatPromptTemplate.from_messages([
         ("system", "Choose the most appropriate concept for the given name. Respond with the concept name only."),
@@ -54,7 +87,7 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
     )
     concepts_by_id: Dict[int, Concept] = {c.id: c for c in concepts}
     existing_pages = await crud_page.get_pages(session, gameworld_id=page.gameworld_id)
-    page_map = {(p.concept_id, p.name.lower()): True for p in existing_pages}
+    page_map = {_canonical(p.name): p.id for p in existing_pages}
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     docs = text_splitter.split_text(page.content or "")
@@ -67,7 +100,7 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
         prompt = ChatPromptTemplate.from_messages([
             (
                 "system",
-                f"List all unique {concept.name} mentioned in the text. {concept.description or ''} Return a comma separated list. If the concept is not present, do not include it to your list.",
+                f"Extract the exact names of any {concept.name} explicitly mentioned in the text. {concept.description or ''} Respond with a comma separated list of the names only. If none are present, reply with an empty string.",
             ),
             ("user", "{text}"),
         ])
@@ -79,14 +112,17 @@ async def analyze_page(session: AsyncSession, agent: Agent, page: Page):
         for name in sorted(found):
             if not _valid_name(name):
                 continue
-            exists = (concept.id, name.lower()) in page_map
+            key = _select_key(name, suggestions_by_name)
+            exists_id = _find_existing_page(key, page_map)
             entry = {
-                "name": name,
+                "name": key,
                 "concept_id": concept.id,
                 "concept": concept.name,
-                "exists": exists,
+                "exists": exists_id is not None,
             }
-            suggestions_by_name.setdefault(name, []).append(entry)
+            if exists_id is not None:
+                entry["target_page_id"] = exists_id
+            suggestions_by_name.setdefault(key, []).append(entry)
 
     final_suggestions: List[dict] = []
     for name, entries in suggestions_by_name.items():
@@ -126,13 +162,13 @@ async def generate_pages(session: AsyncSession, agent: Agent, page: Page, page_s
         """Lookup for a page by fuzzy name and optional concept."""
         if not name:
             return None
-        target = _normalize(name)
+        target = _canonical(name)
         best_id: int | None = None
         best_ratio = 0.0
         for p in existing_pages:
             if ref_concept_id is not None and p.concept_id != ref_concept_id:
                 continue
-            candidate = _normalize(p.name)
+            candidate = _canonical(p.name)
             if not candidate:
                 continue
             if target in candidate or candidate in target:
