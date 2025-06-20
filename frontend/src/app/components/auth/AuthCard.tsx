@@ -43,7 +43,7 @@ enum FormMode {
   FIRST_USER,
 }
 
-export default function AuthCard() {
+export default function AuthCard({ initialError = null }: { initialError?: string | null }) {
   const [formMode, setFormMode] = useState<FormMode>(FormMode.LOGIN);
   const [usersExist, setUsersExist] = useState<boolean | null>(null);
   const [form, setForm] = useState({
@@ -52,7 +52,7 @@ export default function AuthCard() {
     nickname: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [info, setInfo] = useState<string | null>(null);
 
   const { setToken, setRedirectAfterLogin, getRedirectAfterLogin } = useAuth();

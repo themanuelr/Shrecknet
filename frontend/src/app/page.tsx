@@ -1,7 +1,7 @@
 // Shrecknet hero with left-aligned true 2x2 grid, logo top, login+hero text right
 "use client";
 import { useAuth } from "./components/auth/AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 import AuthCard from "./components/auth/AuthCard";
@@ -11,6 +11,8 @@ import Features from "./components/landing/Features";
 export default function LoginPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const firstLogin = searchParams.get("firstLogin");
 
   useEffect(() => {
     if (!loading && user) {
@@ -59,7 +61,7 @@ export default function LoginPage() {
             className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-white/20 backdrop-blur-[18px] bg-white/10 p-7 animate-fadeIn flex flex-col gap-2"
             style={{ boxShadow: "0 8px 60px 0 #7b2ff244, 0 2px 10px #2e205988" }}
           >
-            <AuthCard />
+            <AuthCard initialError={firstLogin ? "Please log in first" : undefined} />
           </div>
         </div>
       </section>

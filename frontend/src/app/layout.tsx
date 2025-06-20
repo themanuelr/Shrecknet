@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from "./components/auth/AuthProvider";
+import GlobalAuthRedirect from "./components/auth/GlobalAuthRedirect";
 import { ThemeProvider } from "./hooks/useThemes";
 import Script from 'next/script';
 
@@ -18,8 +19,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
       </head>
       <body>
-        
-        <AuthProvider> <ThemeProvider>{children}</ThemeProvider></AuthProvider>
+
+        <AuthProvider>
+          <ThemeProvider>
+            <GlobalAuthRedirect />
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
