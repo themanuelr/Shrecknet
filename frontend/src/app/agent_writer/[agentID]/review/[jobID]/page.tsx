@@ -132,8 +132,9 @@
                   if (!srcPages.find((p) => p.id === sp.id)) srcPages.push(sp);
                 });
               });
+              const dateStr = new Date().toISOString().slice(0, 10);
               const headers = srcPages
-                .map((sp) => `<h2>Notes from ${sp.name}</h2>`) 
+                .map((sp) => `<h2>Notes from ${sp.name} - ${dateStr}</h2>`)
                 .join("\n");
               
               console.log("headers:" +JSON.stringify(headers))
