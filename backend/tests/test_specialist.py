@@ -14,18 +14,21 @@ async def test_specialist_sources(async_client, create_user, login_and_get_token
     resp = await async_client.post("/agents/", json=agent_payload, headers={"Authorization": f"Bearer {token}"})
     agent_id = resp.json()["id"]
 
-    uploads_dir = Path(__file__).resolve().parents[2] / "frontend" / "uploads"
-    uploads_dir.mkdir(parents=True, exist_ok=True)
-    file_path = uploads_dir / "doc.txt"
+    file_path = tmp_path / "doc.txt"
     file_path.write_text("hello world")
 
-    resp = await async_client.post(
-        f"/specialist_agents/{agent_id}/sources",
-        json={"name": "doc", "type": "file", "path": str(file_path)},
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    with open(file_path, "rb") as f:
+        resp = await async_client.post(
+            f"/specialist_agents/{agent_id}/source_file",
+            data={"name": "doc"},
+            files={"file": ("doc.txt", f, "text/plain")},
+            headers={"Authorization": f"Bearer {token}"},
+        )
     assert resp.status_code == 200
     source_id = resp.json()["id"]
+    stored_path = Path(resp.json()["path"])
+    assert stored_path.is_file()
+    assert stored_path.read_text() == "hello world"
 
     resp = await async_client.get(
         f"/specialist_agents/{agent_id}/sources",

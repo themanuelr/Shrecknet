@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 import json
@@ -17,6 +17,31 @@ router = APIRouter(prefix="/specialist_agents", tags=["SpecialistAgents"], depen
 @router.post("/{agent_id}/sources", response_model=SpecialistSourceRead)
 async def add_source(agent_id: int, payload: SpecialistSourceCreate, session: AsyncSession = Depends(get_session)):
     source = SpecialistSource(agent_id=agent_id, **payload.model_dump())
+    return await crud_specialist_source.add_source(session, source)
+
+@router.post("/{agent_id}/source_file", response_model=SpecialistSourceRead)
+async def upload_source_file(
+    agent_id: int,
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    session: AsyncSession = Depends(get_session),
+):
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".pdf", ".txt"]:
+        raise HTTPException(status_code=400, detail="Only .pdf or .txt files allowed")
+    dest_dir = Path(".data") / "specialist_agents" / str(agent_id)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = Path(name).stem or "source"
+    dest_path = dest_dir / f"{safe_name}{ext}"
+    with open(dest_path, "wb") as out:
+        out.write(await file.read())
+
+    source = SpecialistSource(
+        agent_id=agent_id,
+        name=name,
+        type="file",
+        path=str(dest_path),
+    )
     return await crud_specialist_source.add_source(session, source)
 
 @router.get("/{agent_id}/sources", response_model=list[SpecialistSourceRead])
