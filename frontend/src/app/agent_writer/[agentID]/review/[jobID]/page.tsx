@@ -261,7 +261,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
           <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
             <AgentBubble agent={agent}>All pages were updated and created!</AgentBubble>
             <button
-              onClick={() => router.push(`/agent_writer/${agentID}`)}
+              onClick={() => router.push(`/agent_writer?agent=${agentID}`)}
               className="mt-4 px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-bold shadow"
             >
               Return to Agent Writer
