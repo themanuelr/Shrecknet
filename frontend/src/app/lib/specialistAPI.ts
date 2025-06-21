@@ -31,6 +31,19 @@ export async function addSource(agentId: number, data: Partial<SpecialistSource>
   return (await res.json()) as SpecialistSource;
 }
 
+export async function uploadSourceFile(agentId: number, name: string, file: File, token: string) {
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/specialist_agents/${agentId}/source_file`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) throw await res.text();
+  return (await res.json()) as SpecialistSource;
+}
+
 export async function deleteSource(agentId: number, sourceId: number, token: string) {
   const res = await fetch(`${API_URL}/specialist_agents/${agentId}/sources/${sourceId}`, {
     method: "DELETE",

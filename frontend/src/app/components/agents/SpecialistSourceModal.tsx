@@ -2,8 +2,7 @@
 import { useState, useRef } from "react";
 import ModalContainer from "../template/modalContainer";
 import { M3FloatingInput } from "../template/M3FloatingInput";
-import { uploadFile } from "../../lib/uploadFile";
-import { addSource, deleteSource, SpecialistSource } from "../../lib/specialistAPI";
+import { addSource, deleteSource, SpecialistSource, uploadSourceFile } from "../../lib/specialistAPI";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function SpecialistSourceModal({ agentId, source, onClose, onSaved }) {
@@ -23,24 +22,23 @@ export default function SpecialistSourceModal({ agentId, source, onClose, onSave
     e.preventDefault();
     setSaving(true);
     try {
-      const payload: Partial<SpecialistSource> = {
-        name: form.name,
-        type: form.type,
-      };
       if (form.type === "link") {
-        payload.url = form.url;
+        const payload: Partial<SpecialistSource> = {
+          name: form.name,
+          type: form.type,
+          url: form.url,
+        };
+        await addSource(agentId, payload, token || "");
       } else if (file) {
-        const safeName = form.name?.trim().replace(/[^a-zA-Z0-9_-]/g, "_") || "source";
-        const ext = file.name.split('.').pop();
-        const uploaded = await uploadFile(file, `ai_specialist/${agentId}`, safeName);
-        const relPath = uploaded.replace(/^\/uploads\//, "");
-        payload.path = relPath.startsWith("ai_specialist") ? relPath : `ai_specialist/${agentId}/${safeName}.${ext}`;
-
-        console.log("Payload path:" + payload.path)
+        await uploadSourceFile(agentId, form.name, file, token || "");
       } else if (form.path) {
-        payload.path = form.path;
+        const payload: Partial<SpecialistSource> = {
+          name: form.name,
+          type: form.type,
+          path: form.path,
+        };
+        await addSource(agentId, payload, token || "");
       }
-      await addSource(agentId, payload, token || "");
     } finally {
       setSaving(false);
       onSaved?.();

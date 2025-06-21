@@ -35,6 +35,7 @@ pnpm-debug.log*
 *.sqlite3
 test.db
 data/
+.data/
 
 # Deployment
 .vercel
