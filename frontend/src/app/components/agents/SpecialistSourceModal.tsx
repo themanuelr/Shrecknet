@@ -35,6 +35,8 @@ export default function SpecialistSourceModal({ agentId, source, onClose, onSave
         const uploaded = await uploadFile(file, `ai_specialist/${agentId}`, safeName);
         const relPath = uploaded.replace(/^\/uploads\//, "");
         payload.path = relPath.startsWith("ai_specialist") ? relPath : `ai_specialist/${agentId}/${safeName}.${ext}`;
+
+        console.log("Payload path:" + payload.path)
       } else if (form.path) {
         payload.path = form.path;
       }
