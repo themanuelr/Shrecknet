@@ -272,7 +272,7 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                           <img
                             src={imgError ? "/images/default/avatars/logo.png" : agent.logo || "/images/default/avatars/logo.png"}
                             alt={agent.name}
-                            className="w-8 h-8 rounded-full border border-[var(--border)]"
+                            className="w-36 h-36 rounded-full border border-[var(--border)]"
                             onError={() => setImgError(true)}
                           />
                           <p className="text-sm leading-snug text-[var(--foreground)]">
