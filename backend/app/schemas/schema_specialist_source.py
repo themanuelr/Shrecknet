@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 class SpecialistSourceCreate(BaseModel):
+    name: Optional[str] = None
     type: str
     path: Optional[str] = None
     url: Optional[str] = None

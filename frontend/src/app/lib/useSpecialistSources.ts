@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { listSources } from "./specialistAPI";
+import { listSources, SpecialistSource } from "./specialistAPI";
 import { useAuth } from "../components/auth/AuthProvider";
 
 export function useSpecialistSources(agentId: number) {
@@ -9,5 +9,5 @@ export function useSpecialistSources(agentId: number) {
     token && agentId ? ["specialist-sources", agentId, token] : null,
     fetcher
   );
-  return { sources: data || [], error, mutate };
+  return { sources: (data as SpecialistSource[]) || [], error, mutate };
 }

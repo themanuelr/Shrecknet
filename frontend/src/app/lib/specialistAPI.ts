@@ -1,14 +1,24 @@
 import { API_URL } from "./config";
 
+export type SpecialistSource = {
+  id?: number;
+  agent_id?: number;
+  name?: string;
+  type: string;
+  path?: string;
+  url?: string;
+  added_at?: string;
+};
+
 export async function listSources(agentId: number, token: string) {
   const res = await fetch(`${API_URL}/specialist_agents/${agentId}/sources`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw await res.text();
-  return await res.json();
+  return (await res.json()) as SpecialistSource[];
 }
 
-export async function addSource(agentId: number, data: any, token: string) {
+export async function addSource(agentId: number, data: Partial<SpecialistSource>, token: string) {
   const res = await fetch(`${API_URL}/specialist_agents/${agentId}/sources`, {
     method: "POST",
     headers: {
@@ -18,7 +28,7 @@ export async function addSource(agentId: number, data: any, token: string) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw await res.text();
-  return await res.json();
+  return (await res.json()) as SpecialistSource;
 }
 
 export async function deleteSource(agentId: number, sourceId: number, token: string) {

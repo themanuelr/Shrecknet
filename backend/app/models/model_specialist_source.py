@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 class SpecialistSource(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     agent_id: int = Field(foreign_key="agent.id")
+    name: Optional[str] = None
     type: str  # 'file' or 'link'
     path: Optional[str] = None
     url: Optional[str] = None
