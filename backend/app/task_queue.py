@@ -63,7 +63,7 @@ from app.api.api_agent import get_agent
 from app.crud.crud_page import get_page, update_page, get_pages
 from app.database import async_session_maker
 from app.config import settings
-from app.crud import crud_vectordb, crud_specialist_vectordb
+from app.crud import crud_vectordb, crud_specialist_vectordb, crud_novel
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -424,5 +424,63 @@ def task_generate_pages_job(
                 f,
                 default=str,
             )
+
+    asyncio.run(run())
+
+@celery_app.task
+def task_create_novel_job(agent_id: int, text: str, instructions: str, example: str | None, helper_agents: list[int], job_id: str):
+    async def run():
+        job_dir = Path(settings.novelist_job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / f"{job_id}.json"
+        start_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "processing",
+                "agent_id": agent_id,
+                "job_type": "create_novel",
+                "progress": 0,
+                "start_time": start_time,
+            }, f, default=str)
+
+        async with async_session_maker() as session:
+            agent = await get_agent(session, agent_id)
+            if not agent:
+                with open(job_path, "w") as ff:
+                    json.dump({"status": "error", "error": "Agent not found", "start_time": start_time}, ff, default=str)
+                return
+
+            async def progress_cb(idx: int, total: int):
+                with open(job_path, "w") as f:
+                    json.dump({
+                        "status": "processing",
+                        "agent_id": agent_id,
+                        "job_type": "create_novel",
+                        "progress": idx + 1,
+                        "chunks_total": total,
+                        "start_time": start_time,
+                    }, f, default=str)
+
+            novel = await crud_novel.create_novel(
+                session,
+                agent,
+                text,
+                instructions,
+                example,
+                helper_agents,
+                progress_cb,
+            )
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "done",
+                "agent_id": agent_id,
+                "job_type": "create_novel",
+                "novel": novel,
+                "start_time": start_time,
+                "end_time": end_time,
+                "action_needed": "review",
+            }, f, default=str)
 
     asyncio.run(run())

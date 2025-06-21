@@ -200,6 +200,44 @@ export async function listWriterJobs(token: string) {
   return await res.json();
 }
 
+export async function startNovelJob(
+  agentId: number,
+  data: {
+    text: string;
+    instructions: string;
+    example?: string | null;
+    helper_agents?: number[];
+  },
+  token: string
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/novel_job`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function getNovelistJob(jobId: string, token: string) {
+  const res = await fetch(`${API_URL}/agents/novelist_jobs/${jobId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
+export async function listNovelistJobs(token: string) {
+  const res = await fetch(`${API_URL}/agents/novelist_jobs`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
+
 export async function updateWriterJob(
   jobId: string,
   data: any,
