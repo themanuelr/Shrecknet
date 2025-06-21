@@ -85,3 +85,41 @@ async def rebuild_agent(session: AsyncSession, agent_id: int) -> int:
         agent.specialist_update_date = datetime.now(timezone.utc)
         await session.commit()
     return len(docs)
+
+
+async def rebuild_agent_with_progress(
+    session: AsyncSession,
+    agent_id: int,
+    progress_callback,
+) -> int:
+    """Rebuild agent vector DB with progress callback."""
+    result = await session.execute(
+        select(SpecialistSource).where(SpecialistSource.agent_id == agent_id)
+    )
+    sources = result.scalars().all()
+    collection = _get_collection(agent_id)
+    _delete_collection(f"specialist_{agent_id}", collection)
+
+    docs: List[Document] = []
+    total = len(sources)
+    for idx, src in enumerate(sources, start=1):
+        if progress_callback:
+            progress_callback(f"reading document {src.name} {idx}/{total}")
+        text = _load_source(src)
+        if not text:
+            continue
+        if progress_callback:
+            progress_callback(f"embedding document {src.name} {idx}/{total}")
+        split_docs = _text_splitter.create_documents([text])
+        for i, d in enumerate(split_docs):
+            d.metadata["source_id"] = src.id
+            d.metadata["chunk_index"] = i
+            docs.append(d)
+    if docs:
+        collection.add_documents(docs)
+
+    agent = await session.get(Agent, agent_id)
+    if agent:
+        agent.specialist_update_date = datetime.now(timezone.utc)
+        await session.commit()
+    return len(docs)
