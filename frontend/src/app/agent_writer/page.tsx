@@ -208,6 +208,17 @@ export default function AgentWriterPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {jobs.map(job => (
+                      <tr key={job.id} className={`border-t border-indigo-100 ${job.status === 'done' ? 'bg-indigo-50/80' : 'bg-yellow-50/70 animate-pulse'}`}>
+                        <td className={`p-2 ${job.status === 'done' ? 'text-fuchsia-700 font-semibold' : 'text-yellow-700 font-semibold'}`}>{job.status === 'done' ? 'Needs Review' : 'Running'}</td>
+                        <td className="p-2">{job.pages.join(', ')}</td>
+                        <td className="p-2">{JOB_LABELS['bulk_analyze']}</td>
+                        <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.status === 'done' && job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
+                        <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
+                        <td className="p-2">{job.status === 'done' ? (<Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.id}`}>Review</Link>) : null}</td>
+                      </tr>
+                    ))}
                     {runningJobs.map(job => (
                       <tr key={job.job_id} className="border-t border-indigo-100 bg-yellow-50/70 animate-pulse">
                         <td className="p-2 text-yellow-700 font-semibold">Running</td>

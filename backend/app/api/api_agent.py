@@ -390,6 +390,7 @@ async def bulk_analyze_endpoint(
     agent_id: int,
     payload: BulkAnalyzeRequest,
     user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ):
     from uuid import uuid4
     from pathlib import Path
@@ -400,6 +401,13 @@ async def bulk_analyze_endpoint(
     job_dir = Path(settings.bulk_job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
     job_path = job_dir / f"{job_id}.json"
+
+    pages = []
+    for pid in payload.page_ids:
+        p = await get_page(session, pid)
+        if p:
+            pages.append(p)
+
     with open(job_path, "w") as f:
         json.dump(
             {
@@ -407,6 +415,7 @@ async def bulk_analyze_endpoint(
                 "agent_id": agent_id,
                 "job_type": "bulk_analyze",
                 "page_ids": payload.page_ids,
+                "page_names": [p.name for p in pages],
                 "pages_total": len(payload.page_ids),
                 "pages_processed": 0,
             },
