@@ -50,49 +50,51 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
       show: true,
     },
     {
-      label: "Talk to your Elders",
-      icon: <GroupRoundedIcon fontSize="medium" />,
-      href: "/elders",
-      external: false,
-      show: true,
-    },
-    {
-      label: "AI Writer",
-      icon: <Bot fontSize="medium" />,
-      href: "/agent_writer",
-      external: false,
-      show: user && ["writer", "system admin"].includes(user.role),
-    },
-    {
-      label: "AI Novelist",
-      icon: <PenLine fontSize="medium" />,
-      href: "/ai_novelist",
-      external: false,
-      show: user && ["writer", "system admin"].includes(user.role),
-    },
-    {
-      label: "AI Specialist",
-      icon: <Sparkles fontSize="medium" />,
-      href: "/ai_specialist",
-      external: false,
-      show: true,
-    },
-    {
-      label: "All Pages",
+      label: "See All Pages",
       icon: <BookOpenText fontSize="medium" />,
       href: "/all_pages",
       external: false,
       show: user && ["writer", "system admin"].includes(user.role),
     },
     {
+      label: "AI Elders",
+      icon: <GroupRoundedIcon fontSize="medium" />,
+      href: "/elders",
+      external: false,
+      show: true,
+    },
+    {
+      label: "AI Specialists",
+      icon: <Sparkles fontSize="medium" />,
+      href: "/ai_specialist",
+      external: false,
+      show: true,
+    },    
+
+    {
+      label: "AI Writers",
+      icon: <Bot fontSize="medium" />,
+      href: "/agent_writer",
+      external: false,
+      show: user && ["writer", "system admin"].includes(user.role),
+    },
+    {
+      label: "AI Novelists",
+      icon: <PenLine fontSize="medium" />,
+      href: "/ai_novelist",
+      external: false,
+      show: user && ["writer", "system admin"].includes(user.role),
+    },
+
+    {
       label: "World Builder",
       icon: <BuildRoundedIcon fontSize="medium" />,
       href: "/world_builder",
       external: false,
       show: user && ["world builder", "system admin"].includes(user.role),
-    },
+    },    
  
-    
+  
     {
       label: "System Settings",
       icon: <GroupRoundedIcon fontSize="medium" />,
