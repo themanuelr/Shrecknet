@@ -305,7 +305,7 @@ const vectorJobsByAgent = vectorJobs
   }, {});
 
 const writerJobsByAgent = writerJobs
-  .filter(j => j.job_type === "analyze_page")
+  .filter(j => j.job_type === "analyze_pages")
   .reduce<Record<number, any[]>>((acc, j) => {
     if (!acc[j.agent_id]) acc[j.agent_id] = [];
     acc[j.agent_id].push(j);
