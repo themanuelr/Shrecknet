@@ -63,7 +63,7 @@ from app.api.api_agent import get_agent
 from app.crud.crud_page import get_page, update_page, get_pages
 from app.database import async_session_maker
 from app.config import settings
-from app.crud import crud_vectordb
+from app.crud import crud_vectordb, crud_specialist_vectordb
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -226,6 +226,56 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
                 "agent_id": agent_id,
                 "job_type": "update_vector_db",
                 "pages_indexed": count,
+                "start_time": start_time,
+                "end_time": end_time,
+            }, f, default=str)
+
+    asyncio.run(run())
+
+
+@celery_app.task
+def task_rebuild_specialist_vectors(agent_id: int, job_id: str):
+    async def run():
+        job_dir = Path(settings.specialist_job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / f"{job_id}.json"
+        start_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "processing",
+                "agent_id": agent_id,
+                "job_type": "rebuild_specialist_vectors",
+                "start_time": start_time,
+            }, f, default=str)
+
+        async with async_session_maker() as session:
+            agent = await get_agent(session, agent_id)
+            if not agent:
+                with open(job_path, "w") as ff:
+                    json.dump({
+                        "status": "error",
+                        "error": "Agent not found",
+                        "start_time": start_time,
+                    }, ff, default=str)
+                return
+            try:
+                count = await crud_specialist_vectordb.rebuild_agent(session, agent_id)
+            except Exception as exc:  # pragma: no cover - defensive
+                with open(job_path, "w") as ff:
+                    json.dump({
+                        "status": "error",
+                        "error": str(exc),
+                        "start_time": start_time,
+                    }, ff, default=str)
+                raise
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        with open(job_path, "w") as f:
+            json.dump({
+                "status": "done",
+                "agent_id": agent_id,
+                "job_type": "rebuild_specialist_vectors",
+                "documents_indexed": count,
                 "start_time": start_time,
                 "end_time": end_time,
             }, f, default=str)

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     chat_history_dir: str = "./data/chat/{user_id}"
     vectordb_job_dir: str = "./data/vector_jobs"
     writer_job_dir: str = "./data/writer_jobs"
+    specialist_job_dir: str = "./data/specialist_jobs"
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"
     vector_db_url: str = "localhost"
