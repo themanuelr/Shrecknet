@@ -5,10 +5,26 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Bot, BookOpenText, Book, Users2 } from "lucide-react";
 
 const agentTypes = [
-  { path: "conversational", label: "Conversationalists", icon: <Bot className="w-6 h-6" /> },
-  { path: "page-writer", label: "Page Writers", icon: <BookOpenText className="w-6 h-6" /> },
-  { path: "story-novelist", label: "Story Novelists", icon: <Book className="w-6 h-6" /> },
-  { path: "specialist", label: "Specialists", icon: <Users2 className="w-6 h-6" /> },
+  {
+    path: "agent_conversational",
+    label: "Conversationalists",
+    icon: <Bot className="w-6 h-6" />,
+  },
+  {
+    path: "agent_writers",
+    label: "Page Writers",
+    icon: <BookOpenText className="w-6 h-6" />,
+  },
+  {
+    path: "agent_novelist",
+    label: "Story Novelists",
+    icon: <Book className="w-6 h-6" />,
+  },
+  {
+    path: "agent_specialists",
+    label: "Specialists",
+    icon: <Users2 className="w-6 h-6" />,
+  },
 ];
 
 export default function AgentsSettingsIndex() {
