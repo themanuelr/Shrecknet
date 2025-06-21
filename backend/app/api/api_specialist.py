@@ -10,7 +10,6 @@ from app.database import get_session
 from app.crud import crud_specialist_source, crud_specialist_vectordb
 from app.models.model_specialist_source import SpecialistSource
 from app.schemas.schema_specialist_source import SpecialistSourceCreate, SpecialistSourceRead
-from app.task_queue import task_rebuild_specialist_vectors
 from app.config import settings
 
 router = APIRouter(prefix="/specialist_agents", tags=["SpecialistAgents"], dependencies=[Depends(get_current_user)])
@@ -39,6 +38,7 @@ async def rebuild_vectors(agent_id: int, session: AsyncSession = Depends(get_ses
 
 @router.post("/{agent_id}/rebuild_vectors_async")
 async def rebuild_vectors_async(agent_id: int, user: User = Depends(get_current_user)):
+    from app.task_queue import task_rebuild_specialist_vectors
     job_id = uuid4().hex
     job_dir = Path(settings.specialist_job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
