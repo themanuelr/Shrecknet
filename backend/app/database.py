@@ -40,8 +40,12 @@ def _migrate(conn):
     # -- SpecialistSource table --
     if "specialistsource" not in inspector.get_table_names():
         conn.execute(text(
-            "CREATE TABLE specialistsource (id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER NOT NULL REFERENCES agent(id), type TEXT NOT NULL, path TEXT, url TEXT, added_at DATETIME NOT NULL)"
+            "CREATE TABLE specialistsource (id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id INTEGER NOT NULL REFERENCES agent(id), name TEXT, type TEXT NOT NULL, path TEXT, url TEXT, added_at DATETIME NOT NULL)"
         ))
+    else:
+        columns = [c["name"] for c in inspector.get_columns("specialistsource")]
+        if "name" not in columns:
+            conn.execute(text("ALTER TABLE specialistsource ADD COLUMN name TEXT"))
 
 async def get_session() -> AsyncSession:
     async with async_session_maker() as session:

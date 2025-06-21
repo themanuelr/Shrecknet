@@ -21,7 +21,7 @@ async def test_specialist_sources(async_client, create_user, login_and_get_token
 
     resp = await async_client.post(
         f"/specialist_agents/{agent_id}/sources",
-        json={"type": "file", "path": str(file_path)},
+        json={"name": "doc", "type": "file", "path": str(file_path)},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
@@ -32,7 +32,9 @@ async def test_specialist_sources(async_client, create_user, login_and_get_token
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
-    assert len(resp.json()) == 1
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "doc"
 
     resp = await async_client.post(
         f"/specialist_agents/{agent_id}/rebuild_vectors",
