@@ -24,12 +24,6 @@ from datetime import datetime, timezone
 from app.dependencies import get_current_user, require_role
 
 
-from app.task_queue import (
-    task_auto_crosslink_page_content,
-    task_auto_crosslink_batch,
-    task_remove_crosslinks_to_page,
-    task_remove_page_refs_from_characteristics,
-)
 
 PageCharacteristicValueUpdate.model_rebuild()
 PageCharacteristicValueRead.model_rebuild()    
@@ -90,6 +84,7 @@ async def create_page_endpoint(
 
      # Schedule background crosslink update only if this page allows
     if not db_page.ignore_crosslink:
+        from app.task_queue import task_auto_crosslink_batch
         task_auto_crosslink_batch.delay(db_page.id)
 
     return response
@@ -171,6 +166,7 @@ async def update_page_endpoint(
     response = PageRead.model_validate({**db_page.model_dump(), "values": values})
 
     print ("Page was updated with the right values, now going into auto_crosslink!")
+    from app.task_queue import task_auto_crosslink_page_content
     task_auto_crosslink_page_content.delay(db_page.id)
 
     return response
@@ -189,6 +185,10 @@ async def delete_page_endpoint(
         raise HTTPException(status_code=403, detail="You are not allowed to delete this page.")
     await delete_page(session, page_id)
 
+    from app.task_queue import (
+        task_remove_page_refs_from_characteristics,
+        task_remove_crosslinks_to_page,
+    )
     task_remove_page_refs_from_characteristics.delay(db_page.id)
     task_remove_crosslinks_to_page.delay(page_id)
     
