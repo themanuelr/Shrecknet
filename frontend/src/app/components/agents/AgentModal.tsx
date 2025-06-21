@@ -146,6 +146,7 @@ export default function AgentModal({ agent, onClose, onSave, onDelete, worlds })
             <option value="conversational">conversational</option>
             <option value="page writer">page writer</option>
             <option value="story novelist">story novelist</option>
+            <option value="specialist">specialist</option>
           </select>
           <label className="absolute left-3 top-1.5 text-base text-[var(--primary)] font-semibold pointer-events-none">
             Task
