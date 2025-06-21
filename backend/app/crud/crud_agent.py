@@ -7,12 +7,56 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from langgraph.graph import MessageGraph
 
+from pathlib import Path
+import json
+
 from app.config import settings
 from app.crud import crud_vectordb
 from app.models.model_agent import Agent
 from app.models.model_gameworld import GameWorld
 
 openai_model = settings.open_ai_model
+
+PERSONALITY_FILE = Path("./data/personalities_parsing.json")
+
+
+async def ensure_personality_prompts(personalities: list[str]) -> dict:
+    """Ensure prompt texts exist for the given personalities."""
+    PERSONALITY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if PERSONALITY_FILE.is_file():
+        with open(PERSONALITY_FILE) as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model)
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "Write one short sentence that describes how text should sound when using this personality.",
+        ),
+        ("user", "{personality}"),
+    ])
+    chain = prompt | llm
+
+    updated = False
+    for p in personalities:
+        key = p.strip()
+        if not key or key in data:
+            continue
+        try:
+            resp = await chain.ainvoke({"personality": key})
+            text = resp.content.strip()
+        except Exception:
+            text = f"Write with a {key} tone."
+        data[key] = f"{key} = {text}"
+        updated = True
+
+    if updated:
+        with open(PERSONALITY_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+
+    return data
 
 
 async def chat_with_agent(
@@ -50,8 +94,12 @@ async def chat_with_agent(
       
 
     history_txt = "\n".join(f"{m['role']}: {m['content']}" for m in messages[:-1])
-    personality = agent.personality or "helpful NPC"
+    personalities = [p.strip() for p in (agent.personality or "helpful NPC").split(",") if p.strip()]
     agent_name = agent.name or "Agent"
+
+    prompts = await ensure_personality_prompts(personalities)
+    tone = "\n".join(prompts.get(p, "") for p in personalities if prompts.get(p))
+    personality = ", ".join(personalities) if personalities else "helpful NPC"
 
     # print (f" ---- Context: {context}")
     # print (f" ---- history_txt: {history_txt}")
@@ -64,6 +112,7 @@ async def chat_with_agent(
         f"World system: {world.system}\n"
         f"World description: {world.description}\n"
         f"Agent`s personality: {personality}\n"
+        f"{tone}\n"
         "Use the following context and chat history to answer the user's question.\n"
         "Use the agent`s personality to give the tone of your responses. Stick to it, and make it creative!\n"
         "Do not mention any links in your answer.\n"
@@ -106,6 +155,11 @@ async def create_agent(session: AsyncSession, agent: Agent) -> Agent:
     session.add(agent)
     await session.commit()
     await session.refresh(agent)
+
+    personalities = [p.strip() for p in (agent.personality or "").split(",") if p.strip()]
+    if personalities:
+        await ensure_personality_prompts(personalities)
+
     return agent
 
 async def get_agent(session: AsyncSession, agent_id: int) -> Optional[Agent]:
@@ -129,6 +183,11 @@ async def update_agent(session: AsyncSession, agent_id: int, updates: dict) -> O
     db_agent.updated_at = datetime.now(timezone.utc)
     await session.commit()
     await session.refresh(db_agent)
+
+    personalities = [p.strip() for p in (db_agent.personality or "").split(",") if p.strip()]
+    if personalities:
+        await ensure_personality_prompts(personalities)
+
     return db_agent
 
 async def delete_agent(session: AsyncSession, agent_id: int) -> bool:
