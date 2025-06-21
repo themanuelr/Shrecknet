@@ -26,10 +26,11 @@ async def upload_source_file(
     name: str = Form(...),
     session: AsyncSession = Depends(get_session),
 ):
+        
     ext = Path(file.filename).suffix.lower()
     if ext not in [".pdf", ".txt"]:
         raise HTTPException(status_code=400, detail="Only .pdf or .txt files allowed")
-    dest_dir = Path(".data") / "specialist_agents" / str(agent_id)
+    dest_dir = Path("data") / "specialist_agents" / str(agent_id)
     dest_dir.mkdir(parents=True, exist_ok=True)
     safe_name = Path(name).stem or "source"
     dest_path = dest_dir / f"{safe_name}{ext}"
