@@ -9,6 +9,7 @@ from . import crud_agent
 from . import crud_chat_history
 from . import crud_specialist_source
 from . import crud_specialist_vectordb
+from . import crud_specialist_agent
 try:
     from . import crud_vectordb
 except Exception:  # pragma: no cover - optional dependency
@@ -30,6 +31,7 @@ __all__ = [
     "crud_chat_history",
     "crud_specialist_source",
     "crud_specialist_vectordb",
+    "crud_specialist_agent",
 ]
 if crud_vectordb:
     __all__.append("crud_vectordb")

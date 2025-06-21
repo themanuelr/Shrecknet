@@ -87,6 +87,32 @@ async def rebuild_agent(session: AsyncSession, agent_id: int) -> int:
     return len(docs)
 
 
+
+def query_agent(agent_id: int, query: str, n_results: int = 5) -> List[dict]:
+    """Query the specialist vector DB for relevant documents."""
+    collection = _get_collection(agent_id)
+    retrieved = collection.max_marginal_relevance_search(query, k=n_results * 4)
+
+    sources: dict[int, dict] = {}
+    for doc in retrieved:
+        meta = doc.metadata or {}
+        sid = meta.get("source_id")
+        if sid is None:
+            continue
+        entry = sources.setdefault(
+            sid,
+            {"document_parts": [], "metadata": {k: v for k, v in meta.items() if k != "chunk_index"}},
+        )
+        entry["document_parts"].append((meta.get("chunk_index", 0), doc.page_content))
+
+    results: List[dict] = []
+    for src in sources.values():
+        parts = sorted(src["document_parts"], key=lambda x: x[0])
+        full_doc = " ".join(p[1] for p in parts)
+        results.append({"document": full_doc, **src["metadata"]})
+
+    return results[:n_results]
+
 async def rebuild_agent_with_progress(
     session: AsyncSession,
     agent_id: int,
@@ -123,3 +149,4 @@ async def rebuild_agent_with_progress(
         agent.specialist_update_date = datetime.now(timezone.utc)
         await session.commit()
     return len(docs)
+

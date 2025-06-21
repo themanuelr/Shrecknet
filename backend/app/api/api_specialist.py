@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 import json
@@ -7,9 +8,16 @@ from pathlib import Path
 from app.dependencies import get_current_user
 from app.models.model_user import User
 from app.database import get_session
-from app.crud import crud_specialist_source, crud_specialist_vectordb
+from app.crud import (
+    crud_specialist_source,
+    crud_specialist_vectordb,
+    crud_chat_history,
+)
+from app.crud.crud_specialist_agent import chat_with_specialist
 from app.models.model_specialist_source import SpecialistSource
 from app.schemas.schema_specialist_source import SpecialistSourceCreate, SpecialistSourceRead
+from pydantic import BaseModel
+from typing import Literal
 from app.config import settings
 
 router = APIRouter(prefix="/specialist_agents", tags=["SpecialistAgents"], dependencies=[Depends(get_current_user)])
@@ -96,3 +104,44 @@ async def list_vector_jobs():
         data["job_id"] = p.stem
         jobs.append(data)
     return jobs
+
+
+class ChatMessage(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+
+
+@router.post("/{agent_id}/chat")
+async def specialist_chat(
+    agent_id: int,
+    payload: ChatRequest,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    msgs = [m.model_dump() for m in payload.messages]
+    history = crud_chat_history.load_history(user.id, agent_id)
+    user_msg = msgs[-1] if msgs else {"role": "user", "content": ""}
+    chat_messages = history + [user_msg]
+    assistant_resp = await chat_with_specialist(session, agent_id, chat_messages)
+    assistant_msg = {"role": "assistant", "content": assistant_resp["answer"]}
+    if assistant_resp.get("sources"):
+        assistant_msg["sources"] = assistant_resp["sources"]
+    new_history = (history + [user_msg, assistant_msg])[-20:]
+    crud_chat_history.save_history(user.id, agent_id, new_history)
+    return JSONResponse(assistant_resp)
+
+
+@router.get("/{agent_id}/history")
+async def specialist_chat_history(agent_id: int, user: User = Depends(get_current_user)):
+    messages = crud_chat_history.load_history(user.id, agent_id)
+    return {"messages": messages[-20:]}
+
+
+@router.delete("/{agent_id}/history")
+async def clear_specialist_history(agent_id: int, user: User = Depends(get_current_user)):
+    crud_chat_history.clear_history(user.id, agent_id)
+    return {"ok": True}

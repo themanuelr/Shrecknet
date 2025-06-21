@@ -52,3 +52,73 @@ async def test_specialist_sources(async_client, create_user, login_and_get_token
     )
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
+
+from datetime import datetime, timezone
+from unittest.mock import patch
+from pydantic import BaseModel
+
+class FakeAgent:
+    world_id = 1
+    personality = "helpful"
+    specialist_update_date = datetime.now(timezone.utc)
+
+
+@pytest.mark.anyio
+async def test_specialist_chat(async_client, create_user, login_and_get_token):
+    await create_user("spec@test.com", "pass", "writer")
+    token = await login_and_get_token("spec@test.com", "pass", "writer")
+
+    payload = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    async def fake_chat(session, agent_id, messages):
+        return {"answer": "<p>Hi</p>", "sources": [{"name": "Doc"}]}
+
+    with patch("app.api.api_specialist.chat_with_specialist", side_effect=fake_chat), \
+         patch("app.api.api_specialist.get_agent", return_value=FakeAgent()):
+        resp = await async_client.post(
+            "/specialist_agents/1/chat",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["answer"].startswith("<p>")
+
+
+@pytest.mark.anyio
+async def test_specialist_chat_history(async_client, create_user, login_and_get_token, tmp_path):
+    from app.config import settings
+
+    settings.chat_history_dir = str(tmp_path / "{user_id}")
+
+    user = await create_user("hist@test.com", "pass", "writer")
+    token = await login_and_get_token("hist@test.com", "pass", "writer")
+
+    payload = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    async def fake_chat(session, agent_id, messages):
+        return {"answer": "<p>Hi</p>", "sources": []}
+
+    with patch("app.api.api_specialist.chat_with_specialist", side_effect=fake_chat), \
+         patch("app.api.api_specialist.get_agent", return_value=FakeAgent()):
+        await async_client.post(
+            "/specialist_agents/1/chat",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    hist_file = tmp_path / str(user["id"]) / "1.json"
+    assert hist_file.is_file()
+
+    resp = await async_client.get(
+        "/specialist_agents/1/history",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["messages"][-1]["content"].startswith("<p>")
+
+    resp = await async_client.delete(
+        "/specialist_agents/1/history",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert not hist_file.exists()
