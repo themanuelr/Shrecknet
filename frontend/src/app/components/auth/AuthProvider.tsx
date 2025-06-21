@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   // On mount, pull token from localStorage if it exists,
   // but do NOT set loading to false here
@@ -47,10 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setLoading(false);
     }
+    setInitialized(true);
   }, []);
 
   // Whenever token changes, (re-)fetch user
   useEffect(() => {
+    if (!initialized) return;
     if (token) {
       setLoading(true);
       getCurrentUser(token)
@@ -68,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setLoading(false);
     }
-  }, [token]);
+  }, [token, initialized]);
 
   const setToken = (t: string | null) => {
     setTokenState(t);
