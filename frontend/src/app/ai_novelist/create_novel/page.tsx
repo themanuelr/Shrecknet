@@ -1,11 +1,13 @@
 "use client";
+export const dynamic = "force-dynamic";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useAuth } from "../../components/auth/AuthProvider";
 import { hasRole } from "../../lib/roles";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function CreateNovelPage() {
+function CreateNovelPageContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const agentId = searchParams.get("agent");
@@ -31,5 +33,13 @@ export default function CreateNovelPage() {
         </div>
       </DashboardLayout>
     </AuthGuard>
+  );
+}
+
+export default function CreateNovelPage() {
+  return (
+    <Suspense>
+      <CreateNovelPageContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+export const dynamic = "force-dynamic";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AuthGuard from "../components/auth/AuthGuard";
 import DashboardLayout from "../components/DashboardLayout";
@@ -27,7 +28,7 @@ const JOB_LABELS = {
   generate_pages: "Update/Create Pages",
 };
 
-export default function AgentWriterPage() {
+function AgentWriterPageContent() {
   const { user, token } = useAuth();
   const { agents, isLoading: agentsLoading } = useAgents();
   const { worlds } = useWorlds();
@@ -380,5 +381,13 @@ export default function AgentWriterPage() {
         </div>
       </DashboardLayout>
     </AuthGuard>
+  );
+}
+
+export default function AgentWriterPage() {
+  return (
+    <Suspense>
+      <AgentWriterPageContent />
+    </Suspense>
   );
 }
