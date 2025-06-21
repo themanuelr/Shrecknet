@@ -296,51 +296,56 @@ function AgentBubble({ agent, children, loading = false }: any) {
                     <h1 className="text-2xl font-extrabold text-[var(--primary)]">Review Legends</h1>
                   </div>
                 )}
-                <div className="flex flex-col sm:flex-row flex-wrap gap-2 border-b border-[var(--border)] pb-2 mb-6">
-                  <div className="flex flex-wrap gap-2">
-                    {generatedPages.filter(p => !p.isUpdate).map((p, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveGen(generatedPages.indexOf(p))}
-                        className={`px-4 py-2 rounded-t-lg text-sm font-bold border-b-2 transition-all ${
-                          activeGen === generatedPages.indexOf(p)
-                            ? "border-green-600 text-green-600 bg-[var(--card)]"
-                            : "border-transparent text-green-700/60 hover:text-green-700"
-                        }`}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
-                  {generatedPages.some(p => p.isUpdate) && (
-                    <div className="flex flex-wrap gap-2 sm:ml-4 mt-2 sm:mt-0 border-t sm:border-t-0 sm:border-l border-[var(--border)] pt-2 sm:pt-0 sm:pl-4">
-                      {generatedPages.filter(p => p.isUpdate).map((p, idx) => (
+                <div className="flex flex-col sm:flex-row flex-wrap gap-4 border-b border-[var(--border)] pb-4 mb-6">
+                  <div className="flex flex-col gap-2">
+                    <p className="font-semibold text-green-700">Suggested new pages</p>
+                    <div className="flex flex-wrap gap-2">
+                      {generatedPages.filter(p => !p.isUpdate).map((p, idx) => (
                         <button
                           key={idx}
                           onClick={() => setActiveGen(generatedPages.indexOf(p))}
                           className={`px-4 py-2 rounded-t-lg text-sm font-bold border-b-2 transition-all ${
                             activeGen === generatedPages.indexOf(p)
-                              ? "border-blue-600 text-blue-600 bg-[var(--card)]"
-                              : "border-transparent text-blue-700/60 hover:text-blue-700"
+                              ? "border-green-600 text-green-600 bg-[var(--card)]"
+                              : "border-transparent text-green-700/60 hover:text-green-700"
                           }`}
                         >
                           {p.name}
                         </button>
                       ))}
                     </div>
+                  </div>
+                  {generatedPages.some(p => p.isUpdate) && (
+                    <div className="flex flex-col gap-2 sm:ml-4 mt-4 sm:mt-0 border-t sm:border-t-0 sm:border-l border-[var(--border)] pt-4 sm:pt-0 sm:pl-4">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-blue-700">Pages to update</p>
+                        <button
+                          onClick={handleBulkUpdate}
+                          disabled={bulkUpdating}
+                          className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold shadow disabled:opacity-50"
+                        >
+                          {bulkUpdating ? 'Updating...' : 'Update All'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-blue-700">All update suggestions will be applied automatically.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {generatedPages.filter(p => p.isUpdate).map((p, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveGen(generatedPages.indexOf(p))}
+                            className={`px-4 py-2 rounded-t-lg text-sm font-bold border-b-2 transition-all ${
+                              activeGen === generatedPages.indexOf(p)
+                                ? "border-blue-600 text-blue-600 bg-[var(--card)]"
+                                : "border-transparent text-blue-700/60 hover:text-blue-700"
+                            }`}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                {generatedPages.some(p => p.isUpdate) && (
-                  <div className="mt-4">
-                    <button
-                      onClick={handleBulkUpdate}
-                      disabled={bulkUpdating}
-                      className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold shadow disabled:opacity-50"
-                    >
-                      {bulkUpdating ? 'Updating...' : 'Update All'}
-                    </button>
-                  </div>
-                )}
                 {bulkUpdating && (
                   <div className="w-full mt-4">
                     <AgentBubble agent={agent} loading>
