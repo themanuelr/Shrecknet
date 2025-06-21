@@ -70,6 +70,7 @@ export default function PageView() {
   // For sidebar open/collapse
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"content" | "notes">("content");
+  const [imgError, setImgError] = useState(false);
 
   
 
@@ -267,13 +268,16 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                   ) : (
                     <div className="w-full">
                       {agent && (
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-start gap-3 mb-4 p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm">
                           <img
-                            src={agent.logo || "/images/default/avatars/logo.png"}
+                            src={imgError ? "/images/default/avatars/logo.png" : agent.logo || "/images/default/avatars/logo.png"}
                             alt={agent.name}
-                            className="w-6 h-6 rounded-full"
+                            className="w-8 h-8 rounded-full border border-[var(--border)]"
+                            onError={() => setImgError(true)}
                           />
-                          <span className="text-sm text-[var(--foreground)]/80">Notes by {agent.name}</span>
+                          <p className="text-sm leading-snug text-[var(--foreground)]">
+                            <span className="font-semibold">{agent.name}</span> penned these notes after carefully reading some of the material on this site, hoping his insights spark inspiration and enrich your adventures.
+                          </p>
                         </div>
                       )}
                       <EditableContent
