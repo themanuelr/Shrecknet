@@ -143,17 +143,11 @@ async def chat(
     chat_messages = history + [user_msg]
     assistant_resp = await chat_with_agent(session, agent_id, chat_messages)
 
-    new_history = (
-        history
-        + [
-            user_msg,
-            {
-                "role": "assistant",
-                "content": assistant_resp["answer"],
-                "sources": assistant_resp["sources"],
-            },
-        ]
-    )[-20:]
+    assistant_msg = {"role": "assistant", "content": assistant_resp["answer"]}
+    if assistant_resp.get("sources"):
+        assistant_msg["sources"] = assistant_resp["sources"]
+
+    new_history = (history + [user_msg, assistant_msg])[-20:]
     crud_chat_history.save_history(user.id, agent_id, new_history)
 
     return JSONResponse(assistant_resp)
