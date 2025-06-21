@@ -1,9 +1,11 @@
 "use client";
+export const dynamic = "force-dynamic";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function SpecialistChatPage() {
+function SpecialistChatPageContent() {
   const searchParams = useSearchParams();
   const agentId = searchParams.get("agent");
 
@@ -20,5 +22,13 @@ export default function SpecialistChatPage() {
         </div>
       </DashboardLayout>
     </AuthGuard>
+  );
+}
+
+export default function SpecialistChatPage() {
+  return (
+    <Suspense>
+      <SpecialistChatPageContent />
+    </Suspense>
   );
 }

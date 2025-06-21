@@ -1,14 +1,15 @@
-// Shrecknet hero with left-aligned true 2x2 grid, logo top, login+hero text right
 "use client";
+// Shrecknet hero with left-aligned true 2x2 grid, logo top, login+hero text right
+export const dynamic = "force-dynamic";
 import { useAuth } from "./components/auth/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import Image from "next/image";
 import AuthCard from "./components/auth/AuthCard";
 import Starfield from "./components/template/Starfield";
 import Features from "./components/landing/Features";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,5 +67,13 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   );
 }
