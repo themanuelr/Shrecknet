@@ -98,6 +98,14 @@ async def create_user(async_client):
 
         print (f"User created: {email}")
         response = await async_client.post("/user/", json=user_data)
+        if response.status_code == 400 and "already registered" in response.text:
+            # User already exists from another test - fetch token instead
+            login_resp = await async_client.post(
+                "/user/login",
+                data={"username": email, "password": password},
+            )
+            assert login_resp.status_code == 200, login_resp.text
+            return login_resp.json()
         assert response.status_code == 200, response.text
         return response.json()
     return _create_user

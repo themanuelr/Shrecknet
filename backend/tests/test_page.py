@@ -25,10 +25,18 @@ PLAYER = {
 @pytest.mark.anyio
 async def register_and_login(async_client, user_data):
     resp = await async_client.post("/user/", json=user_data)
+    if resp.status_code == 400 and "already registered" in resp.text:
+        login_resp = await async_client.post(
+            "/user/login",
+            data={"username": user_data["email"], "password": user_data["password"]},
+        )
+        assert login_resp.status_code == 200, login_resp.text
+        return login_resp.json()["access_token"]
     assert resp.status_code == 200, resp.text
-    resp = await async_client.post("/user/login", data={
-        "username": user_data["email"], "password": user_data["password"]
-    })
+    resp = await async_client.post(
+        "/user/login",
+        data={"username": user_data["email"], "password": user_data["password"]},
+    )
     assert resp.status_code == 200, resp.text
     return resp.json()["access_token"]
 
