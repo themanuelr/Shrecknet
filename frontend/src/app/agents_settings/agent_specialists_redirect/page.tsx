@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function Page() {
-  redirect("/agents_settings/specialist");
+  redirect("/agents_settings/agent_specialist");
 }

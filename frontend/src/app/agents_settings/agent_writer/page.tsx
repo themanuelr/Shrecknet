@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Bot, Sparkles, Wand2, Search } from "lucide-react";
+import { Sparkles, Wand2, BookOpenText, Search } from "lucide-react";
 import AuthGuard from "../../components/auth/AuthGuard";
 import DashboardLayout from "../../components/DashboardLayout";
 import { hasRole } from "../../lib/roles";
@@ -257,10 +257,10 @@ function WriterJobStatusScroll({ jobs }) {
 // ------- MAIN PAGE -------
 export default function AgentsGuildhallPage() {
   const pageInfo = {
-    title: "Conversationalists’ Table",
-    icon: <Bot className="w-6 h-6 text-indigo-500" />,
-    task: "conversational",
-    canRebuild: true,
+    title: "Scribes’ Alcove",
+    icon: <BookOpenText className="w-6 h-6 text-fuchsia-500" />,
+    task: "page writer",
+    canRebuild: false,
   };
 
   const { user, token } = useAuth();
