@@ -75,6 +75,17 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
         job_dir = Path(settings.bulk_job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
         job_path = job_dir / f"{job_id}.json"
+        start_time = datetime.now(timezone.utc).isoformat()
+
+        async with async_session_maker() as session:
+            pages = []
+            for pid in page_ids:
+                p = await get_page(session, pid)
+                if p:
+                    pages.append(p)
+
+        page_names = [p.name for p in pages]
+
         with open(job_path, "w") as f:
             json.dump(
                 {
@@ -82,8 +93,10 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                     "agent_id": agent_id,
                     "job_type": "bulk_analyze",
                     "page_ids": page_ids,
+                    "page_names": page_names,
                     "pages_total": len(page_ids),
                     "pages_processed": 0,
+                    "start_time": start_time,
                 },
                 f,
                 default=str,
@@ -110,8 +123,10 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                             "agent_id": agent_id,
                             "job_type": "bulk_analyze",
                             "page_ids": page_ids,
+                            "page_names": page_names,
                             "pages_total": len(page_ids),
                             "pages_processed": processed,
+                            "start_time": start_time,
                         },
                         f,
                         default=str,
@@ -123,6 +138,7 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
             print (f" --- CALCUALTING SUGGESIONTS2 --- ")
             suggestions = await analyze_pages_bulk(session, agent, pages)
 
+        end_time = datetime.now(timezone.utc).isoformat()
         with open(job_path, "w") as f:
             json.dump(
                 {
@@ -130,9 +146,13 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                     "agent_id": agent_id,
                     "job_type": "bulk_analyze",
                     "page_ids": page_ids,
+                    "page_names": page_names,
                     "pages_total": len(page_ids),
                     "pages_processed": len(page_ids),
                     "suggestions": suggestions,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "action_needed": "review",
                 },
                 f,
                 default=str,
