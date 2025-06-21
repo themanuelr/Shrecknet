@@ -126,6 +126,35 @@ async def list_writer_jobs():
         jobs.append(data)
     return jobs
 
+
+@router.get("/novelist_jobs/{job_id}")
+async def novelist_job_status(job_id: str):
+    from pathlib import Path
+    from app.config import settings
+
+    job_path = Path(settings.novelist_job_dir) / f"{job_id}.json"
+    if not job_path.is_file():
+        raise HTTPException(status_code=404, detail="Job not found")
+    with open(job_path) as f:
+        data = json.load(f)
+    return data
+
+
+@router.get("/novelist_jobs")
+async def list_novelist_jobs():
+    from pathlib import Path
+    from app.config import settings
+
+    job_dir = Path(settings.novelist_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    jobs = []
+    for p in job_dir.glob("*.json"):
+        with open(p) as f:
+            data = json.load(f)
+        data["job_id"] = p.stem
+        jobs.append(data)
+    return jobs
+
 @router.post("/{agent_id}/chat")
 async def chat(
     agent_id: int,
@@ -370,6 +399,13 @@ class AnalyzePagesJobRequest(BaseModel):
     page_ids: List[int]
 
 
+class NovelJobRequest(BaseModel):
+    text: str
+    instructions: str
+    example: str | None = None
+    helper_agents: Optional[List[int]] = None
+
+
 @router.post("/{agent_id}/analyze_job")
 async def analyze_pages_job_endpoint(
     agent_id: int,
@@ -400,6 +436,42 @@ async def analyze_pages_job_endpoint(
         )
 
     task_analyze_pages_job.delay(agent_id, payload.page_ids, job_id)
+    return {"job_id": job_id}
+
+
+@router.post("/{agent_id}/novel_job")
+async def create_novel_job_endpoint(
+    agent_id: int,
+    payload: NovelJobRequest,
+    user: User = Depends(get_current_user),
+):
+    from uuid import uuid4
+    from pathlib import Path
+    from app.config import settings
+    from app.task_queue import task_create_novel_job
+
+    job_id = uuid4().hex
+    job_dir = Path(settings.novelist_job_dir)
+    job_dir.mkdir(parents=True, exist_ok=True)
+    job_path = job_dir / f"{job_id}.json"
+    with open(job_path, "w") as f:
+        json.dump(
+            {
+                "status": "queued",
+                "agent_id": agent_id,
+                "job_type": "create_novel",
+            },
+            f,
+        )
+
+    task_create_novel_job.delay(
+        agent_id,
+        payload.text,
+        payload.instructions,
+        payload.example,
+        payload.helper_agents or [],
+        job_id,
+    )
     return {"job_id": job_id}
 
 
