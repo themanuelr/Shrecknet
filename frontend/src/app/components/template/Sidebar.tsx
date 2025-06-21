@@ -57,14 +57,14 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
       show: user && ["writer", "system admin"].includes(user.role),
     },
     {
-      label: "AI Elders",
+      label: "AI World Elders",
       icon: <GroupRoundedIcon fontSize="medium" />,
       href: "/elders",
       external: false,
       show: true,
     },
     {
-      label: "AI Specialists",
+      label: "AI System Specialists",
       icon: <Sparkles fontSize="medium" />,
       href: "/ai_specialist",
       external: false,
@@ -72,14 +72,14 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
     },    
 
     {
-      label: "AI Writers",
+      label: "AI Page Writers",
       icon: <Bot fontSize="medium" />,
       href: "/agent_writer",
       external: false,
       show: user && ["writer", "system admin"].includes(user.role),
     },
     {
-      label: "AI Novelists",
+      label: "AI Adventure Novelists",
       icon: <PenLine fontSize="medium" />,
       href: "/ai_novelist",
       external: false,

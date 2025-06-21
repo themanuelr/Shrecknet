@@ -16,10 +16,9 @@ from sqlalchemy.future import select
 from app.crud.crud_vectordb import (
     get_chroma_client,
     _delete_collection,
-    SimpleEmbeddings,
+    _embedding_fn,
 )
 
-_embedding_fn = SimpleEmbeddings()
 
 _text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=300,

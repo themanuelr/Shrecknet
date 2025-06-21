@@ -5,20 +5,15 @@ import chromadb
 from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
-class SimpleEmbeddings:
-    """Fallback embedding model that avoids network downloads."""
 
-    def embed_documents(self, texts):
-        return [[float(len(t))] for t in texts]
+_embedding_fn = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-mpnet-base-v2",
+      model_kwargs={"device": "cpu"}
+)
 
-    def embed_query(self, text):
-        return [float(len(text))]
-
-# Use a very simple embedding based on document length. This avoids the need
-# for large pre-trained models or network downloads during tests.
-_embedding_fn = SimpleEmbeddings()
 
 _text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=300,
@@ -85,11 +80,9 @@ def _delete_collection(name: str, _client) -> None:
 
 def get_chroma_client():
     """Return a Chroma client without requiring a running server."""
-    try:
-        return chromadb.PersistentClient(path=_db_path)
-    except Exception:
-        return chromadb.EphemeralClient()
 
+    return chromadb.HttpClient(host=chromadbURL, port=chromadbPort)
+    
     # _db_path = os.getenv("VECTOR_DB_PATH", settings.vector_db_path)
     # print (f"READING CHROMA CLIENT FROM HERE: " + _db_path)
     # os.makedirs(_db_path, exist_ok=True)
