@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import AuthGuard from "../components/auth/AuthGuard";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAuth } from "../components/auth/AuthProvider";
@@ -32,6 +33,7 @@ export default function AgentWriterPage() {
   const { agents, isLoading: agentsLoading } = useAgents();
   const { worlds } = useWorlds();
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const searchParams = useSearchParams();
   const { pages } = usePages(selectedAgent ? { gameworld_id: selectedAgent.world_id } : {});
   const { concepts } = useConcepts(selectedAgent?.world_id);
 
@@ -44,6 +46,15 @@ export default function AgentWriterPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const { jobs: writerJobs } = useWriterJobs();
   const [jobFeedback, setJobFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedAgent || agents.length === 0) return;
+    const param = searchParams.get("agent");
+    if (param) {
+      const ag = agents.find((a) => a.id === Number(param));
+      if (ag) setSelectedAgent(ag);
+    }
+  }, [agents, searchParams, selectedAgent]);
 
   useEffect(() => {
     const interval = setInterval(() => {

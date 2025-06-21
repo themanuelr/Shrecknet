@@ -35,10 +35,27 @@ export default function SuggestionCard({
     }
   
     return (
-      <div className={`border-2 ${isMerged ? 'border-gray-300 bg-gray-100' : backgroundClass} rounded-xl p-4 space-y-3 transition-colors duration-200`}>
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-[var(--primary)]">{suggestion.name}</h3>
-          {subStep === 'a' && (
+      <div
+        className={`border-2 ${
+          isMerged ? "border-gray-300 bg-gray-100" : backgroundClass
+        } rounded-xl p-4 space-y-3 transition-colors duration-200`}
+      >
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-[var(--primary)]">
+              {suggestion.name}
+            </h3>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                isUpdate
+                  ? "bg-blue-200 text-blue-800"
+                  : "bg-green-200 text-green-800"
+              }`}
+            >
+              {isUpdate ? "Update Page" : "New Page"}
+            </span>
+          </div>
+          {subStep === "a" && (
             <button
               className="text-red-500 hover:underline text-sm"
               onClick={() => onRemove(index)}
@@ -96,7 +113,7 @@ export default function SuggestionCard({
               </>
             )}
   
-            {subStep === 'c' && suggestion.mode === "update" && (
+            {subStep === 'c' && (suggestion.mode === "update" || (!suggestion.mode && suggestion.exists)) && (
               <div className="col-span-2">
                 <label className="block text-sm font-semibold mb-1">
                   {suggestion.exists && targetPage
