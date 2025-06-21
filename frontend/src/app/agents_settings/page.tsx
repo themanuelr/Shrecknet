@@ -84,13 +84,15 @@ function JobStatusScroll({ jobs }) {
   if (!jobs || !jobs.length) return null;
 
   // Split jobs into active and completed/error
-  const activeJobs = jobs.filter(j => j.status === "queued" || j.status === "running");
+  const activeJobs = jobs.filter(j =>
+    j.status === "queued" || j.status === "running" || j.status === "processing"
+  );
   const finishedJobs = jobs
     .filter(j => j.status === "finished" || j.status === "done" || j.status === "error")
     .slice(-3); // Last 3 only
 
   function renderJobStatus(job) {
-    if (job.status === "running") {
+    if (job.status === "running" || job.status === "processing") {
       return (
         <>
           <span className="animate-pulse">⏳</span> Running: {job.progress || "In progress..."}
@@ -186,7 +188,9 @@ function WriterJobStatusScroll({ jobs }) {
   if (!jobs || !jobs.length) return null;
 
   // Active and finished jobs
-  const activeJobs = jobs.filter(j => j.status === "queued" || j.status === "running");
+  const activeJobs = jobs.filter(j =>
+    j.status === "queued" || j.status === "running" || j.status === "processing"
+  );
   const finishedJobs = jobs
     .filter(j => j.status === "finished" || j.status === "done" || j.status === "error")
     .slice(-5);
@@ -201,7 +205,7 @@ function WriterJobStatusScroll({ jobs }) {
       <li className="mb-1">
         {/* Status */}
         <span>
-          {job.status === "running" && <><span className="animate-pulse">⏳</span> Running</>}
+          {(job.status === "running" || job.status === "processing") && <><span className="animate-pulse">⏳</span> Running</>}
           {job.status === "queued" && <><span>🕓</span> Queued</>}
           {(job.status === "finished" || job.status === "done") && <><span>✅</span> Done</>}
           {job.status === "error" && <><span>❌</span> Error</>}
@@ -525,6 +529,13 @@ return (
             icon={<Book className="w-6 h-6 text-purple-500" />}
             agents={filtered.filter((a) => a.task === "story novelist")}
             task="story novelist"
+            canRebuild={false}
+          />
+          <AgentGuildTable
+            title="Specialists’ Corner"
+            icon={<Users2 className="w-6 h-6 text-teal-500" />}
+            agents={filtered.filter((a) => a.task === "specialist")}
+            task="specialist"
             canRebuild={false}
           />
 
