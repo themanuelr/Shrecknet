@@ -34,7 +34,7 @@ export default function AISpecialistPage() {
                 specialists.map(a => (
                   <button
                     key={a.id}
-                    onClick={() => router.push(`/ai_novelist/specialist_chat?agent=${a.id}`)}
+                    onClick={() => router.push(`/ai_specialist/specialist_chat?agent=${a.id}`)}
                     className="flex flex-col items-center gap-2 p-6 rounded-2xl shadow-lg border border-indigo-200 bg-white hover:scale-105 hover:shadow-2xl transition-all"
                   >
                     <Image src={a.logo || "/images/default/avatars/logo.png"} alt={a.name} width={100} height={100} className="rounded-full object-cover border-2 border-fuchsia-300 shadow mb-2" />
