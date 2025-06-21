@@ -8,8 +8,10 @@ from app.models.model_specialist_source import SpecialistSource
 from app.models.model_agent import Agent
 
 async def add_source(session: AsyncSession, source: SpecialistSource) -> SpecialistSource:
-    if source.type == "file" and source.path and not os.path.isabs(source.path):
-        source.path = os.path.join("/app/uploads", source.path.lstrip("/"))
+
+    print (f"SOURCE: {source.path}")
+    # if source.type == "file" and source.path and not os.path.isabs(source.path):
+    #     source.path = os.path.join("/app/uploads", source.path.lstrip("/"))
     session.add(source)
     await session.commit()
     await session.refresh(source)

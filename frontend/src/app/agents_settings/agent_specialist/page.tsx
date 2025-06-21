@@ -12,6 +12,56 @@ import { useSpecialistSources } from "../../lib/useSpecialistSources";
 import { startVectorJob } from "../../lib/specialistAPI";
 import AgentModal from "../../components/agents/AgentModal";
 import SpecialistSourceModal from "../../components/agents/SpecialistSourceModal";
+import { Link as LinkIcon, FileText, FileImage, FileArchive, FileVideo, FileAudio, File } from "lucide-react";
+
+
+function getFileIcon(filename) {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  if (["pdf"].includes(ext)) return <FileText className="text-rose-500 w-6 h-6" />;
+  if (["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp"].includes(ext)) return <FileImage className="text-green-500 w-6 h-6" />;
+  if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return <FileArchive className="text-yellow-600 w-6 h-6" />;
+  if (["mp4", "webm", "mov", "avi"].includes(ext)) return <FileVideo className="text-indigo-500 w-6 h-6" />;
+  if (["mp3", "wav", "ogg", "flac"].includes(ext)) return <FileAudio className="text-blue-500 w-6 h-6" />;
+  if (["txt", "md", "csv", "json"].includes(ext)) return <FileText className="text-gray-600 w-6 h-6" />;
+  return <File className="text-indigo-400 w-6 h-6" />;
+}
+
+function getSourceDisplay(source) {  
+  if (source.type === "link") {
+    return (
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-[var(--primary)] underline break-all hover:text-[var(--accent)]"
+      >
+        <LinkIcon className="w-4 h-4" />
+        {source.url}
+      </a>
+    );
+  }
+
+  
+  // const isLink = source.type === "link";
+
+
+  // Assume "file"
+  // Construct public URL (adjust base if needed)
+  const fileUrl = source.path.startsWith("http")
+    ? source.path
+    : `https://shrecknet.club/uploads/${source.path.replace(/^\/+/, "")}`;
+  return (
+    <a
+      href={fileUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-[var(--primary)] underline break-all hover:text-[var(--accent)]"
+    >
+      {getFileIcon(source.path)}
+      {source.name || source.path.split("/").pop()}
+    </a>
+  );
+}
 
 // ----- NPC Guide -----
 const npcQuotes = [
@@ -72,6 +122,40 @@ function JobStatusScroll({ jobs }) {
     return <>🔄 {job.status}</>;
   };
 
+  const renderProgress = job => {
+    if (job.progress) {
+      return <div className="text-xs text-indigo-700 ml-5">{job.progress}</div>;
+    }
+    return null;
+  };
+
+  const renderDocs = job => {
+    if (job.documents_indexed !== undefined && job.documents_indexed !== null) {
+      return (
+        <div className="text-xs text-gray-700 ml-5">
+          Documents indexed: <span className="font-semibold">{job.documents_indexed}</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderTime = job => {
+    const start = job.start_time ? new Date(job.start_time) : null;
+    const end = job.end_time ? new Date(job.end_time) : null;
+    let dur = "";
+    if (start && end) {
+      const diff = (end.getTime() - start.getTime()) / 1000;
+      dur = ` (${Math.round(diff)}s)`;
+    }
+    return (
+      <div className="text-xs text-gray-500 ml-5">
+        Start: {start ? start.toLocaleString() : "?"}
+        {end && <> | End: {end.toLocaleString()}{dur}</>}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-purple-50 border border-indigo-200 rounded-xl p-2 mt-2 shadow-inner">
       <div className="font-semibold text-yellow-900 mb-1 flex items-center gap-1">
@@ -82,7 +166,11 @@ function JobStatusScroll({ jobs }) {
           <div className="font-semibold text-indigo-700">Active Jobs:</div>
           <ul className="pl-3 text-sm text-yellow-900 mb-2">
             {active.map((j, idx) => (
-              <li key={j.job_id || idx}>{render(j)}</li>
+              <li key={j.job_id || idx} className="mb-1">
+                {render(j)}
+                {renderProgress(j)}
+                {renderTime(j)}
+              </li>
             ))}
           </ul>
         </>
@@ -92,7 +180,11 @@ function JobStatusScroll({ jobs }) {
           <div className="font-semibold text-indigo-700 mt-2">Recent Jobs:</div>
           <ul className="pl-3 text-sm text-yellow-900">
             {finished.map((j, idx) => (
-              <li key={j.job_id || idx}>{render(j)}</li>
+              <li key={j.job_id || idx} className="mb-1">
+                {render(j)}
+                {renderDocs(j)}
+                {renderTime(j)}
+              </li>
             ))}
           </ul>
         </>
@@ -103,18 +195,35 @@ function JobStatusScroll({ jobs }) {
 
 // ----- Source Cards -----
 function SourceCard({ source, onEdit }) {
+  const isLink = source.type === "link";
+  console.log("type: "+source.type)
+  console.log("Is link: "+isLink)
   return (
-    <div className="border border-indigo-100 bg-white rounded-xl p-3 shadow flex flex-col">
-      <div className="font-semibold text-indigo-800">{source.name}</div>
-      <div className="text-sm break-all">
-        {source.type === "link" ? source.url : source.path}
+    <div className="border border-[var(--primary)] bg-[var(--card)] rounded-2xl p-4 shadow-lg flex flex-col gap-1">
+      <div className="flex items-center gap-2 mb-1">
+        <div className="bg-[var(--accent)] rounded-full p-2 flex items-center justify-center shadow-inner">
+          {isLink ? (
+            <LinkIcon className="text-[var(--primary)] w-6 h-6" />
+          ) : (
+            getFileIcon(source.path)
+          )}
+        </div>
+        <div className="font-semibold text-[var(--primary)] truncate">{source.name}</div>
       </div>
-      <div className="text-xs text-gray-500 mt-1">
-        Added: {new Date(source.added_at).toLocaleString()}
+      {/* <div className="text-sm break-all mb-1">
+        {getSourceDisplay(source)}
+      </div> */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-[var(--muted-foreground)]">
+          Added: {source.added_at ? new Date(source.added_at).toLocaleString() : "—"}
+        </span>
+        <button
+          className="px-2 py-1 text-xs rounded-xl font-bold bg-[var(--primary)] text-white hover:bg-[var(--accent)] shadow transition"
+          onClick={() => onEdit(source)}
+        >
+          Edit
+        </button>
       </div>
-      <button className="mt-2 text-indigo-600 text-xs self-end" onClick={() => onEdit(source)}>
-        Edit
-      </button>
     </div>
   );
 }
