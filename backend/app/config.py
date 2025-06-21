@@ -6,17 +6,15 @@ class Settings(BaseSettings):
     debug: bool = False
     allowed_origins: str = "*"
     openai_api_key: str | None = None
-    open_ai_model:str | None = None
+    open_ai_model: str | None = None
     vector_db_path: str = "./data/vector_db"
     chat_history_dir: str = "./data/chat/{user_id}"
-    bulk_job_dir: str = "./data/bulk_jobs"
     vectordb_job_dir: str = "./data/vector_jobs"
-    writer_job_dir: str = "./data/writer_jobs"    
+    writer_job_dir: str = "./data/writer_jobs"
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"
-    vector_db_url :str ="localhost"
-    vector_db_port :str = "8001"
+    vector_db_url: str = "localhost"
+    vector_db_port: str = "8001"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-    
 
 settings = Settings()

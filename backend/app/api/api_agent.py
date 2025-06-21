@@ -31,20 +31,6 @@ class ChatRequest(BaseModel):
 router = APIRouter(prefix="/agents", tags=["Agents"], dependencies=[Depends(get_current_user)])
 
 
-
-@router.get("/bulk_jobs/{job_id}")
-async def bulk_job_status(job_id: str):
-    from pathlib import Path
-    from app.config import settings
-
-    job_path = Path(settings.bulk_job_dir) / f"{job_id}.json"
-    if not job_path.is_file():
-        raise HTTPException(status_code=404, detail="Job not found")
-    with open(job_path) as f:
-        data = json.load(f)
-    return data
-
-
 @router.post("/{agent_id}/update_vector_db")
 async def update_vector_job(
     agent_id: int,
@@ -314,21 +300,26 @@ async def analyze_page_job_endpoint(
     from uuid import uuid4
     from pathlib import Path
     from app.config import settings
-    from app.task_queue import task_analyze_page_job
+    from app.task_queue import task_analyze_pages_job
 
     job_id = uuid4().hex
     job_dir = Path(settings.writer_job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
     job_path = job_dir / f"{job_id}.json"
     with open(job_path, "w") as f:
-        json.dump({
-            "status": "queued",
-            "agent_id": agent_id,
-            "page_id": page_id,
-            "job_type": "analyze_page",
-        }, f)
+        json.dump(
+            {
+                "status": "queued",
+                "agent_id": agent_id,
+                "job_type": "analyze_pages",
+                "page_ids": [page_id],
+                "pages_total": 1,
+                "pages_processed": 0,
+            },
+            f,
+        )
 
-    task_analyze_page_job.delay(agent_id, page_id, job_id)
+    task_analyze_pages_job.delay(agent_id, [page_id], job_id)
     return {"job_id": job_id}
 
 
@@ -381,48 +372,40 @@ async def generate_pages_job_endpoint(
     return {"job_id": job_id}
 
 
-class BulkAnalyzeRequest(BaseModel):
+class AnalyzePagesJobRequest(BaseModel):
     page_ids: List[int]
 
 
-@router.post("/{agent_id}/bulk_analyze")
-async def bulk_analyze_endpoint(
+@router.post("/{agent_id}/analyze_job")
+async def analyze_pages_job_endpoint(
     agent_id: int,
-    payload: BulkAnalyzeRequest,
+    payload: AnalyzePagesJobRequest,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
 ):
     from uuid import uuid4
     from pathlib import Path
     from app.config import settings
-    from app.task_queue import task_bulk_analyze
+    from app.task_queue import task_analyze_pages_job
 
     job_id = uuid4().hex
-    job_dir = Path(settings.bulk_job_dir)
+    job_dir = Path(settings.writer_job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
     job_path = job_dir / f"{job_id}.json"
-
-    pages = []
-    for pid in payload.page_ids:
-        p = await get_page(session, pid)
-        if p:
-            pages.append(p)
 
     with open(job_path, "w") as f:
         json.dump(
             {
                 "status": "queued",
                 "agent_id": agent_id,
-                "job_type": "bulk_analyze",
+                "job_type": "analyze_pages",
                 "page_ids": payload.page_ids,
-                "page_names": [p.name for p in pages],
                 "pages_total": len(payload.page_ids),
                 "pages_processed": 0,
             },
             f,
         )
 
-    task_bulk_analyze.delay(agent_id, payload.page_ids, job_id)
+    task_analyze_pages_job.delay(agent_id, payload.page_ids, job_id)
     return {"job_id": job_id}
 
 

@@ -9,7 +9,7 @@ import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
 import { usePages } from "../lib/usePage";
 import { useConcepts } from "../lib/useConcept";
-import { startBulkAnalyze, getBulkJob, startAnalyzeJob } from "../lib/agentAPI";
+import { startAnalyzeJob, getWriterJob } from "../lib/agentAPI";
 import { useWriterJobs } from "../lib/useWriterJobs";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,8 +23,7 @@ const AGENT_PERSONALITIES = {
 };
 
 const JOB_LABELS = {
-  analyze_page: "Suggest Pages",
-  bulk_analyze: "Bulk Suggestions",
+  analyze_pages: "Analyze Pages",
   generate_pages: "Update/Create Pages",
 };
 
@@ -60,7 +59,7 @@ export default function AgentWriterPage() {
     const interval = setInterval(() => {
       jobs.forEach((job) => {
         if (job.status === "done") return;
-        getBulkJob(job.id, token)
+        getWriterJob(job.id, token)
           .then((data) => {
             setJobs((j) =>
               j.map((jj) => (jj.id === job.id ? { ...jj, ...data } : jj))
@@ -212,7 +211,7 @@ export default function AgentWriterPage() {
                       <tr key={job.id} className={`border-t border-indigo-100 ${job.status === 'done' ? 'bg-indigo-50/80' : 'bg-yellow-50/70 animate-pulse'}`}>
                         <td className={`p-2 ${job.status === 'done' ? 'text-fuchsia-700 font-semibold' : 'text-yellow-700 font-semibold'}`}>{job.status === 'done' ? 'Needs Review' : 'Running'}</td>
                         <td className="p-2">{job.pages.join(', ')}</td>
-                        <td className="p-2">{JOB_LABELS['bulk_analyze']}</td>
+                        <td className="p-2">{JOB_LABELS['analyze_pages']}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.status === 'done' && job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
@@ -239,10 +238,8 @@ export default function AgentWriterPage() {
                         <td className="p-2">{job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
                         <td className="p-2 flex gap-2">
-                          {job.job_type === 'analyze_page' ? (
+                          {job.job_type === 'analyze_pages' ? (
                             <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review</Link>
-                          ) : job.job_type === 'bulk_analyze' ? (
-                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/bulk_review/${job.job_id}`}>Review</Link>
                           ) : (
                             <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review</Link>
                           )}
@@ -296,10 +293,8 @@ export default function AgentWriterPage() {
                 <button
                   disabled={selectedPages.length === 0}
                   onClick={async () => {
-                    for (const pid of selectedPages) {
-                      const res = await startAnalyzeJob(selectedAgent.id, pid, token || "");
-                      setJobs(j => [...j, { id: res.job_id, pages: [pageMap[pid]?.name || pid], status: "queued" }]);
-                    }
+                    const res = await startAnalyzeJob(selectedAgent.id, selectedPages, token || "");
+                    setJobs(j => [...j, { id: res.job_id, pages: selectedPages.map(pid => pageMap[pid]?.name || pid), status: "queued" }]);
                     setSelectedPages([]);
                     setJobFeedback("Processing selected pages...");
                     setTimeout(() => setJobFeedback(null), 1200);
@@ -345,7 +340,7 @@ export default function AgentWriterPage() {
                           <button
                             className="px-3 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold text-xs hover:bg-fuchsia-700 transition"
                             onClick={async () => {
-                              const res = await startAnalyzeJob(selectedAgent.id, p.id, token || "");
+                              const res = await startAnalyzeJob(selectedAgent.id, [p.id], token || "");
                               setJobs(j => [...j, { id: res.job_id, pages: [p.name], status: "queued" }]);
                               setJobFeedback(`Started job for "${p.name}"!`);
                               setTimeout(() => setJobFeedback(null), 1200);

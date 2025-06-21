@@ -70,73 +70,67 @@ from app.crud.crud_page_analysis import analyze_page, generate_pages
 
 
 @celery_app.task
-def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
+def task_analyze_pages_job(agent_id: int, page_ids: list[int], job_id: str):
     async def run():
-        job_dir = Path(settings.bulk_job_dir)
+        job_dir = Path(settings.writer_job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
         job_path = job_dir / f"{job_id}.json"
         start_time = datetime.now(timezone.utc).isoformat()
-
-        async with async_session_maker() as session:
-            pages = []
-            for pid in page_ids:
-                p = await get_page(session, pid)
-                if p:
-                    pages.append(p)
-
-        page_names = [p.name for p in pages]
 
         with open(job_path, "w") as f:
             json.dump(
                 {
                     "status": "processing",
                     "agent_id": agent_id,
-                    "job_type": "bulk_analyze",
+                    "job_type": "analyze_pages",
                     "page_ids": page_ids,
-                    "page_names": page_names,
                     "pages_total": len(page_ids),
                     "pages_processed": 0,
                     "start_time": start_time,
+                    "action_needed": None,
                 },
                 f,
                 default=str,
             )
 
-        print (f" --- CALCUALTING SUGGESIONTS --- ")
-        print (f" --- CALCUALTING SUGGESIONTS --- ")
-        print (f" --- CALCUALTING SUGGESIONTS --- ")
-        print (f" --- CALCUALTING SUGGESIONTS --- ")
-
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
+            if not agent:
+                with open(job_path, "w") as ff:
+                    json.dump({"status": "error", "error": "Agent not found", "start_time": start_time}, ff, default=str)
+                return
+
             pages = []
+            page_names = []
             processed = 0
             for pid in page_ids:
                 p = await get_page(session, pid)
                 if p and p.gameworld_id == agent.world_id:
                     pages.append(p)
+                    page_names.append(p.name)
                 processed += 1
                 with open(job_path, "w") as f:
                     json.dump(
                         {
                             "status": "processing",
                             "agent_id": agent_id,
-                            "job_type": "bulk_analyze",
+                            "job_type": "analyze_pages",
                             "page_ids": page_ids,
                             "page_names": page_names,
                             "pages_total": len(page_ids),
                             "pages_processed": processed,
                             "start_time": start_time,
+                            "action_needed": None,
                         },
                         f,
                         default=str,
                     )
 
-            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
-            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
-            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
-            print (f" --- CALCUALTING SUGGESIONTS2 --- ")
-            suggestions = await analyze_pages_bulk(session, agent, pages)
+            if len(pages) == 1:
+                result = await analyze_page(session, agent, pages[0])
+                suggestions = result.get("suggestions", [])
+            else:
+                suggestions = await analyze_pages_bulk(session, agent, pages)
 
         end_time = datetime.now(timezone.utc).isoformat()
         with open(job_path, "w") as f:
@@ -144,7 +138,7 @@ def task_bulk_analyze(agent_id: int, page_ids: list[int], job_id: str):
                 {
                     "status": "done",
                     "agent_id": agent_id,
-                    "job_type": "bulk_analyze",
+                    "job_type": "analyze_pages",
                     "page_ids": page_ids,
                     "page_names": page_names,
                     "pages_total": len(page_ids),
@@ -238,50 +232,6 @@ def task_rebuild_vectordb(agent_id: int, job_id: str):
     asyncio.run(run())
 
 
-@celery_app.task
-def task_analyze_page_job(agent_id: int, page_id: int, job_id: str):
-    async def run():
-        job_dir = Path(settings.writer_job_dir)
-        job_dir.mkdir(parents=True, exist_ok=True)
-        job_path = job_dir / f"{job_id}.json"
-        start_time = datetime.now(timezone.utc).isoformat()
-        with open(job_path, "w") as f:
-            json.dump({
-                "status": "processing",
-                "agent_id": agent_id,
-                "page_id": page_id,
-                "job_type": "analyze_page",
-                "start_time": start_time,
-                "action_needed": None,
-            }, f, default=str)
-
-        async with async_session_maker() as session:
-            agent = await get_agent(session, agent_id)
-            page = await get_page(session, page_id)
-            if not agent or not page or agent.world_id != page.gameworld_id:
-                with open(job_path, "w") as ff:
-                    json.dump({
-                        "status": "error",
-                        "error": "Agent or page not found",
-                        "start_time": start_time,
-                    }, ff, default=str)
-                return
-            result = await analyze_page(session, agent, page)
-
-        end_time = datetime.now(timezone.utc).isoformat()
-        with open(job_path, "w") as f:
-            json.dump({
-                "status": "done",
-                "agent_id": agent_id,
-                "page_id": page_id,
-                "job_type": "analyze_page",
-                "suggestions": result.get("suggestions", []),
-                "start_time": start_time,
-                "end_time": end_time,
-                "action_needed": "review",
-            }, f, default=str)
-
-    asyncio.run(run())
 
 
 @celery_app.task
