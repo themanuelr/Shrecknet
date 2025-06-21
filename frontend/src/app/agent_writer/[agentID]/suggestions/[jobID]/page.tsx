@@ -6,7 +6,7 @@ import { useAuth } from "@/app/components/auth/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import SuggestionCard from "@/app/components/agents/SuggestionCard";
-import { getWriterJob, getBulkJob, startGenerateJob, updateWriterJob } from "@/app/lib/agentAPI";
+import { getWriterJob, startGenerateJob, updateWriterJob } from "@/app/lib/agentAPI";
 import { useAgentById } from "@/app/lib/useAgentById";
 import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
@@ -99,17 +99,7 @@ export default function SuggestionsPage() {
         );
         setSelectedSuggestions(mapped);
       })
-      .catch(() => {
-        getBulkJob(jobID as string, token)
-          .then((data) => {
-            setJob(data);
-            const mapped = (data.suggestions || []).map((s: any) =>
-              s.exists && !s.mode ? { ...s, mode: "update" } : s
-            );
-            setSelectedSuggestions(mapped);
-          })
-          .catch(() => {});
-      });
+      .catch(() => {});
   }, [jobID, token]);
 
   const scrollToCard = (idx: number) => {

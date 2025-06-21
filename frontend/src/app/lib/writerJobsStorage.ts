@@ -46,7 +46,7 @@ export function markWriterJobCompleted(
     agent_id: job.agent_id,
     page_id: job.page_id,
     page_name: pageName,
-    job_type: job.job_type || "bulk_analyze",
+    job_type: job.job_type || "analyze_pages",
     start_time: job.start_time,
     end_time: job.end_time,
     completed_at: new Date().toISOString(),
