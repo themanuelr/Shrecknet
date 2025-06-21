@@ -135,13 +135,15 @@ async def rebuild_agent_with_progress(
         if not text:
             continue
         if progress_callback:
-            progress_callback(f"embedding document {src.name} {idx}/{total}")
+            progress_callback(f"creating chunks of document {src.name} {idx}/{total}")
         split_docs = _text_splitter.create_documents([text])
         for i, d in enumerate(split_docs):
             d.metadata["source_id"] = src.id
             d.metadata["chunk_index"] = i
             docs.append(d)
     if docs:
+        if progress_callback:
+            progress_callback(f"embedding documents {len(docs)}")
         collection.add_documents(docs)
 
     agent = await session.get(Agent, agent_id)
