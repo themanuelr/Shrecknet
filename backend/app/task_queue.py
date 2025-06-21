@@ -240,45 +240,42 @@ def task_rebuild_specialist_vectors(agent_id: int, job_id: str):
         job_dir.mkdir(parents=True, exist_ok=True)
         job_path = job_dir / f"{job_id}.json"
         start_time = datetime.now(timezone.utc).isoformat()
-        with open(job_path, "w") as f:
-            json.dump({
-                "status": "processing",
+        def write_status(status: str, progress: str | None = None, count: int | None = None, end: str | None = None):
+            data = {
+                "status": status,
                 "agent_id": agent_id,
                 "job_type": "rebuild_specialist_vectors",
                 "start_time": start_time,
-            }, f, default=str)
+            }
+            if progress:
+                data["progress"] = progress
+            if count is not None:
+                data["documents_indexed"] = count
+            if end:
+                data["end_time"] = end
+            with open(job_path, "w") as f:
+                json.dump(data, f, default=str)
+
+        write_status("processing")
 
         async with async_session_maker() as session:
             agent = await get_agent(session, agent_id)
             if not agent:
-                with open(job_path, "w") as ff:
-                    json.dump({
-                        "status": "error",
-                        "error": "Agent not found",
-                        "start_time": start_time,
-                    }, ff, default=str)
+                write_status("error")
                 return
             try:
-                count = await crud_specialist_vectordb.rebuild_agent(session, agent_id)
+                def progress_cb(msg: str):
+                    write_status("processing", msg)
+
+                count = await crud_specialist_vectordb.rebuild_agent_with_progress(
+                    session, agent_id, progress_cb
+                )
             except Exception as exc:  # pragma: no cover - defensive
-                with open(job_path, "w") as ff:
-                    json.dump({
-                        "status": "error",
-                        "error": str(exc),
-                        "start_time": start_time,
-                    }, ff, default=str)
+                write_status("error")
                 raise
 
         end_time = datetime.now(timezone.utc).isoformat()
-        with open(job_path, "w") as f:
-            json.dump({
-                "status": "done",
-                "agent_id": agent_id,
-                "job_type": "rebuild_specialist_vectors",
-                "documents_indexed": count,
-                "start_time": start_time,
-                "end_time": end_time,
-            }, f, default=str)
+        write_status("done", count=count, end=end_time)
 
     asyncio.run(run())
 
