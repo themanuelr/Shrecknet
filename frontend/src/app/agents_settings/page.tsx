@@ -5,10 +5,10 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Bot, BookOpenText, Book, Users2 } from "lucide-react";
 
 const agentTypes = [
-  { path: "conversational", label: "Conversationalists", icon: <Bot className="w-8 h-8" /> },
-  { path: "page-writer", label: "Page Writers", icon: <BookOpenText className="w-8 h-8" /> },
-  { path: "story-novelist", label: "Story Novelists", icon: <Book className="w-8 h-8" /> },
-  { path: "specialist", label: "Specialists", icon: <Users2 className="w-8 h-8" /> },
+  { path: "agent_conversational", label: "Conversationalists", icon: <Bot className="w-8 h-8" /> },
+  { path: "agent_writer", label: "Page Writers", icon: <BookOpenText className="w-8 h-8" /> },
+  { path: "agent_novelist", label: "Story Novelists", icon: <Book className="w-8 h-8" /> },
+  { path: "agent_specialist", label: "Specialists", icon: <Users2 className="w-8 h-8" /> },
 ];
 
 export default function AgentsSettingsIndex() {
@@ -57,13 +57,13 @@ export default function AgentsSettingsIndex() {
 // Helper for pretty descriptions
 function getAgentTypeDescription(type) {
   switch (type) {
-    case "conversational":
+    case "agent_conversational":
       return "Chat with your world’s rules, lore, and personalities.";
-    case "page-writer":
+    case "agent_writer":
       return "Automate and review page creation, linking, and summaries.";
-    case "story-novelist":
+    case "agent_novelist":
       return "Generate adventure hooks, session logs, and dramatic retellings.";
-    case "specialist":
+    case "agent_specialist":
       return "Niche agents for specific game mechanics or moderation.";
     default:
       return "";
