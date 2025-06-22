@@ -95,10 +95,11 @@ def export_agent_vectordb(agent_id: int) -> dict:
     # ``ValueError`` when ``ids`` is included, which resulted in 500 errors when
     # exporting a vector database. We only request the optional fields that are
     # allowed and rely on the default behaviour to include the document IDs.
-    data = collection.get(include=["documents", "metadatas"])
+    data = collection.get(include=["documents", "metadatas", "embeddings"])
     return {
         "documents": data.get("documents", []),
         "metadatas": data.get("metadatas", []),
+        "embeddings": data.get("embeddings", []),
         "ids": data.get("ids", []),
     }
 
@@ -107,21 +108,25 @@ async def import_agent_vectordb(session: AsyncSession, agent_id: int, data: dict
     """Import vector DB data for an agent, replacing existing data."""
     docs = data.get("documents") or []
     metas = data.get("metadatas") or []
+    embeds = data.get("embeddings") or []
+    ids = data.get("ids") or None
+
     collection = _get_collection(agent_id)
     _delete_collection(f"specialist_{agent_id}", collection)
 
-    documents: List[Document] = []
-    for content, meta in zip(docs, metas):
-        d = Document(page_content=content, metadata=meta or {})
-        documents.append(d)
-    if documents:
-        collection.add_documents(documents)
+    if docs:
+        collection._collection.add(
+            ids=ids,
+            embeddings=embeds,
+            documents=docs,
+            metadatas=metas,
+        )
 
     agent = await session.get(Agent, agent_id)
     if agent:
         agent.specialist_update_date = datetime.now(timezone.utc)
         await session.commit()
-    return len(documents)
+    return len(docs)
 
 
 
