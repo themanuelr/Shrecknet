@@ -234,8 +234,7 @@ function CreateNovelPageContent() {
             </div>
             <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-sm text-indigo-800 space-y-1">
               <div><strong>Source:</strong> {text ? `${text.split(/\s+/).length} words` : 'None'}</div>
-              <div><strong>Style Example:</strong> {example ? pages?.find(p => p.id === example)?.name : 'None'}</div>
-              <div><strong>Helpers:</strong> {helpers.length}</div>
+              <div><strong>Style Example:</strong> {example ? pages?.find(p => p.id === example)?.name : 'None'}</div>              
             </div>
             <button
               onClick={handleStart}

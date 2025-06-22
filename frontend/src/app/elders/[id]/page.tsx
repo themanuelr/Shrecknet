@@ -12,6 +12,7 @@ import { useAuth } from "../../components/auth/AuthProvider";
 import Image from "next/image";
 import WikiLinkHoverCard from "../../components/editor/WikiLinkHoverCard";
 import { Loader2 } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface Message extends ChatMessage { time: Date }
 interface SourceInfo { title: string; url: string; logo?: string }
@@ -184,7 +185,9 @@ export default function ElderChatPage() {
       <svg className="w-5 h-5 text-fuchsia-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
       </svg>
+      <BookOpen className="w-5 h-5 text-fuchsia-600" />
       <span className="font-semibold text-fuchsia-700 text-base">
+      
         Relevant Sources
       </span>
     </div>
