@@ -1,17 +1,14 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# Pre-copy and install only requirements first (leverages Docker cache)
+COPY requirements.txt ./
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir chromadb==1.0.12
 
-RUN pip install --upgrade pip
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install  --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r requirements.txt
-RUN pip install chromadb==1.0.12
-
-
-# Copy the backend code
+# Now copy the rest of your app (so code changes don't bust the cache above)
 COPY . .
 
 EXPOSE 8000
