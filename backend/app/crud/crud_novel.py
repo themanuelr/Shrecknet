@@ -19,14 +19,15 @@ async def create_novel(
     helper_agent_ids = helper_agent_ids or []
     words = text.split()
     chunks = []
-    step = 500
+    step = 2000
+    overlap = 250
     if len(words) <= step:
         chunks = [" ".join(words)]
     else:
         for i in range(0, len(words), step):
             chunk_words = words[i : i + step]
             if i > 0:
-                overlap_start = max(0, i - 50)
+                overlap_start = max(0, i - overlap)
                 chunk_words = words[overlap_start : i + step]
             chunks.append(" ".join(chunk_words))
 

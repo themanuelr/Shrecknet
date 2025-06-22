@@ -22,13 +22,6 @@ import { clearSpecialistHistory } from "../../lib/specialistAPI";
 import { getPage } from "../../lib/pagesAPI";
 import type { SourceLink } from "../../lib/agentAPI";
 
-const RPG_BACKGROUNDS = [
-  "bg-gradient-to-br from-fuchsia-100 to-indigo-50",
-  "bg-[url('/images/rpg-parchment.png')] bg-cover bg-center",
-  "bg-gradient-to-tr from-purple-100 to-white",
-];
-const getRandomBackground = () =>
-  RPG_BACKGROUNDS[Math.floor(Math.random() * RPG_BACKGROUNDS.length)];
 
 const QUICK_REPLIES = [
   "Tell me more!",
@@ -151,8 +144,7 @@ function SpecialistChatPageContent() {
   const [toastMsg, setToastMsg] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [bg, setBg] = useState(getRandomBackground());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
   interface SourceInfo { title: string; url: string; logo?: string }
   const [sourceInfos, setSourceInfos] = useState<SourceInfo[]>([]);
@@ -305,7 +297,7 @@ function SpecialistChatPageContent() {
           </div>
         )}
         <div
-          className={`min-h-screen w-full flex flex-col items-center px-1 sm:px-6 py-6 transition-all duration-700 ${bg}`}
+          className={`min-h-screen w-full flex flex-col items-center px-1 sm:px-6 py-6 transition-all duration-700`}
         >
           {/* Topbar: Agent Presence */}
           <div className="flex items-center gap-3 mb-5 drop-shadow-xl">
@@ -327,13 +319,7 @@ function SpecialistChatPageContent() {
                   : "ready for your next question"}
               </div>
             </div>
-            <button
-              className="ml-5 text-xs text-fuchsia-500 hover:underline hidden sm:inline"
-              onClick={() => setBg(getRandomBackground())}
-              title="Change ambience"
-            >
-              Change background
-            </button>
+
           </div>
 
           <div className="w-full sm:w-[80%] mx-auto flex flex-col h-[calc(100vh-160px)]">
