@@ -140,6 +140,23 @@ async def novelist_job_status(job_id: str):
     return data
 
 
+@router.patch("/novelist_jobs/{job_id}")
+async def update_novelist_job(job_id: str, payload: dict):
+    from pathlib import Path
+    from app.config import settings
+
+    job_path = Path(settings.novelist_job_dir) / f"{job_id}.json"
+    if not job_path.is_file():
+        raise HTTPException(status_code=404, detail="Job not found")
+    with open(job_path) as f:
+        data = json.load(f)
+    data.update(payload)
+    with open(job_path, "w") as f:
+        json.dump(data, f)
+    data["job_id"] = job_id
+    return data
+
+
 @router.get("/novelist_jobs")
 async def list_novelist_jobs():
     from pathlib import Path
