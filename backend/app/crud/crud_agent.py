@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
-from langgraph.graph import MessageGraph
+from langgraph.graph import Graph
 
 from pathlib import Path
 import json
@@ -133,19 +133,16 @@ async def chat_with_agent(
     llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model)
     chain = prompt | llm
 
-    builder = MessageGraph()
+    builder = Graph()
     builder.add_node("chat", chain)
     builder.set_entry_point("chat")
     builder.set_finish_point("chat")
     graph = builder.compile()
 
-    # The graph expects only the input mapping. Passing the HumanMessage list
-    # causes the prompt template to receive a list instead of a dict, leading
-    # to `Expected mapping type` errors. The query message is already provided
-    # via the input variable.
     response = await graph.ainvoke({"input": query})
+    answer = getattr(response, "content", str(response))
 
-    return {"answer": response[1].content, "sources": sources}
+    return {"answer": answer, "sources": sources}
 
 
 from sqlalchemy.future import select

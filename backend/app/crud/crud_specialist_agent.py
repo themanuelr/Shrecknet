@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
-from langgraph.graph import MessageGraph
+from langgraph.graph import Graph
 
 from app.config import settings
 from app.models.model_agent import Agent
@@ -76,14 +76,14 @@ async def chat_with_specialist(
 
     llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=openai_model)
     chain = prompt | llm
-    builder = MessageGraph()
+
+    builder = Graph()
     builder.add_node("chat", chain)
     builder.set_entry_point("chat")
     builder.set_finish_point("chat")
     graph = builder.compile()
-    # Only pass the prompt variables to the graph. Passing a list of messages
-    # results in the ChatPromptTemplate receiving a list instead of a mapping
-    # and triggers a TypeError. The query is provided via the `input` key.
-    response = await graph.ainvoke({"input": query})
 
-    return {"answer": response[1].content, "sources": sources}
+    response = await graph.ainvoke({"input": query})
+    answer = getattr(response, "content", str(response))
+
+    return {"answer": answer, "sources": sources}
