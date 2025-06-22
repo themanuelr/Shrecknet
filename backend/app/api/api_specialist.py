@@ -19,6 +19,7 @@ from app.schemas.schema_specialist_source import SpecialistSourceCreate, Special
 from pydantic import BaseModel
 from typing import Literal
 from app.config import settings
+from fastapi import Response
 
 router = APIRouter(prefix="/specialist_agents", tags=["SpecialistAgents"], dependencies=[Depends(get_current_user)])
 
@@ -67,6 +68,34 @@ async def remove_source(agent_id: int, source_id: int, session: AsyncSession = D
 @router.post("/{agent_id}/rebuild_vectors")
 async def rebuild_vectors(agent_id: int, session: AsyncSession = Depends(get_session)):
     count = await crud_specialist_vectordb.rebuild_agent(session, agent_id)
+    return {"documents_indexed": count}
+
+
+@router.get("/{agent_id}/export_vectordb")
+async def export_vectordb(agent_id: int, user: User = Depends(get_current_user)):
+    data = crud_specialist_vectordb.export_agent_vectordb(agent_id)
+    return Response(
+        content=json.dumps(data),
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="agent_{agent_id}_vectordb.json"'
+        },
+    )
+
+
+@router.post("/{agent_id}/import_vectordb")
+async def import_vectordb(
+    agent_id: int,
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+):
+    try:
+        content = await file.read()
+        data = json.loads(content)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid file")
+
+    count = await crud_specialist_vectordb.import_agent_vectordb(session, agent_id, data)
     return {"documents_indexed": count}
 
 

@@ -12,6 +12,8 @@ import { useSpecialistSources } from "../../lib/useSpecialistSources";
 import { startVectorJob } from "../../lib/specialistAPI";
 import AgentModal from "../../components/agents/AgentModal";
 import SpecialistSourceModal from "../../components/agents/SpecialistSourceModal";
+import ExportVectorDBModal from "../../components/agents/ExportVectorDBModal";
+import ImportVectorDBModal from "../../components/agents/ImportVectorDBModal";
 import { Link as LinkIcon, FileText, FileImage, FileArchive, FileVideo, FileAudio, File } from "lucide-react";
 
 
@@ -237,6 +239,8 @@ export default function SpecialistSettingsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [sourceModal, setSourceModal] = useState<{agentId:number, source:any}|null>(null);
   const [selectedAgent, setSelectedAgent] = useState(null as any);
+  const [exportAgent, setExportAgent] = useState(null as any);
+  const [importAgent, setImportAgent] = useState(null as any);
   const [success, setSuccess] = useState("");
   const [npcFlavor, setNpcFlavor] = useState("Manage your specialist agents and their sources here.");
   const [npcQuote] = useState(npcQuotes[Math.floor(Math.random()*npcQuotes.length)]);
@@ -295,10 +299,12 @@ export default function SpecialistSettingsPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button className="px-3 py-1 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-800 transition text-sm shadow" onClick={()=>{setSelectedAgent(agent);setModalOpen(true);}}>Edit</button>
                         <button className="px-3 py-1 rounded-lg font-semibold text-purple-700 bg-purple-200 hover:bg-yellow-300 transition text-sm shadow border border-purple-300" onClick={()=>handleRebuild(agent.id)}>Rebuild Vector</button>
                         <button className="px-3 py-1 rounded-lg font-semibold text-white bg-sky-600 hover:bg-sky-800 transition text-sm shadow" onClick={()=>setSourceModal({agentId:agent.id,source:null})}>Add Source</button>
+                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-800 transition text-sm shadow" onClick={()=>setExportAgent(agent)}>Export DB</button>
+                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-amber-600 hover:bg-amber-800 transition text-sm shadow" onClick={()=>setImportAgent(agent)}>Import DB</button>
                       </div>
                     </div>
                     {jobsByAgent[agent.id] && <JobStatusScroll jobs={jobsByAgent[agent.id]} />}
@@ -329,6 +335,19 @@ export default function SpecialistSettingsPage() {
                 source={sourceModal.source}
                 onClose={()=>setSourceModal(null)}
                 onSaved={()=>{}}
+              />
+            )}
+            {exportAgent && (
+              <ExportVectorDBModal
+                agent={exportAgent}
+                onClose={()=>setExportAgent(null)}
+              />
+            )}
+            {importAgent && (
+              <ImportVectorDBModal
+                agent={importAgent}
+                onClose={()=>setImportAgent(null)}
+                onImported={()=>{}}
               />
             )}
           </div>
