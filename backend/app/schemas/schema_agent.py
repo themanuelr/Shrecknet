@@ -14,6 +14,7 @@ class AgentRead(AgentCreate):
     created_at: datetime
     updated_at: datetime
     vector_db_update_date: Optional[datetime] = None
+    specialist_update_date: Optional[datetime] = None
 
     class Config:
         orm_mode = True
@@ -25,4 +26,5 @@ class AgentUpdate(BaseModel):
     task: Optional[str] = None
     world_id: Optional[int] = None
     vector_db_update_date: Optional[datetime] = None
+    specialist_update_date: Optional[datetime] = None
 

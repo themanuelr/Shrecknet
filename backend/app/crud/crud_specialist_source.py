@@ -4,6 +4,8 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 import os
+from pathlib import Path
+
 from app.models.model_specialist_source import SpecialistSource
 from app.models.model_agent import Agent
 
@@ -31,3 +33,16 @@ async def delete_source(session: AsyncSession, source_id: int) -> bool:
     await session.delete(obj)
     await session.commit()
     return True
+
+async def delete_all_sources(session: AsyncSession, agent_id: int) -> None:
+    result = await session.execute(
+        select(SpecialistSource).where(SpecialistSource.agent_id == agent_id)
+    )
+    for src in result.scalars().all():
+        if src.type == "file" and src.path and os.path.isfile(src.path):
+            try:
+                os.remove(src.path)
+            except Exception:
+                pass
+        await session.delete(src)
+    await session.commit()
