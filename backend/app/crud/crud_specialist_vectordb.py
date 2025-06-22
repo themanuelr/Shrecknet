@@ -90,7 +90,12 @@ async def rebuild_agent(session: AsyncSession, agent_id: int) -> int:
 def export_agent_vectordb(agent_id: int) -> dict:
     """Export the vector database for an agent as a serializable dict."""
     collection = _get_collection(agent_id)
-    data = collection.get(include=["documents", "metadatas", "ids"])
+    # `ids` are always returned by Chroma's ``get`` method and should not be
+    # passed in the ``include`` list. Newer versions of Chroma raise a
+    # ``ValueError`` when ``ids`` is included, which resulted in 500 errors when
+    # exporting a vector database. We only request the optional fields that are
+    # allowed and rely on the default behaviour to include the document IDs.
+    data = collection.get(include=["documents", "metadatas"])
     return {
         "documents": data.get("documents", []),
         "metadatas": data.get("metadatas", []),
