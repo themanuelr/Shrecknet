@@ -15,10 +15,12 @@ import {
 import type { ChatMessage } from "../../lib/specialistAPI";
 import { useSpecialistSources } from "../../lib/useSpecialistSources";
 import { downloadBlob } from "../../lib/importExportAPI";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { BookOpen, Download, Link2, File } from "lucide-react";
 import ModalContainer from "../../components/template/modalContainer";
 import { clearSpecialistHistory } from "../../lib/specialistAPI";
+import { getPage } from "../../lib/pagesAPI";
+import type { SourceLink } from "../../lib/agentAPI";
 
 const RPG_BACKGROUNDS = [
   "bg-gradient-to-br from-fuchsia-100 to-indigo-50",
@@ -149,12 +151,37 @@ function SpecialistChatPageContent() {
   const [toastMsg, setToastMsg] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showLorebook, setShowLorebook] = useState(true);
   const [bg, setBg] = useState(getRandomBackground());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  interface SourceInfo { title: string; url: string; logo?: string }
+  const [sourceInfos, setSourceInfos] = useState<SourceInfo[]>([]);
+
   // For RPG "emote" effect
   const [agentEmote, setAgentEmote] = useState<"normal" | "thinking" | "happy" | "surprised">("normal");
+
+  async function updateSourceInfos(sources: SourceLink[] = []) {
+    if (!sources.length) {
+      setSourceInfos([]);
+      return;
+    }
+    const infos: SourceInfo[] = await Promise.all(
+      sources.map(async (s) => {
+        let title = s.title;
+        let logo: string | undefined;
+        const match = s.url.match(/page\/(\d+)/);
+        if (match) {
+          try {
+            const page = await getPage(Number(match[1]), token || "");
+            title = page.name;
+            logo = page.logo;
+          } catch {}
+        }
+        return { title, url: s.url, logo };
+      })
+    );
+    setSourceInfos(infos);
+  }
 
   useEffect(() => {
     if (!agentId) return;
@@ -162,10 +189,13 @@ function SpecialistChatPageContent() {
       .then((msgs) => {
         setAllMessages(msgs as ChatMessage[]);
         setMessages((msgs as ChatMessage[]).slice(-10));
+        const last = [...msgs as ChatMessage[]].reverse().find(m => m.role === "assistant" && m.sources);
+        if (last && last.sources) updateSourceInfos(last.sources);
       })
       .catch(() => {
         setAllMessages([]);
         setMessages([]);
+        setSourceInfos([]);
       });
   }, [agentId, token]);
 
@@ -195,6 +225,7 @@ function SpecialistChatPageContent() {
         arr[arr.length - 1] = { role: "assistant", content: answer, sources };
         return arr.slice(-10);
       });
+      updateSourceInfos(sources);
       setAgentEmote("happy");
       scrollToBottom();
     } catch {
@@ -203,6 +234,7 @@ function SpecialistChatPageContent() {
         ...m.slice(0, -1),
         { role: "assistant", content: "Sorry, something went wrong." },
       ].slice(-10));
+      updateSourceInfos([]);
       setAgentEmote("surprised");
     }
     setTimeout(() => setAgentEmote("normal"), 2200);
@@ -227,6 +259,7 @@ function SpecialistChatPageContent() {
       await clearSpecialistHistory(agentId, token || "");
       setMessages([]);
       setAllMessages([]);
+      setSourceInfos([]);
       setToastMsg("Chat history cleared");
     } catch (err) {
       setToastMsg("Failed to clear history");
@@ -251,42 +284,6 @@ function SpecialistChatPageContent() {
     return (
       <>
         <span dangerouslySetInnerHTML={{ __html: msg.content }} />
-        {msg.sources && msg.sources.length > 0 && (
-          <div className="flex gap-1 mt-2 flex-wrap">
-            {msg.sources.map((s, i) => (
-              s.type === "file" ? (
-                <motion.button
-                  type="button"
-                  key={i}
-                  className="flex items-center px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 mr-2 mb-1 text-xs gap-1 cursor-pointer hover:bg-fuchsia-100 transition"
-                  initial={{ scale: 0.7, opacity: 0.7 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  whileHover={{ scale: 1.07, boxShadow: "0 2px 8px #a78bfa22" }}
-                  onClick={() => handleDownload(s.id!, s.path?.split("/").pop() || "source")}
-                  title="Download source"
-                >
-                  <File className="w-4 h-4" />
-                  <span className="font-semibold text-fuchsia-700">{s.name}</span>
-                </motion.button>
-              ) : (
-                <motion.a
-                  key={i}
-                  className="flex items-center px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 mr-2 mb-1 text-xs gap-1 cursor-pointer hover:bg-fuchsia-100 transition"
-                  initial={{ scale: 0.7, opacity: 0.7 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  whileHover={{ scale: 1.07, boxShadow: "0 2px 8px #a78bfa22" }}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open link"
-                >
-                  <Link2 className="w-4 h-4" />
-                  <span className="font-semibold text-fuchsia-700">{s.name}</span>
-                </motion.a>
-              )
-            ))}
-          </div>
-        )}
       </>
     );
   }
@@ -339,64 +336,39 @@ function SpecialistChatPageContent() {
             </button>
           </div>
 
-          <div className="w-full flex gap-5 justify-center">
-            {/* Lorebook (Sources) */}
-            <AnimatePresence>
-              {showLorebook && (
-                <motion.div
-                  className="hidden lg:flex flex-col w-56 border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-3 h-fit sticky top-6 self-start"
-                  initial={{ x: -40, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -40, opacity: 0 }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <BookOpen className="w-5 h-5 text-fuchsia-700" />
-                    <h3 className="font-semibold text-fuchsia-700">Lorebook Tomes</h3>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {sources.map((src) => (
-                      <TomeCard key={src.id} src={src} onDownload={handleDownload} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="w-full sm:w-[80%] mx-auto flex flex-col h-[calc(100vh-160px)]">
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                className="ml-auto text-xs text-fuchsia-600 underline"
+                onClick={() => setShowHistoryModal(true)}
+              >
+                See whole chat
+              </button>
+              <button
+                className="text-xs text-red-600 underline"
+                onClick={handleClearChat}
+              >
+                Clear chat
+              </button>
+            </div>
 
-            {/* Main Chat Area */}
-            <div className="flex-1 max-w-5xl w-full flex flex-col border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-4">
-              {/* Toggle Lorebook on mobile */}
-              <div className="mb-2 flex items-center gap-2">
-                <button
-                  className="block lg:hidden px-2 py-1 rounded bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-700 text-xs"
-                  onClick={() => setShowLorebook((s) => !s)}
+            <div className="mb-3 overflow-x-auto flex gap-3 pb-2">
+              {sources.map((src) => (
+                <TomeCard key={src.id} src={src} onDownload={handleDownload} />
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-5 mb-2 border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-4">
+              {messages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex w-full ${
+                    m.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  {showLorebook ? "Hide Lorebook" : "Show Lorebook"}
-                </button>
-                <button
-                  className="ml-auto text-xs text-fuchsia-600 underline"
-                  onClick={() => setShowHistoryModal(true)}
-                >
-                  See whole chat
-                </button>
-                <button
-                  className="text-xs text-red-600 underline"
-                  onClick={handleClearChat}
-                >
-                  Clear chat
-                </button>
-              </div>
-              {/* Chat Window */}
-              <div className="flex-1 overflow-y-auto space-y-5 pb-2">
-                {messages.map((m, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex w-full ${
-                      m.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {m.role === "assistant" && (
-                      <AgentAnimatedAvatar logo={agent?.logo} emote={agentEmote} />
-                    )}
+                  {m.role === "assistant" && (
+                    <AgentAnimatedAvatar logo={agent?.logo} emote={agentEmote} />
+                  )}
                     <motion.div
                       className={`${
                         m.role === "user"
@@ -428,12 +400,38 @@ function SpecialistChatPageContent() {
                 ))}
                 <div ref={messagesEndRef} />
               </div>
-              {/* RPG Quick Replies */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {QUICK_REPLIES.map((q, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
+
+            {sourceInfos.length > 0 && (
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-5 h-5 text-fuchsia-600" />
+                  <span className="font-semibold text-fuchsia-700 text-base">Relevant Sources</span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {sourceInfos.map((s) => (
+                    <motion.a
+                      key={s.url}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 hover:bg-fuchsia-100"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      {s.logo && (
+                        <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
+                      )}
+                      <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
+                    </motion.a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 mt-3">
+              {QUICK_REPLIES.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
                     className="bg-fuchsia-200 hover:bg-fuchsia-300 text-fuchsia-700 px-3 py-1 rounded-xl text-xs shadow transition"
                     onClick={(e) => handleSend(e as any, q)}
                     disabled={loading}
@@ -441,12 +439,12 @@ function SpecialistChatPageContent() {
                     {q}
                   </button>
                 ))}
-              </div>
-              {/* Input */}
-              <form onSubmit={handleSend} className="mt-3 flex gap-2">
-                <textarea
-                  className="flex-1 rounded-xl border border-fuchsia-300 p-2 bg-white text-fuchsia-900 resize-y shadow-sm"
-                  rows={2}
+            </div>
+
+            <form onSubmit={handleSend} className="mt-3 flex gap-2">
+              <textarea
+                className="flex-1 rounded-xl border border-fuchsia-300 p-2 bg-white text-fuchsia-900 resize-y shadow-sm"
+                rows={2}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
@@ -464,7 +462,6 @@ function SpecialistChatPageContent() {
                   Send
                 </button>
               </form>
-            </div>
           </div>
         </div>
         {showHistoryModal && (
