@@ -10,6 +10,7 @@ import { useWorlds } from "../../lib/userWorlds";
 import DashboardLayout from "../../components/DashboardLayout";
 import AuthGuard from "../../components/auth/AuthGuard";
 import { useConcepts } from "../../lib/useConcept";
+import { useAgents } from "../../lib/useAgents";
 import WorldFormModal from "../../components/worlds/WorldFormModal";
 import { FaSearch } from "react-icons/fa";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export default function WorldDetailPage({ params }) {
   const { worlds, isLoading: worldsLoading } = useWorlds();
   const { users, isLoading: usersLoading } = useUsers();
   const { concepts, isLoading: conceptsLoading } = useConcepts(Number(worldID));
+  const { agents, isLoading: agentsLoading } = useAgents(Number(worldID));
 
   const loading = worldLoading || worldsLoading || usersLoading || conceptsLoading;
   const [saving, setSaving] = useState(false);
@@ -66,6 +68,8 @@ export default function WorldDetailPage({ params }) {
   const canEditWorld = user && (user.role === "world builder" || user.role === "system admin");
   const highlightConcepts = concepts.filter(c => !c.group && c.display_on_world);
   const highlightGroups = Array.from(new Set(concepts.filter(c => c.group).map(c => c.group)));
+  const conversationalAgents = agents.filter(a => a.task === "conversational");
+  const specialistAgents = agents.filter(a => a.task === "specialist");
 
   const creator =
   users && users.length
@@ -242,6 +246,60 @@ export default function WorldDetailPage({ params }) {
       </Link>
     ))}
   </div>
+</div>
+
+{/* Agents Section */}
+<div className="max-w-6xl mx-auto px-4 md:px-0 mb-14">
+  <div
+    className="relative overflow-hidden rounded-2xl md:rounded-3xl mb-8 p-6 shadow-2xl border border-white/20 backdrop-blur-[14px] bg-gradient-to-br from-[#29196620] via-[#7b2ff25] to-[#36205a15] bg-white/15 flex flex-col items-center text-center"
+    style={{ boxShadow: "0 6px 40px 0 #7b2ff225, 0 1.5px 8px #2e205933" }}
+  >
+    <Image
+      src="/images/default/avatars/logo.png"
+      alt="Agents"
+      width={120}
+      height={120}
+      className="w-24 h-24 rounded-full object-cover border-2 border-[var(--primary)] shadow-xl mb-4"
+    />
+    <h2 className="text-2xl md:text-3xl font-bold text-[var(--primary)] mb-2">
+      Meet the Agents of {world.name}
+    </h2>
+    <p className="text-base md:text-lg text-[var(--foreground)]/80 max-w-xl">
+      Speak with knowledgeable Elders or consult a Specialist dedicated to this world.
+    </p>
+    <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+      <div className="absolute left-4 top-4 w-24 h-24 bg-[var(--primary)]/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute right-10 bottom-6 w-32 h-32 bg-[var(--accent)]/20 rounded-full blur-3xl" />
+    </div>
+  </div>
+
+  {agentsLoading ? (
+    <div className="text-center text-[var(--primary)]">Loading agents...</div>
+  ) : (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
+      {[...conversationalAgents, ...specialistAgents].map(agent => (
+        <Link
+          key={agent.id}
+          href={agent.task === "specialist" ? `/ai_specialist/specialist_chat?agent=${agent.id}` : `/elders/${agent.id}`}
+          className="group bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6 flex flex-col items-center w-full max-w-[240px] hover:scale-105 hover:border-[var(--primary)]/60 transition"
+        >
+          <Image
+            src={agent.logo || "/images/default/avatars/logo.png"}
+            alt={agent.name}
+            width={200}
+            height={200}
+            className="w-24 h-24 rounded-full object-cover mb-3 border-2 border-[var(--primary)]"
+          />
+          <h3 className="text-lg font-bold text-[var(--primary)] text-center mb-1 truncate w-full">
+            {agent.name}
+          </h3>
+          <p className="text-xs text-[var(--foreground)]/70">
+            {agent.task === "specialist" ? "Specialist" : "Elder"}
+          </p>
+        </Link>
+      ))}
+    </div>
+  )}
 </div>
 
           {/* Full Width Editable Content */}
