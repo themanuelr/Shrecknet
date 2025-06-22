@@ -81,6 +81,9 @@ async def chat_with_specialist(
     builder.set_entry_point("chat")
     builder.set_finish_point("chat")
     graph = builder.compile()
-    response = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
+    # Only pass the prompt variables to the graph. Passing a list of messages
+    # results in the ChatPromptTemplate receiving a list instead of a mapping
+    # and triggers a TypeError. The query is provided via the `input` key.
+    response = await graph.ainvoke({"input": query})
 
     return {"answer": response[1].content, "sources": sources}

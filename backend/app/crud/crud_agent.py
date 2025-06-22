@@ -139,7 +139,11 @@ async def chat_with_agent(
     builder.set_finish_point("chat")
     graph = builder.compile()
 
-    response = await graph.ainvoke([HumanMessage(content=query)], {"input": query})
+    # The graph expects only the input mapping. Passing the HumanMessage list
+    # causes the prompt template to receive a list instead of a dict, leading
+    # to `Expected mapping type` errors. The query message is already provided
+    # via the input variable.
+    response = await graph.ainvoke({"input": query})
 
     return {"answer": response[1].content, "sources": sources}
 
