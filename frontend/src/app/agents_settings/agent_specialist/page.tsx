@@ -230,6 +230,53 @@ function SourceCard({ source, onEdit }) {
   );
 }
 
+// ----- Specialist Agent Card -----
+function SpecialistAgentCard({
+  agent,
+  worlds,
+  jobs,
+  onEdit,
+  onRebuild,
+  setSourceModal,
+  onExport,
+  onImport,
+}) {
+  const { sources } = useSpecialistSources(agent.id);
+  return (
+    <div className="border border-indigo-100 bg-white/80 rounded-2xl shadow p-4">
+      <div className="flex items-center gap-4">
+        <AgentAvatar name={agent.name} logo={agent.logo} />
+        <div className="flex-1">
+          <div className="font-bold text-indigo-800">{agent.name}</div>
+          <div className="text-sm text-indigo-700 opacity-70">
+            World: <span className="font-semibold">{worlds?.find(w => w.id === agent.world_id)?.name || "???"}</span>
+          </div>
+          {agent.specialist_update_date && (
+            <div className="text-sm text-indigo-700 opacity-70">
+              Vector DB updated: <span className="font-semibold">{new Date(agent.specialist_update_date).toLocaleString()}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button className="px-3 py-1 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-800 transition text-sm shadow" onClick={onEdit}>Edit</button>
+          <button className="px-3 py-1 rounded-lg font-semibold text-purple-700 bg-purple-200 hover:bg-yellow-300 transition text-sm shadow border border-purple-300" onClick={onRebuild}>Rebuild Vector</button>
+          <button className="px-3 py-1 rounded-lg font-semibold text-white bg-sky-600 hover:bg-sky-800 transition text-sm shadow" onClick={() => setSourceModal({agentId: agent.id, source: null})}>Add Source</button>
+          <button className="px-3 py-1 rounded-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-800 transition text-sm shadow" onClick={onExport}>Export DB</button>
+          <button className="px-3 py-1 rounded-lg font-semibold text-white bg-amber-600 hover:bg-amber-800 transition text-sm shadow" onClick={onImport}>Import DB</button>
+        </div>
+      </div>
+      {jobs && <JobStatusScroll jobs={jobs} />}
+      {sources && sources.length > 0 && (
+        <div className="mt-3 grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {sources.map(src => (
+            <SourceCard key={src.id} source={src} onEdit={(s) => setSourceModal({agentId: agent.id, source: s})} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ----- Main Page -----
 export default function SpecialistSettingsPage() {
   const { user, token } = useAuth();
@@ -282,42 +329,19 @@ export default function SpecialistSettingsPage() {
             </div>
 
             <div className="space-y-6">
-              {specialists.map(agent => {
-                const { sources } = useSpecialistSources(agent.id);
-                return (
-                  <div key={agent.id} className="border border-indigo-100 bg-white/80 rounded-2xl shadow p-4">
-                    <div className="flex items-center gap-4">
-                      <AgentAvatar name={agent.name} logo={agent.logo} />
-                      <div className="flex-1">
-                        <div className="font-bold text-indigo-800">{agent.name}</div>
-                        <div className="text-sm text-indigo-700 opacity-70">
-                          World: <span className="font-semibold">{worlds?.find(w => w.id === agent.world_id)?.name || "???"}</span>
-                        </div>
-                        {agent.specialist_update_date && (
-                          <div className="text-sm text-indigo-700 opacity-70">
-                            Vector DB updated: <span className="font-semibold">{new Date(agent.specialist_update_date).toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-800 transition text-sm shadow" onClick={()=>{setSelectedAgent(agent);setModalOpen(true);}}>Edit</button>
-                        <button className="px-3 py-1 rounded-lg font-semibold text-purple-700 bg-purple-200 hover:bg-yellow-300 transition text-sm shadow border border-purple-300" onClick={()=>handleRebuild(agent.id)}>Rebuild Vector</button>
-                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-sky-600 hover:bg-sky-800 transition text-sm shadow" onClick={()=>setSourceModal({agentId:agent.id,source:null})}>Add Source</button>
-                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-800 transition text-sm shadow" onClick={()=>setExportAgent(agent)}>Export DB</button>
-                        <button className="px-3 py-1 rounded-lg font-semibold text-white bg-amber-600 hover:bg-amber-800 transition text-sm shadow" onClick={()=>setImportAgent(agent)}>Import DB</button>
-                      </div>
-                    </div>
-                    {jobsByAgent[agent.id] && <JobStatusScroll jobs={jobsByAgent[agent.id]} />}
-                    {sources && sources.length > 0 && (
-                      <div className="mt-3 grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {sources.map(src => (
-                          <SourceCard key={src.id} source={src} onEdit={(s)=>setSourceModal({agentId:agent.id,source:s})} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {specialists.map(agent => (
+                <SpecialistAgentCard
+                  key={agent.id}
+                  agent={agent}
+                  worlds={worlds}
+                  jobs={jobsByAgent[agent.id]}
+                  onEdit={() => { setSelectedAgent(agent); setModalOpen(true); }}
+                  onRebuild={() => handleRebuild(agent.id)}
+                  setSourceModal={setSourceModal}
+                  onExport={() => setExportAgent(agent)}
+                  onImport={() => setImportAgent(agent)}
+                />
+              ))}
             </div>
 
             {modalOpen && (
