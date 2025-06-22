@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 import json
 from pathlib import Path
+import base64
 
 from app.dependencies import get_current_user
 from app.models.model_user import User
@@ -87,13 +88,34 @@ async def rebuild_vectors(agent_id: int, session: AsyncSession = Depends(get_ses
 
 
 @router.get("/{agent_id}/export_vectordb")
-async def export_vectordb(agent_id: int, user: User = Depends(get_current_user)):
-    data = crud_specialist_vectordb.export_agent_vectordb(agent_id)
+async def export_vectordb(
+    agent_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    vectordb = crud_specialist_vectordb.export_agent_vectordb(agent_id)
+    sources = await crud_specialist_source.get_sources(session, agent_id)
+    exported_sources = []
+    for src in sources:
+        entry = {
+            "id": src.id,
+            "name": src.name,
+            "type": src.type,
+            "url": src.url,
+            "path": Path(src.path).name if src.path else None,
+            "added_at": src.added_at.isoformat(),
+        }
+        if src.type == "file" and src.path and Path(src.path).is_file():
+            with open(src.path, "rb") as f:
+                entry["content"] = base64.b64encode(f.read()).decode("utf-8")
+        exported_sources.append(entry)
+
+    data = {"vectordb": vectordb, "sources": exported_sources}
     return Response(
         content=json.dumps(data),
         media_type="application/json",
         headers={
-            "Content-Disposition": f'attachment; filename="agent_{agent_id}_vectordb.json"'
+            "Content-Disposition": f'attachment; filename="agent_{agent_id}_export.json"'
         },
     )
 
@@ -110,7 +132,49 @@ async def import_vectordb(
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid file")
 
-    count = await crud_specialist_vectordb.import_agent_vectordb(session, agent_id, data)
+    sources_data = data.get("sources", [])
+    vectordb_data = data.get("vectordb", {})
+
+    # remove existing sources
+    await crud_specialist_source.delete_all_sources(session, agent_id)
+
+    id_map: dict[int, int] = {}
+    for src in sources_data:
+        if src.get("type") == "file":
+            filename = src.get("path") or (src.get("name") or "source")
+            dest_dir = Path("data") / "specialist_agents" / str(agent_id)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest_path = dest_dir / filename
+            if src.get("content"):
+                with open(dest_path, "wb") as f:
+                    f.write(base64.b64decode(src["content"]))
+            new_src = SpecialistSource(
+                agent_id=agent_id,
+                name=src.get("name") or filename,
+                type="file",
+                path=str(dest_path),
+            )
+        else:
+            new_src = SpecialistSource(
+                agent_id=agent_id,
+                name=src.get("name"),
+                type="link",
+                url=src.get("url"),
+            )
+        created = await crud_specialist_source.add_source(session, new_src)
+        if src.get("id") is not None:
+            id_map[src["id"]] = created.id
+
+    # map old source ids to new ones in metadata
+    metas = vectordb_data.get("metadatas") or []
+    for meta in metas:
+        sid = meta.get("source_id")
+        if sid in id_map:
+            meta["source_id"] = id_map[sid]
+
+    count = await crud_specialist_vectordb.import_agent_vectordb(
+        session, agent_id, vectordb_data
+    )
     return {"documents_indexed": count}
 
 

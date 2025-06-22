@@ -15,7 +15,7 @@ export default function ExportVectorDBModal({ agent, onClose }) {
     setError("");
     try {
       const blob = await exportVectorDB(agent.id, token || "");
-      downloadBlob(blob, `agent_${agent.id}_vectordb.json`);
+      downloadBlob(blob, `agent_${agent.id}_export.json`);
       onClose();
     } catch (err) {
       setError("Failed to export vector DB");
