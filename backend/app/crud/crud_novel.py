@@ -4,7 +4,6 @@ from app.api.api_agent import chat_with_agent
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from app.config import settings
-import math
 
 async def create_novel(
     session: AsyncSession,
@@ -15,10 +14,13 @@ async def create_novel(
     helper_agent_ids: list[int] | None = None,
     progress_cb=None,
 ) -> str:
-    """Generate a novel from a source text using an agent."""
+    """
+    Generate a novel from transcript text and instructions using one or more AI agents.
+    """
+
     helper_agent_ids = helper_agent_ids or []
     world_agent_id = helper_agent_ids[0] if helper_agent_ids else None
-    critic_agent_id = helper_agent_ids[1] if len(helper_agent_ids) > 1 else None
+    critic_agent_id = helper_agent_ids[0] if helper_agent_ids else None
 
     words = text.split()
     chunks = []
@@ -34,11 +36,9 @@ async def create_novel(
                 chunk_words = words[overlap_start : i + step]
             chunks.append(" ".join(chunk_words))
 
-    # group raw chunks in sets of three for a more coherent rewrite
-    grouped_chunks = [
-        chunks[i : i + 3] for i in range(0, len(chunks), 3)
-    ]
+    grouped_chunks = [chunks[i : i + 3] for i in range(0, len(chunks), 3)]
 
+    # Extract writing style prompt if example is provided
     style_prompt = ""
     if example:
         llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=settings.open_ai_model)
@@ -59,15 +59,40 @@ async def create_novel(
     for idx, group in enumerate(grouped_chunks):
         if progress_cb:
             progress_cb(idx, total_pass1)
-
-        prev_summary = " ".join(summaries[-3:])
         group_text = "\n\n".join(group)
 
+        # --- Get world/lore info first ---
+        world_info = ""
+        if world_agent_id:
+            helper_content = (
+                "Given the following transcript, provide relevant world, lore, and character details that a novelist could use to enrich the scene.\n"
+                "If any mapping of player names to character names is provided, use those character names for all references.\n"                
+                f"{'Instructions: ' + instructions if instructions else ''}"
+            )
+            helper_msgs = [
+                {"role": "system", "content": helper_content},
+                {"role": "user", "content": group_text},
+            ]
+            helper_resp = await chat_with_agent(session, world_agent_id, helper_msgs)
+            world_info = helper_resp.get("answer", "")
+
+        prev_summary = " ".join(summaries[-3:])
+
+        # --- Main Rewrite Prompt ---
         base_prompt = (
-            f"Follow these instructions when rewriting as a narrative book chapter: {instructions}\n"
-            "Use a poetic and character-driven narrative focusing on actions, fears and passions.\n"
-            + (f"Write in this style: {style_prompt}.\n" if style_prompt else "")
-            + (f"Previous summary: {prev_summary}\n" if prev_summary else "")
+            "You are a talented fantasy novelist. Your task is to transform an RPG session transcript into an immersive book chapter.\n"
+            "Follow the instructions below for world, tone, and characters.\n"
+            "Rules:\n"
+            "...(your previous prompt blocks)...\n"
+            "- You may invent brief narration, transitions, or lines of dialogue to connect events or make the story flow more smoothly. Any invented content must fit the established characters and events, and should not contradict what actually happened.\n"
+            "- Incorporate this background/world info as appropriate: " + (world_info if world_info else "") + "\n"
+            "- Avoid all repetition: do NOT repeat scenes, phrases, or ideas from previous sections (see previous summary below).\n"
+            "- At the end, add a block beginning with 'Summary:' and write a concise 1-3 sentence summary of this section for use in the next chunk.\n"
+            f"{'Map the following players to characters, and follow these instructions: ' + instructions if instructions else ''}\n"
+            f"{'Emulate this style: ' + style_prompt if style_prompt else ''}\n"
+            f"{'Refer to this previous summary to maintain flow and avoid repetition: ' + prev_summary if prev_summary else ''}\n"
+            "Here is the transcript for this section:\n"
+            "{group_text}\n"
         )
 
         messages = [
@@ -75,28 +100,27 @@ async def create_novel(
             {"role": "user", "content": group_text},
         ]
         resp = await chat_with_agent(session, agent.id, messages)
-        rewritten = resp.get("answer", "")
-
-        # ask helper agent for extra info if available
-        if world_agent_id:
-            helper_msgs = [
-                {"role": "system", "content": "Provide additional world details for this text."},
-                {"role": "user", "content": rewritten},
-            ]
-            helper_resp = await chat_with_agent(session, world_agent_id, helper_msgs)
-            rewritten = rewritten + " " + helper_resp.get("answer", "")
+        output = resp.get("answer", "")
+        # Parse output
+        if "\nSummary:" in output:
+            rewritten, summary = output.split("\nSummary:", 1)
+            rewritten = rewritten.strip()
+            summary = summary.strip()
+        else:
+            rewritten = output
+            summary = ""
 
         final_sections.append(rewritten)
-        summaries.append(rewritten.split(".")[0][:200])
+        summaries.append(summary[:250])
 
-    draft = "\n\n".join(final_sections)
-    full_summary = " ".join(summaries)
-
-    # critic pass for overall suggestions
+    # Critic pass for suggestions
     critic_notes = ""
     if critic_agent_id is not None:
         critic_prompt = (
-            "You are a literary critic. Read the following chapter summary and provide bullet point suggestions to make it concise and compelling."
+            "You are a literary critic. Read the following chapter draft and provide bullet-point suggestions to improve it as a published fantasy novel.\n"
+            "Focus on narrative flow, pacing, character development, emotional resonance, avoiding repetition, and creating an immersive experience for the reader. "
+            "Point out any awkward transitions, flat dialogue, or places where more character thoughts or vivid description would help. "
+            "Be detailed but concise."
         )
         critic_messages = [
             {"role": "system", "content": critic_prompt},
@@ -105,7 +129,7 @@ async def create_novel(
         critic_resp = await chat_with_agent(session, critic_agent_id, critic_messages)
         critic_notes = critic_resp.get("answer", "")
 
-    # second rewrite incorporating critic suggestions
+    # Second rewrite incorporating critic suggestions
     words2 = draft.split()
     rewrite_chunks = []
     step2 = 1000
@@ -126,15 +150,18 @@ async def create_novel(
     for idx, chunk in enumerate(rewrite_chunks):
         if progress_cb:
             progress_cb(total_pass1 + idx, total)
-        base_prompt = (
-            f"Apply these critic notes when rewriting: {critic_notes}\n"
+        rewrite_prompt = (
+            "Apply the following critic notes and instructions as you rewrite this chapter draft into a seamless, engaging, and polished book chapter. "
+            "Incorporate the suggestions to enhance character depth, natural dialogue, emotional impact, and world immersion. "
+            "Maintain narrative continuity and eliminate repetition or awkward phrasing. "
             f"{instructions}\n"
-            "Write as a cohesive short book chapter with proper pace and length. Use narrative and poetic language focused on characters.\n"
-            + (f"Write in this style: {style_prompt}.\n" if style_prompt else "")
-            + (f"Previous summary: {summary}\n" if summary else "")
+            f"{'Emulate this style: ' + style_prompt if style_prompt else ''}\n"
+            f"{'Critic notes: ' + critic_notes if critic_notes else ''}\n"
+            f"{'Refer to this previous summary for continuity: ' + summary if summary else ''}\n"
+            "Rewrite the following text:"
         )
         messages = [
-            {"role": "system", "content": base_prompt},
+            {"role": "system", "content": rewrite_prompt},
             {"role": "user", "content": chunk},
         ]
         resp = await chat_with_agent(session, agent.id, messages)
@@ -149,6 +176,7 @@ async def create_novel(
             rewritten = rewritten + " " + helper_resp.get("answer", "")
 
         final_sections2.append(rewritten)
-        summary = rewritten.split(".")[0][:200]
+        summary_text = rewritten.split(".")[:2]
+        summary = ".".join(summary_text)[:250]
 
     return "\n\n".join(final_sections2)
