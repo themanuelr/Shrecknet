@@ -106,3 +106,23 @@ export async function clearSpecialistHistory(agentId: number, token: string) {
   if (!res.ok) throw await res.text();
   return await res.json();
 }
+
+export async function exportVectorDB(agentId: number, token: string) {
+  const res = await fetch(`${API_URL}/specialist_agents/${agentId}/export_vectordb`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.blob();
+}
+
+export async function importVectorDB(agentId: number, file: File, token: string) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/specialist_agents/${agentId}/import_vectordb`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) throw await res.text();
+  return await res.json();
+}
