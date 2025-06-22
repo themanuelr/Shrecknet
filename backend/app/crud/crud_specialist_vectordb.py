@@ -96,10 +96,22 @@ def export_agent_vectordb(agent_id: int) -> dict:
     # exporting a vector database. We only request the optional fields that are
     # allowed and rely on the default behaviour to include the document IDs.
     data = collection.get(include=["documents", "metadatas", "embeddings"])
+
+    # ``embeddings`` may contain numpy arrays which aren't JSON serialisable.
+    # Convert any ndarray entries to plain Python lists so the returned
+    # structure can be safely dumped to JSON by the API layer.
+    raw_embeddings = data.get("embeddings", [])
+    embeddings = []
+    for emb in raw_embeddings:
+        try:
+            embeddings.append(emb.tolist())
+        except AttributeError:
+            embeddings.append(emb)
+
     return {
         "documents": data.get("documents", []),
         "metadatas": data.get("metadatas", []),
-        "embeddings": data.get("embeddings", []),
+        "embeddings": embeddings,
         "ids": data.get("ids", []),
     }
 
