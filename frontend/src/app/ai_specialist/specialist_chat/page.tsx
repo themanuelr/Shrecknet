@@ -146,7 +146,7 @@ function SpecialistChatPageContent() {
   const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  interface SourceInfo { title: string; url: string; logo?: string }
+  interface SourceInfo { title: string; url?: string; logo?: string }
   const [sourceInfos, setSourceInfos] = useState<SourceInfo[]>([]);
 
   // For RPG "emote" effect
@@ -159,17 +159,21 @@ function SpecialistChatPageContent() {
     }
     const infos: SourceInfo[] = await Promise.all(
       sources.map(async (s) => {
-        let title = s.title;
+        const src: any = s;
+        let title = src.title || src.name || "";
+        let url: string | undefined = src.url;
         let logo: string | undefined;
-        const match = s.url.match(/page\/(\d+)/);
-        if (match) {
-          try {
-            const page = await getPage(Number(match[1]), token || "");
-            title = page.name;
-            logo = page.logo;
-          } catch {}
+        if (url) {
+          const match = url.match(/page\/(\d+)/);
+          if (match) {
+            try {
+              const page = await getPage(Number(match[1]), token || "");
+              title = page.name;
+              logo = page.logo;
+            } catch {}
+          }
         }
-        return { title, url: s.url, logo };
+        return { title, url, logo };
       })
     );
     setSourceInfos(infos);
@@ -395,19 +399,32 @@ function SpecialistChatPageContent() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {sourceInfos.map((s) => (
-                    <motion.a
-                      key={s.url}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 hover:bg-fuchsia-100"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      {s.logo && (
-                        <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
-                      )}
-                      <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
-                    </motion.a>
+                    s.url ? (
+                      <motion.a
+                        key={s.url}
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 hover:bg-fuchsia-100"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {s.logo && (
+                          <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
+                        )}
+                        <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
+                      </motion.a>
+                    ) : (
+                      <motion.div
+                        key={s.title}
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {s.logo && (
+                          <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
+                        )}
+                        <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
+                      </motion.div>
+                    )
                   ))}
                 </div>
               </div>
