@@ -127,12 +127,26 @@ async def import_agent_vectordb(session: AsyncSession, agent_id: int, data: dict
     _delete_collection(f"specialist_{agent_id}", collection)
 
     if docs:
-        collection._collection.add(
-            ids=ids,
-            embeddings=embeds,
-            documents=docs,
-            metadatas=metas,
-        )
+        # ``chromadb`` can reject very large payloads. Determine the maximum
+        # batch size supported by the underlying client and send the data in
+        # chunks to avoid ``413 Payload Too Large`` errors during import.
+        client = collection._collection._client
+        try:
+            max_size = (
+                client.get_max_batch_size()
+                if hasattr(client, "get_max_batch_size")
+                else client.max_batch_size  # type: ignore[attr-defined]
+            )
+        except Exception:
+            max_size = 100
+
+        for i in range(0, len(docs), max_size):
+            collection._collection.add(
+                ids=ids[i : i + max_size] if ids else None,
+                embeddings=embeds[i : i + max_size],
+                documents=docs[i : i + max_size],
+                metadatas=metas[i : i + max_size],
+            )
 
     agent = await session.get(Agent, agent_id)
     if agent:
