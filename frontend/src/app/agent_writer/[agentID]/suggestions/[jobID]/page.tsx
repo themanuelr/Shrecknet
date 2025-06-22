@@ -213,6 +213,10 @@ export default function SuggestionsPage() {
 
   const step = 2;
 
+  const sortedSuggestions = [...selectedSuggestions].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
   return (
     <AuthGuard>
       <DashboardLayout>
@@ -265,12 +269,14 @@ export default function SuggestionsPage() {
 
             <div className="w-full max-w-screen-2xl grid grid-cols-1 xl:grid-cols-[1fr_18rem] gap-6 items-start px-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {selectedSuggestions.map((sugg, idx) => (
+                {sortedSuggestions.map((sugg, idx) => {
+                  const origIndex = selectedSuggestions.indexOf(sugg);
+                  return (
                   <div key={idx} ref={(el) => (suggestionRefs.current[idx] = el!)}>
                     <SuggestionCard
-                      index={idx}
+                      index={origIndex}
                       suggestion={sugg}
-                      suggestions={selectedSuggestions}
+                      suggestions={sortedSuggestions}
                       concepts={concepts}
                       pages={allPages}
                       token={token}
@@ -287,7 +293,7 @@ export default function SuggestionsPage() {
                       }}
                     />
                   </div>
-                ))}
+                )})}
               </div>
 
               <div className="sticky top-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
@@ -295,8 +301,13 @@ export default function SuggestionsPage() {
                 <p className="text-sm mb-4 text-[var(--muted-foreground)]">{selectedSuggestions.length} suggestions</p>
                 <p className="mb-4">Track your progress through this step-by-step refinement.</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  {selectedSuggestions.map((s, idx) => {
-                    const isMerged = selectedSuggestions.some((other, j) => j !== idx && Array.isArray(other.merge_targets) && other.merge_targets.includes(s.name));
+                  {sortedSuggestions.map((s, idx) => {
+                    const isMerged = selectedSuggestions.some(
+                      (other) =>
+                        other !== s &&
+                        Array.isArray(other.merge_targets) &&
+                        other.merge_targets.includes(s.name)
+                    );
                     const type = isMerged ? "Merged" : s.mode === "update" || s.exists ? "Update" : "Create";
                     const color = type === "Update" ? "text-blue-500" : type === "Create" ? "text-green-500" : "text-gray-500";
                     return (

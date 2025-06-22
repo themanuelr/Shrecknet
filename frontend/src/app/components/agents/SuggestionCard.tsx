@@ -133,10 +133,12 @@ export default function SuggestionCard({
                     />
                     <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-xl bg-[var(--surface)] shadow-lg z-20 border border-[var(--primary)]">
                       {pages
-                        .filter(p =>
+                        .filter(
+                          (p) =>
                             p.concept_id === suggestion.concept_id &&
                             p.name.toLowerCase().includes(filter.toLowerCase())
                         )
+                        .sort((a, b) => a.name.localeCompare(b.name))
                         .map((p) => (
                           <Combobox.Option
                             key={p.id}
@@ -158,6 +160,7 @@ export default function SuggestionCard({
                 <div className="flex flex-wrap gap-2">
                   {suggestions
                     .filter((s, i) => i !== index)
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map((suggOption, i) => {
                       const merged = Array.isArray(suggestion.merge_targets) && suggestion.merge_targets.includes(suggOption.name);
                       return (
