@@ -294,7 +294,7 @@ export default function WorldDetailPage({ params }) {
             {agent.name}
           </h3>
           <p className="text-xs text-[var(--foreground)]/70">
-            {agent.task === "specialist" ? "Specialist" : "Elder"}
+            {agent.task === "specialist" ? `Specialist on ${world.system}` : "Elder"}
           </p>
         </Link>
       ))}

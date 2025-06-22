@@ -14,6 +14,8 @@ export default function AISpecialistPage() {
 
   const specialists = agents.filter(a => a.task === "specialist");
   const worldName = (id: number) => worlds.find(w => w.id === id)?.name || "";
+  const worldSystem = (id: number) =>
+    worlds.find(w => w.id === id)?.system || "";
 
   return (
     <AuthGuard>
@@ -40,6 +42,7 @@ export default function AISpecialistPage() {
                     <Image src={a.logo || "/images/default/avatars/logo.png"} alt={a.name} width={100} height={100} className="rounded-full object-cover border-2 border-fuchsia-300 shadow mb-2" />
                     <span className="text-xl font-bold text-indigo-800">{a.name}</span>
                     <span className="text-sm text-fuchsia-700">{worldName(a.world_id)}</span>
+                    <span className="text-xs text-indigo-700">System: {worldSystem(a.world_id)}</span>
                   </button>
                 ))
               )}
