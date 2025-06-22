@@ -39,6 +39,14 @@ async def test_specialist_sources(async_client, create_user, login_and_get_token
     assert len(data) == 1
     assert data[0]["name"] == "doc"
 
+    resp = await async_client.get(
+        f"/specialist_agents/{agent_id}/sources/{source_id}/download",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers["content-disposition"].startswith("attachment")
+    assert resp.content == b"hello world"
+
     resp = await async_client.post(
         f"/specialist_agents/{agent_id}/rebuild_vectors",
         headers={"Authorization": f"Bearer {token}"},

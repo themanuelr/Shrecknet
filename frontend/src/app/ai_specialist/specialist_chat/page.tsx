@@ -10,14 +10,18 @@ import { useAgentById } from "../../lib/useAgentById";
 import {
   chatWithSpecialist,
   getSpecialistHistory,
+  downloadSource,
 } from "../../lib/specialistAPI";
 import type { ChatMessage } from "../../lib/specialistAPI";
+import { useSpecialistSources } from "../../lib/useSpecialistSources";
+import { downloadBlob } from "../../lib/importExportAPI";
 
 function SpecialistChatPageContent() {
   const { user, token } = useAuth();
   const searchParams = useSearchParams();
   const agentId = parseInt(searchParams.get("agent") || "0");
   const { agent } = useAgentById(agentId);
+  const { sources } = useSpecialistSources(agentId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +62,15 @@ function SpecialistChatPageContent() {
     setLoading(false);
   }
 
+  async function handleDownload(sourceId: number, filename: string) {
+    try {
+      const blob = await downloadSource(agentId, sourceId, token || "");
+      downloadBlob(blob, filename);
+    } catch (err) {
+      console.error("Failed to download source", err);
+    }
+  }
+
   function renderMessageContent(msg: ChatMessage) {
     return (
       <>
@@ -87,12 +100,34 @@ function SpecialistChatPageContent() {
             )}
             <h2 className="text-2xl font-bold">{agent?.name || "Specialist"}</h2>
           </div>
-          <div className="w-full max-w-2xl flex flex-col flex-1 border border-indigo-200 rounded-2xl bg-white/80 shadow p-4">
-            <div className="flex-1 overflow-y-auto space-y-4 mb-2">
-              {messages.map((m, idx) => (
-                <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {m.role === "assistant" && agent?.logo && (
-                    <Image src={agent.logo} alt="agent" width={32} height={32} className="w-8 h-8 rounded-full mr-2" />
+          <div className="w-full flex gap-4">
+            <div className="hidden lg:block w-1/5 border border-indigo-200 rounded-2xl bg-white/80 shadow p-4 h-fit">
+              <h3 className="font-semibold text-indigo-700 mb-2">Knowledge Tomes</h3>
+              <ul className="space-y-2 text-sm">
+                {sources.map(src => (
+                  <li key={src.id} className="flex flex-col">
+                    <span className="font-medium">{src.name}</span>
+                    {src.path && (
+                      <span className="text-xs text-indigo-600">{src.path.split('/').pop()}</span>
+                    )}
+                    {src.type === 'file' && (
+                      <button
+                        className="mt-1 text-xs text-white bg-indigo-600 px-2 py-1 rounded-xl w-max"
+                        onClick={() => handleDownload(src.id!, src.path?.split('/').pop() || 'source')}
+                      >
+                        Download
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex-1 lg:w-4/5 max-w-3xl mx-auto flex flex-col flex-1 border border-indigo-200 rounded-2xl bg-white/80 shadow p-4">
+              <div className="flex-1 overflow-y-auto space-y-4 mb-2">
+                {messages.map((m, idx) => (
+                  <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {m.role === "assistant" && agent?.logo && (
+                      <Image src={agent.logo} alt="agent" width={32} height={32} className="w-8 h-8 rounded-full mr-2" />
                   )}
                   <div className={`${m.role === "user" ? "bg-fuchsia-600 text-white" : "bg-purple-50 text-purple-900"} rounded-xl px-3 py-2 shadow max-w-[80%]`}>
                     {renderMessageContent(m)}
@@ -101,12 +136,13 @@ function SpecialistChatPageContent() {
                     <Image src={user.image_url} alt="me" width={32} height={32} className="w-8 h-8 rounded-full ml-2" />
                   )}
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
             <form onSubmit={handleSend} className="mt-2 flex gap-2">
-              <input
-                className="flex-1 rounded-xl border border-indigo-300 p-2 bg-white text-indigo-900"
+              <textarea
+                className="flex-1 rounded-xl border border-indigo-300 p-2 bg-white text-indigo-900 resize-y"
+                rows={3}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 placeholder="Type your message..."
@@ -120,6 +156,7 @@ function SpecialistChatPageContent() {
                 Send
               </button>
             </form>
+            </div>
           </div>
         </div>
       </DashboardLayout>
