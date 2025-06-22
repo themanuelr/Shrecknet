@@ -55,6 +55,14 @@ export async function deleteSource(agentId: number, sourceId: number, token: str
   return await res.json();
 }
 
+export async function downloadSource(agentId: number, sourceId: number, token: string) {
+  const res = await fetch(`${API_URL}/specialist_agents/${agentId}/sources/${sourceId}/download`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw await res.text();
+  return await res.blob();
+}
+
 export async function startVectorJob(agentId: number, token: string) {
   const res = await fetch(`${API_URL}/specialist_agents/${agentId}/rebuild_vectors_async`, {
     method: "POST",

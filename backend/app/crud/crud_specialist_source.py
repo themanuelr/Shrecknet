@@ -21,6 +21,9 @@ async def get_sources(session: AsyncSession, agent_id: int) -> List[SpecialistSo
     result = await session.execute(select(SpecialistSource).where(SpecialistSource.agent_id == agent_id))
     return result.scalars().all()
 
+async def get_source(session: AsyncSession, source_id: int) -> Optional[SpecialistSource]:
+    return await session.get(SpecialistSource, source_id)
+
 async def delete_source(session: AsyncSession, source_id: int) -> bool:
     obj = await session.get(SpecialistSource, source_id)
     if not obj:

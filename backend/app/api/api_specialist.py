@@ -58,6 +58,21 @@ async def upload_source_file(
 async def list_sources(agent_id: int, session: AsyncSession = Depends(get_session)):
     return await crud_specialist_source.get_sources(session, agent_id)
 
+@router.get("/{agent_id}/sources/{source_id}/download")
+async def download_source(agent_id: int, source_id: int, session: AsyncSession = Depends(get_session)):
+    source = await crud_specialist_source.get_source(session, source_id)
+    if not source or source.agent_id != agent_id or source.type != "file" or not source.path:
+        raise HTTPException(status_code=404, detail="Source not found")
+    file_path = Path(source.path)
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    content = file_path.read_bytes()
+    return Response(
+        content=content,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{file_path.name}"'}
+    )
+
 @router.delete("/{agent_id}/sources/{source_id}")
 async def remove_source(agent_id: int, source_id: int, session: AsyncSession = Depends(get_session)):
     ok = await crud_specialist_source.delete_source(session, source_id)
