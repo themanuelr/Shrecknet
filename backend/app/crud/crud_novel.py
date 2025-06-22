@@ -92,7 +92,7 @@ async def create_novel(
             f"{'Emulate this style: ' + style_prompt if style_prompt else ''}\n"
             f"{'Refer to this previous summary to maintain flow and avoid repetition: ' + prev_summary if prev_summary else ''}\n"
             "Here is the transcript for this section:\n"
-            "{group_text}\n"
+            f"{group_text}\n"
         )
 
         messages = [
@@ -112,6 +112,9 @@ async def create_novel(
 
         final_sections.append(rewritten)
         summaries.append(summary[:250])
+
+    draft = "\n\n".join(final_sections)
+    full_summary = "\n".join(summaries)
 
     # Critic pass for suggestions
     critic_notes = ""
