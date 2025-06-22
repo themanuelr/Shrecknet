@@ -128,17 +128,7 @@ export default function ElderChatPage() {
             {i < lines.length - 1 && <br />}
           </span>
         ))}
-        {msg.sources && msg.sources.length > 0 && (
-          <ul className="mt-1 text-xs space-y-1">
-            {msg.sources.map((s) => (
-              <li key={s.url}>
-                <WikiLinkHoverCard href={s.url}>
-                  {`${s.title}`}
-                </WikiLinkHoverCard>
-              </li>
-            ))}
-          </ul>
-        )}
+        
       </>
     );
   }
@@ -162,33 +152,7 @@ export default function ElderChatPage() {
                 Clear chat
               </button>
             </div>
-            {sourceInfos.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-3">
-                {sourceInfos.map((s) => (
-                  <motion.a
-                    key={s.url}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[var(--surface-variant)] border border-[var(--border)] hover:bg-[var(--surface)]"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {s.logo && (
-                      <Image
-                        src={s.logo}
-                        alt={s.title}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded object-cover"
-                      />
-                    )}
-                    <span className="text-sm font-semibold text-[var(--foreground)]">
-                      {s.title}
-                    </span>
-                  </motion.a>
-                ))}
-              </div>
-            )}
+            
             <div className="flex-1 overflow-y-auto space-y-4 mb-2 border border-[var(--border)] rounded-xl p-3 bg-[var(--surface)]">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -212,6 +176,46 @@ export default function ElderChatPage() {
               ))}
               <div ref={messagesEndRef} />
             </div>
+            {sourceInfos.length > 0 && (
+  <div className="mb-3">
+    {/* Header */}
+    <div className="flex items-center gap-2 mb-2">
+      {/* You can swap BookOpen for any other icon you like */}
+      <svg className="w-5 h-5 text-fuchsia-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+      </svg>
+      <span className="font-semibold text-fuchsia-700 text-base">
+        Relevant Sources
+      </span>
+    </div>
+          {/* Source suggestions */}
+          <div className="flex flex-wrap gap-3">
+            {sourceInfos.map((s) => (
+              <motion.a
+                key={s.url}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[var(--surface-variant)] border border-[var(--border)] hover:bg-[var(--surface)]"
+                whileHover={{ scale: 1.05 }}
+              >
+                {s.logo && (
+                  <Image
+                    src={s.logo}
+                    alt={s.title}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded object-cover"
+                  />
+                )}
+                <span className="text-sm font-semibold text-[var(--foreground)]">
+                  {s.title}
+                </span>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      )}
             <form onSubmit={handleSend} className="mt-2 flex gap-2">
               <input
                 className="flex-1 rounded-xl border border-[var(--primary)] p-2 bg-[var(--surface)] text-[var(--foreground)] placeholder-[var(--primary)]/70 focus:outline-none"
