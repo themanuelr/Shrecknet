@@ -2,13 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Pre-copy and install only requirements first (leverages Docker cache)
-COPY requirements.txt ./
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir chromadb==1.0.12
+# Only copy requirements for pip install (enables Docker cache)
+COPY requirements.txt .
 
-# Now copy the rest of your app (so code changes don't bust the cache above)
+# Leverage pip cache, upgrade pip and install deps
+ENV PIP_CACHE_DIR=/tmp/pipcache
+RUN pip install --upgrade pip \
+    && pip install --cache-dir=$PIP_CACHE_DIR --no-cache-dir -r requirements.txt
+
+# Now copy the rest of your code (doesn't bust the pip cache on rebuilds)
 COPY . .
 
 EXPOSE 8000

@@ -24,17 +24,20 @@ async def create_novel(
 
     words = text.split()
     chunks = []
-    step = 2000
-    overlap = 250
-    if len(words) <= step:
-        chunks = [" ".join(words)]
-    else:
-        for i in range(0, len(words), step):
-            chunk_words = words[i : i + step]
-            if i > 0:
-                overlap_start = max(0, i - overlap)
-                chunk_words = words[overlap_start : i + step]
-            chunks.append(" ".join(chunk_words))
+    step = 5000  # ou ajuste conforme necessário
+    chunks = [" ".join(words[i:i+step]) for i in range(0, len(words), step)]
+    
+    # step = 2000
+    # overlap = 250
+    # if len(words) <= step:
+    #     chunks = [" ".join(words)]
+    # else:
+    #     for i in range(0, len(words), step):
+    #         chunk_words = words[i : i + step]
+    #         if i > 0:
+    #             overlap_start = max(0, i - overlap)
+    #             chunk_words = words[overlap_start : i + step]
+    #         chunks.append(" ".join(chunk_words))
 
     grouped_chunks = [chunks[i : i + 3] for i in range(0, len(chunks), 3)]
 
