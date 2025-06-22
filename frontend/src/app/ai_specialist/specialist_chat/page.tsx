@@ -17,6 +17,8 @@ import { useSpecialistSources } from "../../lib/useSpecialistSources";
 import { downloadBlob } from "../../lib/importExportAPI";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Download, Link2, File } from "lucide-react";
+import ModalContainer from "../../components/template/modalContainer";
+import { clearSpecialistHistory } from "../../lib/specialistAPI";
 
 const RPG_BACKGROUNDS = [
   "bg-gradient-to-br from-fuchsia-100 to-indigo-50",
@@ -142,6 +144,9 @@ function SpecialistChatPageContent() {
   const { agent } = useAgentById(agentId);
   const { sources } = useSpecialistSources(agentId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLorebook, setShowLorebook] = useState(true);
@@ -154,8 +159,14 @@ function SpecialistChatPageContent() {
   useEffect(() => {
     if (!agentId) return;
     getSpecialistHistory(agentId, token || "")
-      .then((msgs) => setMessages(msgs as ChatMessage[]))
-      .catch(() => setMessages([]));
+      .then((msgs) => {
+        setAllMessages(msgs as ChatMessage[]);
+        setMessages((msgs as ChatMessage[]).slice(-10));
+      })
+      .catch(() => {
+        setAllMessages([]);
+        setMessages([]);
+      });
   }, [agentId, token]);
 
   function scrollToBottom() {
@@ -167,27 +178,31 @@ function SpecialistChatPageContent() {
     if ((!input.trim() && !quick) || !agentId) return;
     const userMsg = quick || input.trim();
     const newMsg: ChatMessage = { role: "user", content: userMsg };
-    const updated = [...messages, newMsg];
-    setMessages(updated);
+    const updatedAll = [...allMessages, newMsg];
+    setAllMessages(updatedAll);
+    const display = [...messages, newMsg].slice(-10);
+    setMessages(display);
     setInput("");
     scrollToBottom();
     setLoading(true);
     setAgentEmote("thinking");
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
     try {
-      const { answer, sources } = await chatWithSpecialist(agentId, updated, token || "");
+      const { answer, sources } = await chatWithSpecialist(agentId, updatedAll, token || "");
+      setAllMessages((m) => [...m, { role: "assistant", content: answer, sources }]);
       setMessages((m) => {
         const arr = [...m];
         arr[arr.length - 1] = { role: "assistant", content: answer, sources };
-        return arr;
+        return arr.slice(-10);
       });
       setAgentEmote("happy");
       scrollToBottom();
     } catch {
+      setAllMessages((m) => [...m, { role: "assistant", content: "Sorry, something went wrong." }]);
       setMessages((m) => [
         ...m.slice(0, -1),
         { role: "assistant", content: "Sorry, something went wrong." },
-      ]);
+      ].slice(-10));
       setAgentEmote("surprised");
     }
     setTimeout(() => setAgentEmote("normal"), 2200);
@@ -202,6 +217,22 @@ function SpecialistChatPageContent() {
       // You can trigger an emote or show a toast here!
       setAgentEmote("surprised");
       console.error("Failed to download source", err);
+    }
+  }
+
+  async function handleClearChat() {
+    if (!agentId) return;
+    if (!confirm("Delete entire chat history?")) return;
+    try {
+      await clearSpecialistHistory(agentId, token || "");
+      setMessages([]);
+      setAllMessages([]);
+      setToastMsg("Chat history cleared");
+    } catch (err) {
+      setToastMsg("Failed to clear history");
+      console.error(err);
+    } finally {
+      setTimeout(() => setToastMsg(""), 3000);
     }
   }
 
@@ -223,22 +254,36 @@ function SpecialistChatPageContent() {
         {msg.sources && msg.sources.length > 0 && (
           <div className="flex gap-1 mt-2 flex-wrap">
             {msg.sources.map((s, i) => (
-              <motion.div
-                key={i}
-                className="flex items-center px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 mr-2 mb-1 text-xs gap-1 cursor-pointer hover:bg-fuchsia-100 transition"
-                initial={{ scale: 0.7, opacity: 0.7 }}
-                animate={{ scale: 1, opacity: 1 }}
-                whileHover={{ scale: 1.07, boxShadow: "0 2px 8px #a78bfa22" }}
-                onClick={() =>
-                  s.type === "file"
-                    ? handleDownload(s.id!, s.path?.split("/").pop() || "source")
-                    : window.open(s.url, "_blank")
-                }
-                title={s.type === "file" ? "Download source" : "Open link"}
-              >
-                {s.type === "file" ? <File className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
-                <span className="font-semibold text-fuchsia-700">{s.name}</span>
-              </motion.div>
+              s.type === "file" ? (
+                <motion.button
+                  type="button"
+                  key={i}
+                  className="flex items-center px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 mr-2 mb-1 text-xs gap-1 cursor-pointer hover:bg-fuchsia-100 transition"
+                  initial={{ scale: 0.7, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  whileHover={{ scale: 1.07, boxShadow: "0 2px 8px #a78bfa22" }}
+                  onClick={() => handleDownload(s.id!, s.path?.split("/").pop() || "source")}
+                  title="Download source"
+                >
+                  <File className="w-4 h-4" />
+                  <span className="font-semibold text-fuchsia-700">{s.name}</span>
+                </motion.button>
+              ) : (
+                <motion.a
+                  key={i}
+                  className="flex items-center px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 mr-2 mb-1 text-xs gap-1 cursor-pointer hover:bg-fuchsia-100 transition"
+                  initial={{ scale: 0.7, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  whileHover={{ scale: 1.07, boxShadow: "0 2px 8px #a78bfa22" }}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open link"
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span className="font-semibold text-fuchsia-700">{s.name}</span>
+                </motion.a>
+              )
             ))}
           </div>
         )}
@@ -257,6 +302,11 @@ function SpecialistChatPageContent() {
   return (
     <AuthGuard>
       <DashboardLayout>
+        {toastMsg && (
+          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-fuchsia-600 text-white px-4 py-2 rounded-xl shadow-lg z-[1000] text-sm animate-fade-in-out">
+            {toastMsg}
+          </div>
+        )}
         <div
           className={`min-h-screen w-full flex flex-col items-center px-1 sm:px-6 py-6 transition-all duration-700 ${bg}`}
         >
@@ -294,7 +344,7 @@ function SpecialistChatPageContent() {
             <AnimatePresence>
               {showLorebook && (
                 <motion.div
-                  className="hidden lg:flex flex-col w-56 border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-3 h-fit"
+                  className="hidden lg:flex flex-col w-56 border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-3 h-fit sticky top-6 self-start"
                   initial={{ x: -40, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: -40, opacity: 0 }}
@@ -313,7 +363,7 @@ function SpecialistChatPageContent() {
             </AnimatePresence>
 
             {/* Main Chat Area */}
-            <div className="flex-1 max-w-2xl w-full flex flex-col border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-4">
+            <div className="flex-1 max-w-5xl w-full flex flex-col border border-fuchsia-200 rounded-2xl bg-white/90 shadow-lg p-4">
               {/* Toggle Lorebook on mobile */}
               <div className="mb-2 flex items-center gap-2">
                 <button
@@ -321,6 +371,18 @@ function SpecialistChatPageContent() {
                   onClick={() => setShowLorebook((s) => !s)}
                 >
                   {showLorebook ? "Hide Lorebook" : "Show Lorebook"}
+                </button>
+                <button
+                  className="ml-auto text-xs text-fuchsia-600 underline"
+                  onClick={() => setShowHistoryModal(true)}
+                >
+                  See whole chat
+                </button>
+                <button
+                  className="text-xs text-red-600 underline"
+                  onClick={handleClearChat}
+                >
+                  Clear chat
                 </button>
               </div>
               {/* Chat Window */}
@@ -405,6 +467,24 @@ function SpecialistChatPageContent() {
             </div>
           </div>
         </div>
+        {showHistoryModal && (
+          <ModalContainer title="Full Chat History" onClose={() => setShowHistoryModal(false)} className="max-w-3xl">
+            <div className="space-y-4">
+              {allMessages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex w-full ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`px-3 py-2 rounded-xl shadow max-w-[80%] ${m.role === "user" ? "bg-fuchsia-200" : "bg-fuchsia-50"} text-fuchsia-900`}
+                  >
+                    {renderMessageContent(m, idx, m.role === "assistant")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ModalContainer>
+        )}
       </DashboardLayout>
     </AuthGuard>
   );
