@@ -135,9 +135,15 @@ async def import_agent_vectordb(session: AsyncSession, agent_id: int, data: dict
             max_size = (
                 client.get_max_batch_size()
                 if hasattr(client, "get_max_batch_size")
-                else client.max_batch_size  # type: ignore[attr-defined]
+                else getattr(client, "max_batch_size", 0)  # type: ignore[attr-defined]
             )
         except Exception:
+            max_size = 0
+
+        # ``get_max_batch_size`` may return ``-1`` (unlimited) or a value that's
+        # still too high for the HTTP server. Cap the batch size at a safe
+        # default to prevent ``413 Payload Too Large`` errors.
+        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
             max_size = 100
 
         for i in range(0, len(docs), max_size):
