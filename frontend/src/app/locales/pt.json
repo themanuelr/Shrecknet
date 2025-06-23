@@ -79,5 +79,16 @@
   "desc_agent_conversational": "Converse com as regras, o lore e as personalidades do seu mundo.",
   "desc_agent_writer": "Automatize e revise a criação de páginas, links e resumos.",
   "desc_agent_novelist": "Gere ganchos de aventura, registros de sessão e recontos dramáticos.",
-  "desc_agent_specialist": "Agentes específicos para mecânicas ou moderação."
+  "desc_agent_specialist": "Agentes específicos para mecânicas ou moderação.",
+  "elders_title": "Os Anciões",
+  "elders_description": "Adentre a câmara do conselho da Shrecknet e conheça seus seres mais sábios. Cada Ancião guarda o lore de um mundo único e está ansioso para compartilhar seu conhecimento com você.",
+  "loading_elders": "Carregando anciões...",
+  "speak_with_elder": "Falar com este Ancião",
+  "clear_chat": "Limpar conversa",
+  "thinking": "Pensando...",
+  "relevant_sources": "Fontes Relevantes",
+  "type_message": "Digite sua mensagem...",
+  "send": "Enviar",
+  "delete_chat_confirm": "Isso apagará permanentemente seu histórico de conversa com este Ancião. Continuar?",
+  "generic_error": "Desculpe, algo deu errado."
 }

@@ -79,5 +79,16 @@
   "desc_agent_conversational": "Parla con le regole, il lore e le personalità del tuo mondo.",
   "desc_agent_writer": "Automatizza e revisiona la creazione di pagine, i collegamenti e i riassunti.",
   "desc_agent_novelist": "Genera spunti di avventura, resoconti di sessione e racconti drammatici.",
-  "desc_agent_specialist": "Agenti specializzati per meccaniche specifiche o moderazione."
+  "desc_agent_specialist": "Agenti specializzati per meccaniche specifiche o moderazione.",
+  "elders_title": "Gli Anziani",
+  "elders_description": "Entra nella sala del consiglio di Shrecknet e incontra i suoi esseri più saggi. Ogni Anziano custodisce il sapere di un mondo unico ed è pronto a condividere la sua conoscenza con te.",
+  "loading_elders": "Caricamento anziani...",
+  "speak_with_elder": "Parla con questo Anziano",
+  "clear_chat": "Cancella chat",
+  "thinking": "Sto pensando...",
+  "relevant_sources": "Fonti Rilevanti",
+  "type_message": "Digita il tuo messaggio...",
+  "send": "Invia",
+  "delete_chat_confirm": "Questo eliminerà definitivamente la tua cronologia con questo Anziano. Continuare?",
+  "generic_error": "Spiacente, qualcosa è andato storto."
 }

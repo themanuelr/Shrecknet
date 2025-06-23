@@ -79,5 +79,16 @@
   "desc_agent_conversational": "Chat with your world’s rules, lore, and personalities.",
   "desc_agent_writer": "Automate and review page creation, linking, and summaries.",
   "desc_agent_novelist": "Generate adventure hooks, session logs, and dramatic retellings.",
-  "desc_agent_specialist": "Niche agents for specific game mechanics or moderation."
+  "desc_agent_specialist": "Niche agents for specific game mechanics or moderation.",
+  "elders_title": "The Elders",
+  "elders_description": "Step into the council chamber of Shrecknet and meet its wisest beings. Each Elder guards the lore of a unique world and is eager to share their knowledge with you.",
+  "loading_elders": "Loading elders...",
+  "speak_with_elder": "Speak with this Elder",
+  "clear_chat": "Clear chat",
+  "thinking": "Thinking...",
+  "relevant_sources": "Relevant Sources",
+  "type_message": "Type your message...",
+  "send": "Send",
+  "delete_chat_confirm": "This will permanently delete your chat history with this Elder. Continue?",
+  "generic_error": "Sorry, something went wrong."
 }
