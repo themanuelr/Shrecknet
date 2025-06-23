@@ -3,6 +3,7 @@ import AuthGuard from "../components/auth/AuthGuard";
 import DashboardLayout from "../components/DashboardLayout";
 import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
+import { useTranslation } from "../hooks/useTranslation";
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,7 @@ export default function AISpecialistPage() {
   const { agents, isLoading } = useAgents();
   const { worlds } = useWorlds();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const specialists = agents.filter(a => a.task === "specialist");
   const worldName = (id: number) => worlds.find(w => w.id === id)?.name || "";
@@ -24,14 +26,14 @@ export default function AISpecialistPage() {
           <div className="mx-auto max-w-3xl flex flex-col gap-8 items-center">
             <div className="w-full flex flex-col items-center gap-4 bg-gradient-to-br from-indigo-100/70 via-teal-100/80 to-white/80 rounded-2xl shadow-xl p-8 border border-indigo-200">
               <Sparkles className="w-12 h-12 text-indigo-400 mb-2" />
-              <h1 className="text-3xl font-bold text-indigo-700 text-center font-serif mb-1">Choose your Specialist</h1>
+              <h1 className="text-3xl font-bold text-indigo-700 text-center font-serif mb-1">{t('choose_specialist')}</h1>
               <p className="text-center text-lg text-indigo-900/80 mb-2">
-                Consult a specialist AI to assist you with advanced tasks.
+                {t('choose_specialist_desc')}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-6 w-full">
               {isLoading ? (
-                <div className="col-span-2 text-center text-lg">Summoning Specialists...</div>
+                <div className="col-span-2 text-center text-lg">{t('summoning_specialists')}</div>
               ) : (
                 specialists.map(a => (
                   <button

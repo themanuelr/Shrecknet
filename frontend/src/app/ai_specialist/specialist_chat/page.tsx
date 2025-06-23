@@ -21,14 +21,15 @@ import ModalContainer from "../../components/template/modalContainer";
 import { clearSpecialistHistory } from "../../lib/specialistAPI";
 import { getPage } from "../../lib/pagesAPI";
 import type { SourceLink } from "../../lib/agentAPI";
+import { useTranslation } from "../../hooks/useTranslation";
 
 
 const QUICK_REPLIES = [
-  "Tell me more!",
-  "Show your sources.",
-  "Can you summarize that?",
-  "What's the next step?",
-  "How did you know that?",
+  "quick_tell_me_more",
+  "quick_show_sources",
+  "quick_summarize",
+  "quick_next_step",
+  "quick_how_did_you_know",
 ];
 
 // --- Typewriter Effect ---
@@ -122,14 +123,14 @@ export function TomeCard({ src, onDownload }) {
              className="mt-2 text-xs text-white bg-fuchsia-600 hover:bg-fuchsia-700 px-2 py-1 rounded"
              onClick={() => onDownload(src.id!, src.path?.split("/").pop() || "source")}
            >
-             <Download className="w-4 h-4 inline" /> Download
+             <Download className="w-4 h-4 inline" /> {t('download')}
            </button>
           ) : src.url ? (
             <a
               href={src.url}
               target="_blank"
               rel="noopener noreferrer"
-              title="Open Link"
+              title={t('open_link')}
               className="rounded-full hover:bg-indigo-50 p-1"
               onClick={e => e.stopPropagation()}
             >
@@ -184,6 +185,7 @@ export function TomeCard({ src, onDownload }) {
 
 function SpecialistChatPageContent() {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const agentId = parseInt(searchParams.get("agent") || "0");
   const { agent } = useAgentById(agentId);
@@ -276,10 +278,10 @@ function SpecialistChatPageContent() {
       setAgentEmote("happy");
       scrollToBottom();
     } catch {
-      setAllMessages((m) => [...m, { role: "assistant", content: "Sorry, something went wrong." }]);
+      setAllMessages((m) => [...m, { role: "assistant", content: t('error_generic') }]);
       setMessages((m) => [
         ...m.slice(0, -1),
-        { role: "assistant", content: "Sorry, something went wrong." },
+        { role: "assistant", content: t('error_generic') },
       ].slice(-10));
       updateSourceInfos([]);
       setAgentEmote("surprised");
@@ -304,15 +306,15 @@ function SpecialistChatPageContent() {
 
   async function handleClearChat() {
     if (!agentId) return;
-    if (!confirm("Delete entire chat history?")) return;
+    if (!confirm(t('confirm_delete_history'))) return;
     try {
       await clearSpecialistHistory(agentId, token || "");
       setMessages([]);
       setAllMessages([]);
       setSourceInfos([]);
-      setToastMsg("Chat history cleared");
+      setToastMsg(t('chat_history_cleared'));
     } catch (err) {
-      setToastMsg("Failed to clear history");
+      setToastMsg(t('chat_history_clear_failed'));
       console.error(err);
     } finally {
       setTimeout(() => setToastMsg(""), 3000);
@@ -352,7 +354,7 @@ function SpecialistChatPageContent() {
   if (!agentId) {
     return (
       <div className="p-10 text-lg text-center font-bold text-fuchsia-800">
-        No specialist selected
+        {t('no_specialist_selected')}
       </div>
     );
   }
@@ -380,12 +382,12 @@ function SpecialistChatPageContent() {
               </h2>
               <div className="text-sm text-fuchsia-500 italic">
                 {agentEmote === "thinking"
-                  ? "is pondering your request..."
+                  ? t('agent_pondering')
                   : agentEmote === "happy"
-                  ? "is excited to help!"
+                  ? t('agent_excited')
                   : agentEmote === "surprised"
-                  ? "is startled!"
-                  : "ready for your next question"}
+                  ? t('agent_startled')
+                  : t('agent_ready')}
               </div>
             </div>
 
@@ -397,13 +399,13 @@ function SpecialistChatPageContent() {
                 className="ml-auto text-xs text-fuchsia-600 underline"
                 onClick={handleOpenHistory}
               >
-                See chat history
+                {t('see_chat_history')}
               </button>
               <button
                 className="text-xs text-red-600 underline"
                 onClick={handleClearChat}
               >
-                Clear chat
+                {t('clear_chat')}
               </button>
             </div>
 
@@ -471,8 +473,8 @@ function SpecialistChatPageContent() {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
                     loading
-                      ? "The specialist is thinking..."
-                      : "Type your message or choose a quick reply..."
+                      ? t('specialist_thinking')
+                      : t('specialist_input_placeholder')
                   }
                   disabled={loading}
                 />
@@ -481,13 +483,13 @@ function SpecialistChatPageContent() {
                   className="px-5 py-2 rounded-xl bg-fuchsia-600 text-white font-bold shadow-md hover:bg-fuchsia-700 disabled:opacity-60"
                   disabled={loading || !input.trim()}
                 >
-                  Send
+                  {t('send')}
                 </button>
               </form>
           </div>
         </div>
         {showHistoryModal && (
-          <ModalContainer title="Full Chat History" onClose={() => setShowHistoryModal(false)} className="max-w-3xl">
+          <ModalContainer title={t('full_chat_history')} onClose={() => setShowHistoryModal(false)} className="max-w-3xl">
             <div className="space-y-4">
               {allMessages.map((m, idx) => (
                 <div
@@ -505,11 +507,11 @@ function SpecialistChatPageContent() {
           </ModalContainer>
         )}
         {showDownloadModal && (
-          <ModalContainer title="Preparing Download" onClose={() => setShowDownloadModal(false)}>
+          <ModalContainer title={t('preparing_download')} onClose={() => setShowDownloadModal(false)}>
             <div className="flex flex-col items-center gap-4 text-fuchsia-700">
               <AgentAnimatedAvatar logo={agent?.logo} emote="thinking" />
               <p className="text-center text-base font-semibold">
-                Let me wrap this for you dear, wait a bit, might take a minute or two...
+                {t('preparing_download_text')}
               </p>
             </div>
           </ModalContainer>
