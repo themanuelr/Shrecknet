@@ -16,7 +16,7 @@ import CreatePageForm from "../../../components/create_page/CreatePageForm";
 import SuggestionCard from "../../../components/agents/SuggestionCard";
 import Image from "next/image";
 import { Loader2, PlusCircle, PenLine, Merge, AlertTriangle } from "lucide-react";
-import { useTranslation } from "../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 
 const AGENT_PERSONALITIES = {
   "Lorekeeper Lyra": "“Every story is a new star in the night sky. Let’s light up your world!”",

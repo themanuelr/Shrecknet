@@ -12,7 +12,7 @@ import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
 import { usePages } from "@/app/lib/usePage";
 import { Loader2, AlertTriangle } from "lucide-react";
-import { useTranslation } from "../../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 
 const STEPS = [
   { label: "Review Lore" },

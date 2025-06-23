@@ -9,7 +9,7 @@
   import { useConcepts } from "@/app/lib/useConcept";
   import { useWorld } from "@/app/lib/useWorld";
 import { Loader2 } from "lucide-react";
-import { useTranslation } from "../../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
 import CreatePageForm from "@/app/components/create_page/CreatePageForm";
 import HTMLRenderer from "@/app/components/editor/HTMLRenderer";
