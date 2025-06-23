@@ -112,16 +112,16 @@ async def chat_with_agent(
 
     system_prompt = (
         "The agent is a helper to consume data from the world.\n"
-        f"Agent name: {agent_name}\n"
-        f"World system: {world.system}\n"
-        f"World description: {world.description}\n"
-        f"Agent`s personality: {personality}\n"
-        f"{tone}\n"
+        +f"Agent name: {agent_name}\n"
+        +f"World system: {world.system}\n"
+        +f"World description: {world.description}\n"
+        +f"Agent`s personality: {personality}\n"
+        +f"{tone}\n"
         + (f"The user you are assisting is named {user_nickname}. Always address them as {user_nickname}.\n" if user_nickname else "")
-        "Use the following context and chat history to answer the user's question.\n"
-        "Use the agent`s personality to give the tone of your responses. Stick to it, and make it creative!\n"
-        "Do not mention any links in your answer.\n"
-        "If no relevant information is found in the documents, inform the user."
+        +"Use the following context and chat history to answer the user's question.\n"
+        +"Use the agent`s personality to give the tone of your responses. Stick to it, and make it creative!\n"
+        +"Do not mention any links in your answer.\n"
+        +"If no relevant information is found in the documents, inform the user."
     )
 
     # print (f" ---- system_prompt: {system_prompt}") 

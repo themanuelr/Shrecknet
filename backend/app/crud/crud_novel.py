@@ -5,194 +5,140 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from app.config import settings
 
+
+def split_into_arcs(text, min_words_per_arc=1000, max_arcs=5):
+    words = text.split()
+    n_words = len(words)
+
+    if n_words <= min_words_per_arc:
+        # Only one arc if text is small
+        return [" ".join(words)]
+
+    # Calculate number of arcs (never more than max_arcs)
+    n_arcs = min((n_words + min_words_per_arc - 1) // min_words_per_arc, max_arcs)
+    arc_sizes = [n_words // n_arcs + (1 if i < n_words % n_arcs else 0) for i in range(n_arcs)]
+
+    arcs = []
+    start = 0
+    for size in arc_sizes:
+        arcs.append(" ".join(words[start:start+size]))
+        start += size
+    return arcs
+
+
 async def create_novel(
     session: AsyncSession,
     agent: Agent,
     text: str,
     instructions: str,
-    example: str | None = None,
+    example: str | None = None,  # Still included, but not used in this version
     helper_agent_ids: list[int] | None = None,
     progress_cb=None,
 ) -> str:
     """
-    Generate a novel from transcript text and instructions using one or more AI agents.
+    Generate a concise, structured novelization from transcript text.
+    Output will be formatted, brief, and under 2000 words, with creative transitions/dialogue allowed.
     """
 
+    # ----- Helper Agents -----
     helper_agent_ids = helper_agent_ids or []
     world_agent_id = helper_agent_ids[0] if helper_agent_ids else None
-    critic_agent_id = helper_agent_ids[0] if helper_agent_ids else None
+    critic_agent_id = helper_agent_ids[0] if len(helper_agent_ids) > 1 else None
 
-    words = text.split()
-    chunks = []
-    step = 5000  # ou ajuste conforme necessário
-    chunks = [" ".join(words[i:i+step]) for i in range(0, len(words), step)]
-    
-    # step = 2000
-    # overlap = 250
-    # if len(words) <= step:
-    #     chunks = [" ".join(words)]
-    # else:
-    #     for i in range(0, len(words), step):
-    #         chunk_words = words[i : i + step]
-    #         if i > 0:
-    #             overlap_start = max(0, i - overlap)
-    #             chunk_words = words[overlap_start : i + step]
-    #         chunks.append(" ".join(chunk_words))
+    # ----- 1. Split into 1-4 arcs (each max 500 words) -----
+    arcs = split_into_arcs(text, min_words_per_arc=1000, max_arcs=5)
 
-    grouped_chunks = [chunks[i : i + 3] for i in range(0, len(chunks), 3)]
+    arc_novels = []
+    arc_worlds = []
+    arc_critic_notes = []
 
-    # Extract writing style prompt if example is provided
-    style_prompt = ""
-    if example:
-        llm = ChatOpenAI(api_key=settings.openai_api_key or "sk-test", model=settings.open_ai_model)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Extract a short prompt describing the writing style."),
-            ("user", "{text}"),
-        ])
-        chain = prompt | llm
-        try:
-            resp = await chain.ainvoke({"text": example})
-            style_prompt = resp.content.strip()
-        except Exception:
-            style_prompt = ""
-
-    final_sections = []
-    summaries = []
-    total_pass1 = len(grouped_chunks)
-    for idx, group in enumerate(grouped_chunks):
+    # ----- 2. Process each arc: Novelize, World, Critic -----
+    for idx, arc_text in enumerate(arcs):
         if progress_cb:
-            progress_cb(idx, total_pass1)
-        group_text = "\n\n".join(group)
+            progress_cb(idx, len(arcs) + 2)
 
-        # --- Get world/lore info first ---
-        world_info = ""
-        if world_agent_id:
-            helper_content = (
-                "Given the following transcript, provide relevant world, lore, and character details that a novelist could use to enrich the scene.\n"
-                "If any mapping of player names to character names is provided, use those character names for all references.\n"                
-                f"{'Instructions: ' + instructions if instructions else ''}"
+        # --- Novelize arc, allow creative bridges/dialogue for flow ---
+        novel_prompt = f"""
+You are a talented fantasy novelist. Rewrite the following RPG transcript arc as a **brief, engaging, and flowing novel segment** (max 1000 words).
+You are allowed to invent short dialogue lines or brief bridge scenes when needed to improve story flow and immersion, but do NOT contradict established events or character/world consistency.
+
+- Write your answer in the same language as the transcript below.
+- Format dialogue as in a novel (for example: — Gryx: What's happening here?).
+- Keep it concise, focus on main events, character emotions, and dramatic transitions.
+- You may add brief invented narration, dialogue, or transitions for flow, as long as they fit the characters and events.
+- Do NOT repeat or invent entire scenes; only fill gaps for readability.
+- Give the segment a clear beginning, middle, and end.
+- Instructions: {instructions}
+Transcript:
+{arc_text}
+"""
+
+        novel_resp = await chat_with_agent(
+            session, agent.id, [{"role": "system", "content": novel_prompt}]
+        )
+        novel_arc = novel_resp.get("answer", "").strip()
+        arc_novels.append(novel_arc)
+
+#         # --- World Info (optional per arc) ---
+#         world_info = ""
+#         if world_agent_id:
+#             world_prompt = f"""
+# Given this RPG transcript arc, provide world, lore, and character details that a novelist could use to enrich the story.
+# If player-to-character mappings are given, use character names in all references.
+# Instructions: {instructions}
+# Arc text:
+# {arc_text}
+# """
+#             world_resp = await chat_with_agent(
+#                 session, world_agent_id, [{"role": "system", "content": world_prompt}]
+#             )
+#             world_info = world_resp.get("answer", "").strip()
+#         arc_worlds.append(world_info)
+
+        # --- Critic Notes (optional per arc, includes world info) ---
+        critic_notes = ""
+        if critic_agent_id:
+            critic_prompt = f"""
+You are a fantasy literary critic. Read this novelized arc and the world info.
+Provide bullet-point feedback on story flow, character consistency, world accuracy, and narrative immersion.
+Point out anything that contradicts the world, characters, or instructions. Suggest brief improvements if needed.
+- Write your answer in the same language as the novelized arc below.
+Novelized arc:
+{novel_arc}
+"""
+            critic_resp = await chat_with_agent(
+                session, critic_agent_id, [{"role": "system", "content": critic_prompt}]
             )
-            helper_msgs = [
-                {"role": "system", "content": helper_content},
-                {"role": "user", "content": group_text},
-            ]
-            helper_resp = await chat_with_agent(
-                session, world_agent_id, helper_msgs, user_nickname=None
-            )
-            world_info = helper_resp.get("answer", "")
+            critic_notes = critic_resp.get("answer", "").strip()
+        arc_critic_notes.append(critic_notes)
 
-        prev_summary = " ".join(summaries[-3:])
+    # ----- 3. Final Synthesis: Combine all arcs -----
+    if progress_cb:
+        progress_cb(len(arcs) + 1, len(arcs) + 2)
 
-        # --- Main Rewrite Prompt ---
-        base_prompt = (
-            "You are a talented fantasy novelist. Your task is to transform an RPG session transcript into an immersive book chapter.\n"
-            "Follow the instructions below for world, tone, and characters.\n"
-            "Rules:\n"
-            "...(your previous prompt blocks)...\n"
-            "- You may invent brief narration, transitions, or lines of dialogue to connect events or make the story flow more smoothly. Any invented content must fit the established characters and events, and should not contradict what actually happened.\n"
-            "- Incorporate this background/world info as appropriate: " + (world_info if world_info else "") + "\n"
-            "- Avoid all repetition: do NOT repeat scenes, phrases, or ideas from previous sections (see previous summary below).\n"
-            "- At the end, add a block beginning with 'Summary:' and write a concise 1-3 sentence summary of this section for use in the next chunk.\n"
-            f"{'Map the following players to characters, and follow these instructions: ' + instructions if instructions else ''}\n"
-            f"{'Emulate this style: ' + style_prompt if style_prompt else ''}\n"
-            f"{'Refer to this previous summary to maintain flow and avoid repetition: ' + prev_summary if prev_summary else ''}\n"
-            "Here is the transcript for this section:\n"
-            f"{group_text}\n"
-        )
+    final_writer_prompt = f"""
+You are a talented fantasy novelist. Combine and polish the following arcs into a single, seamless, concise fantasy novel chapter.
+- Incorporate important world details where appropriate.
+- Apply the critic's suggestions to improve narrative flow, character depth, and world consistency.
+- Write your answer in the same language as the given arc novels below.
+- You may invent brief dialogue lines or transitions if needed for story cohesion, as long as they do not contradict the story so far.
+- The entire output must be **no more than 4000 words**.
+- Eliminate repetition, awkward transitions, or extraneous detail.
+- Make the final chapter emotionally engaging and easy to read.
+- Format the output using valid HTML: wrap each paragraph in <p>. Use <h2>/<h3> for titles if relevant. Format dialogue as you would in a novel, with each line in its own <p> or <blockquote> if appropriate.
+Novelized arcs:
+{"\n\n".join(arc_novels)}
 
-        messages = [
-            {"role": "system", "content": base_prompt},
-            {"role": "user", "content": group_text},
-        ]
-        resp = await chat_with_agent(
-            session, agent.id, messages, user_nickname=None
-        )
-        output = resp.get("answer", "")
-        # Parse output
-        if "\nSummary:" in output:
-            rewritten, summary = output.split("\nSummary:", 1)
-            rewritten = rewritten.strip()
-            summary = summary.strip()
-        else:
-            rewritten = output
-            summary = ""
+Critic notes for each arc:
+{"\n\n".join(arc_critic_notes)}
+"""
 
-        final_sections.append(rewritten)
-        summaries.append(summary[:250])
+    final_resp = await chat_with_agent(
+        session, agent.id, [{"role": "system", "content": final_writer_prompt}]
+    )
+    draft = final_resp.get("answer", "").strip()
 
-    draft = "\n\n".join(final_sections)
-    full_summary = "\n".join(summaries)
+    if progress_cb:
+        progress_cb(len(arcs) + 2, len(arcs) + 2)
 
-    # Critic pass for suggestions
-    critic_notes = ""
-    if critic_agent_id is not None:
-        critic_prompt = (
-            "You are a literary critic. Read the following chapter draft and provide bullet-point suggestions to improve it as a published fantasy novel.\n"
-            "Focus on narrative flow, pacing, character development, emotional resonance, avoiding repetition, and creating an immersive experience for the reader. "
-            "Point out any awkward transitions, flat dialogue, or places where more character thoughts or vivid description would help. "
-            "Be detailed but concise."
-        )
-        critic_messages = [
-            {"role": "system", "content": critic_prompt},
-            {"role": "user", "content": full_summary},
-        ]
-        critic_resp = await chat_with_agent(
-            session, critic_agent_id, critic_messages, user_nickname=None
-        )
-        critic_notes = critic_resp.get("answer", "")
-
-    # Second rewrite incorporating critic suggestions
-    words2 = draft.split()
-    rewrite_chunks = []
-    step2 = 1000
-    overlap2 = 100
-    if len(words2) <= step2:
-        rewrite_chunks = [" ".join(words2)]
-    else:
-        for i in range(0, len(words2), step2):
-            chunk_words = words2[i : i + step2]
-            if i > 0:
-                overlap_start = max(0, i - overlap2)
-                chunk_words = words2[overlap_start : i + step2]
-            rewrite_chunks.append(" ".join(chunk_words))
-
-    final_sections2 = []
-    summary = ""
-    total = total_pass1 + len(rewrite_chunks)
-    for idx, chunk in enumerate(rewrite_chunks):
-        if progress_cb:
-            progress_cb(total_pass1 + idx, total)
-        rewrite_prompt = (
-            "Apply the following critic notes and instructions as you rewrite this chapter draft into a seamless, engaging, and polished book chapter. "
-            "Incorporate the suggestions to enhance character depth, natural dialogue, emotional impact, and world immersion. "
-            "Maintain narrative continuity and eliminate repetition or awkward phrasing. "
-            f"{instructions}\n"
-            f"{'Emulate this style: ' + style_prompt if style_prompt else ''}\n"
-            f"{'Critic notes: ' + critic_notes if critic_notes else ''}\n"
-            f"{'Refer to this previous summary for continuity: ' + summary if summary else ''}\n"
-            "Rewrite the following text:"
-        )
-        messages = [
-            {"role": "system", "content": rewrite_prompt},
-            {"role": "user", "content": chunk},
-        ]
-        resp = await chat_with_agent(
-            session, agent.id, messages, user_nickname=None
-        )
-        rewritten = resp.get("answer", "")
-
-        if world_agent_id:
-            helper_msgs = [
-                {"role": "system", "content": "Provide additional world details for this text."},
-                {"role": "user", "content": rewritten},
-            ]
-            helper_resp = await chat_with_agent(
-                session, world_agent_id, helper_msgs, user_nickname=None
-            )
-            rewritten = rewritten + " " + helper_resp.get("answer", "")
-
-        final_sections2.append(rewritten)
-        summary_text = rewritten.split(".")[:2]
-        summary = ".".join(summary_text)[:250]
-
-    return "\n\n".join(final_sections2)
+    return draft

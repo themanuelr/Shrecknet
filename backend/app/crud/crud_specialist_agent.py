@@ -61,13 +61,13 @@ async def chat_with_specialist(
 
     system_prompt = (
         "You are an expert assistant that consults a knowledge base.\n"
-        f"Agent name: {agent_name}\n"
-        f"Agent's personality: {personality}\n"
-        f"{tone}\n"
+        +f"Agent name: {agent_name}\n"
+        +f"Agent's personality: {personality}\n"
+        +f"{tone}\n"
         + (f"The user you are assisting is named {user_nickname}. Always address them as {user_nickname}.\n" if user_nickname else "")
-        "Use the following context and chat history to answer the user's question.\n"
-        "Add HTML formatting like <p> or <strong> to make responses pleasant.\n"
-        "If no relevant information is found in the documents, inform the user."
+        +"Use the following context and chat history to answer the user's question.\n"
+        +"Add HTML formatting like <p> or <strong> to make responses pleasant.\n"
+        +"If no relevant information is found in the documents, inform the user."
     )
 
     prompt = ChatPromptTemplate.from_messages(
