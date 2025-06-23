@@ -82,6 +82,7 @@ export default function PageView() {
   const { characteristics, isLoading: charsLoading } = useCharacteristicsForConcept(page?.concept_id);
 
   const { agents } = useAgents(page?.gameworld_id);
+  const chatAgent = agents?.find(a => a.task === "conversational");
 
   const loading = pageLoading || conceptLoading || worldLoading || worldsLoading || conceptsLoading || charsLoading;
 
@@ -109,6 +110,15 @@ export default function PageView() {
 
   const groups = [...new Set(concepts.filter(c => !!c.group).map(c => c.group))];
   const agent = agents?.find(a => a.id === page?.updated_by_agent_id);
+
+  function openChatWithAgent() {
+    if (!chatAgent) return;
+    const detail = {
+      agentId: chatAgent.id,
+      input: `I have the following questions about the page ${page?.name}: `,
+    };
+    window.dispatchEvent(new CustomEvent("openChatPanel", { detail }));
+  }
 
   if (!hasRole(user?.role, "player")) {
     return (
@@ -361,6 +371,21 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
             </ModalContainer>
           )}
         </div>
+        {chatAgent && (
+          <button
+            onClick={openChatWithAgent}
+            className="fixed bottom-6 left-6 z-40 flex flex-col items-center group"
+          >
+            <img
+              src={chatAgent.logo || "/images/default/avatars/logo.png"}
+              alt={chatAgent.name}
+              className="w-16 h-16 rounded-full border-2 border-[var(--primary)] shadow-lg group-hover:scale-110 transition-transform object-cover"
+            />
+            <span className="mt-1 px-2 py-0.5 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-semibold shadow group-hover:bg-[var(--accent)]">
+              Ask {chatAgent.name}
+            </span>
+          </button>
+        )}
       </DashboardLayout>
     </AuthGuard>
   );

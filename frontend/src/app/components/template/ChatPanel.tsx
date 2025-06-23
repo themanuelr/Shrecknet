@@ -12,7 +12,19 @@ import {
   getChatHistory,
 } from "../../lib/agentAPI";
 
-export default function ChatPanel({ open, onOpen, onClose }) {
+export default function ChatPanel({
+  open,
+  onOpen,
+  onClose,
+  defaultAgentId = null,
+  defaultInput = "",
+}: {
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  defaultAgentId?: number | null;
+  defaultInput?: string;
+}) {
   const PANEL_WIDTH = 420; // px, can use % if preferred
   const BAR_WIDTH = 54; // px
   const BAR_HEIGHT = 200; // px
@@ -34,6 +46,12 @@ export default function ChatPanel({ open, onOpen, onClose }) {
     selectedAgentId !== null
       ? agents.find(a => a.id === selectedAgentId)
       : null;
+
+  useEffect(() => {
+    if (!open) return;
+    if (defaultAgentId !== null) setSelectedAgentId(defaultAgentId);
+    if (defaultInput) setInput(defaultInput);
+  }, [open, defaultAgentId, defaultInput]);
 
   useEffect(() => {
     if (selectedAgentId === null) return;
