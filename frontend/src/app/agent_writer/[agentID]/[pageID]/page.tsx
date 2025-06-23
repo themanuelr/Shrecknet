@@ -76,7 +76,7 @@ function AgentBubble({ agent, children, loading = false }) {
 
 export default function PageAnalyze() {
   const { agentID, pageID } = useParams();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const { page } = usePageById(Number(pageID));
   const { agent } = useAgentById(Number(agentID));
   const { concepts } = useConcepts(agent?.world_id);
@@ -291,7 +291,11 @@ export default function PageAnalyze() {
             {step === 0 && (
               <>
                 <AgentBubble agent={agent}>
-                  <b>Step 1: Review the Old Tome</b><br />“Let us read the ancient page together...”
+                  <b>Step 1: Review the Old Tome</b>
+                  <br />
+                  {user?.nickname
+                    ? `${user.nickname}, let us read the ancient page together...`
+                    : '“Let us read the ancient page together...”'}
                 </AgentBubble>
                 {page && (
                   <div className="bg-[var(--card)] p-6 rounded-xl border border-[var(--border)] shadow max-w-3xl mx-auto">
@@ -321,7 +325,10 @@ export default function PageAnalyze() {
         {subStep === 'a' && (
           <>
             <b>Step 2A: Remove Unworthy Suggestions</b>
-            <br />Begin by eliminating any irrelevant or incorrect suggestions.
+            <br />
+            {user?.nickname
+              ? `${user.nickname}, begin by eliminating any irrelevant or incorrect suggestions.`
+              : 'Begin by eliminating any irrelevant or incorrect suggestions.'}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
               Click “Remove” on any suggestion you don't want to keep.
             </p>
@@ -330,7 +337,10 @@ export default function PageAnalyze() {
         {subStep === 'b' && (
           <>
             <b>Step 2B: Merge Similar Suggestions</b>
-            <br />Now, group together suggestions that refer to the same topic.
+            <br />
+            {user?.nickname
+              ? `${user.nickname}, now group together suggestions that refer to the same topic.`
+              : 'Now, group together suggestions that refer to the same topic.'}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
               Use the “Merge With” dropdown on each card to link related suggestions.
             </p>
@@ -339,7 +349,10 @@ export default function PageAnalyze() {
         {subStep === 'c' && (
           <>
             <b>Step 2C: Finalize Pages</b>
-            <br />Time to assign concepts and decide whether to create or update pages.
+            <br />
+            {user?.nickname
+              ? `${user.nickname}, time to assign concepts and decide whether to create or update pages.`
+              : 'Time to assign concepts and decide whether to create or update pages.'}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
               Set the action, select the target concept, and pick an existing page if updating.
             </p>

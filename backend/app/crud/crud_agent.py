@@ -60,7 +60,11 @@ async def ensure_personality_prompts(personalities: list[str]) -> dict:
 
 
 async def chat_with_agent(
-    session: AsyncSession, agent_id: int, messages: list[dict], n_results: int = 5
+    session: AsyncSession,
+    agent_id: int,
+    messages: list[dict],
+    n_results: int = 5,
+    user_nickname: str | None = None,
 ) -> dict:
     """Return a chat response and source links using OpenAI with world and agent context."""
 
@@ -113,6 +117,7 @@ async def chat_with_agent(
         f"World description: {world.description}\n"
         f"Agent`s personality: {personality}\n"
         f"{tone}\n"
+        + (f"The user you are assisting is named {user_nickname}. Always address them as {user_nickname}.\n" if user_nickname else "")
         "Use the following context and chat history to answer the user's question.\n"
         "Use the agent`s personality to give the tone of your responses. Stick to it, and make it creative!\n"
         "Do not mention any links in your answer.\n"
