@@ -1,5 +1,6 @@
 import ModalContainer from "../template/modalContainer";
 import WorldForm from "./WorldForm";
+import { useTranslation } from "../hooks/useTranslation";
 
 /**
  * @param {boolean} open - Whether the modal is open
@@ -19,11 +20,12 @@ export default function WorldFormModal({
   worlds,
   onClose,
 }) {
+  const { t } = useTranslation();
   if (!open) return null;
 
   return (
     <ModalContainer
-      title={initialData ? "Edit World" : "Create a New World"}
+      title={initialData ? t("edit_world") : t("create_new_world")}
       onClose={onClose}
       className="max-w-2xl"
     >

@@ -15,9 +15,11 @@ import { FaSearch } from "react-icons/fa";
 import ModalContainer from "@/app/components/template/modalContainer";
 import CardScroller from "@/app/components/template/CardScroller";
 import Image from "next/image";
+import { useTranslation } from "../../../hooks/useTranslation";
 export default function ConceptPage({ params }) {
   const { conceptID } = use(params);
   const { token } = useAuth();
+  const { t } = useTranslation();
 
   const router = useRouter();
 
@@ -43,7 +45,7 @@ export default function ConceptPage({ params }) {
   if (loading || !concept || !world) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center text-[var(--primary)] text-lg">
-        Loading concept...
+        {t("loading_concept")}
       </div>
     );
   }
@@ -126,12 +128,12 @@ export default function ConceptPage({ params }) {
 
             {/* Search bar */}
             <div className="flex items-center justify-between mt-10 mb-6">
-              <h2 className="text-xl font-bold">Pages ({filteredPages.length})</h2>
+              <h2 className="text-xl font-bold">{t("pages_heading")} ({filteredPages.length})</h2>
               <div className="flex items-center gap-2">
                 <FaSearch className="text-[var(--primary)]" />
                 <input
                   type="text"
-                  placeholder="Search pages..."
+                  placeholder={t("search_pages_placeholder")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="px-3 py-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--foreground)] focus:outline-none focus:ring focus:border-[var(--primary)]"

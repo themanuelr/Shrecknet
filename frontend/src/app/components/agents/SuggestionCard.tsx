@@ -1,6 +1,7 @@
 // SUGGESTION CARD — SubStep A/B/C logic added
 import { useState, useRef, useEffect } from "react";
 import { Combobox } from "@headlessui/react";
+import { useTranslation } from "../../hooks/useTranslation";
 export default function SuggestionCard({
     suggestion,
     index,
@@ -12,6 +13,7 @@ export default function SuggestionCard({
     onUpdate,
     onRemove,
   }) {
+    const { t } = useTranslation();
     const [filter, setFilter] = useState("");
     const isUpdate = suggestion.exists || suggestion.mode === "update";
     const targetPage = pages.find((p) => p.id === suggestion.target_page_id);
@@ -28,7 +30,7 @@ export default function SuggestionCard({
       return (
         <div className="border-2 border-gray-300 bg-gray-100 rounded-xl p-4">
           <div className="text-sm italic text-gray-500">
-            This suggestion will be merged with another.
+            {t('merged_suggestion_note')}
           </div>
         </div>
       );
@@ -52,7 +54,7 @@ export default function SuggestionCard({
                   : "bg-green-200 text-green-800"
               }`}
             >
-              {isUpdate ? "Update Page" : "New Page"}
+              {isUpdate ? t('update_page') : t('new_page')}
             </span>
           </div>
           {subStep === "a" && (
@@ -60,7 +62,7 @@ export default function SuggestionCard({
               className="text-red-500 hover:underline text-sm"
               onClick={() => onRemove(index)}
             >
-              Remove
+              {t('remove')}
             </button>
           )}
         </div>
@@ -70,7 +72,7 @@ export default function SuggestionCard({
         </div>
         {Array.isArray(suggestion.source_pages) && suggestion.source_pages.length > 0 && (
           <div className="text-xs text-[var(--muted-foreground)]">
-            From: {suggestion.source_pages.map((sp: any) => sp.name).join(', ')}
+            {t('from')} {suggestion.source_pages.map((sp: any) => sp.name).join(', ')}
           </div>
         )}
   
@@ -79,19 +81,19 @@ export default function SuggestionCard({
             {subStep === 'c' && (
               <>
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Action</label>
+                  <label className="block text-sm font-semibold mb-1">{t('action')}</label>
                   <select
                     value={suggestion.mode || (suggestion.exists ? "update" : "create")}
                     onChange={(e) => onUpdate(index, { mode: e.target.value, target_page_id: undefined })}
                     className="w-full px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
                   >
-                    <option value="create">Create New</option>
-                    <option value="update">Update Existing</option>
+                    <option value="create">{t('create_new')}</option>
+                    <option value="update">{t('update_existing')}</option>
                   </select>
                 </div>
-  
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">Concept</label>
+                  <label className="block text-sm font-semibold mb-1">{t('concept')}</label>
                   <select
                     className="w-full px-2 py-1 rounded border border-[var(--primary)] bg-[var(--surface)] text-[var(--foreground)]"
                     value={suggestion.concept_id || ""}
@@ -102,7 +104,7 @@ export default function SuggestionCard({
                       })
                     }
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('select')}</option>
                     {concepts.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -117,8 +119,8 @@ export default function SuggestionCard({
               <div className="col-span-2">
                 <label className="block text-sm font-semibold mb-1">
                   {suggestion.exists && targetPage
-                    ? `Update this Page: ${targetPage.name}`
-                    : "Select Page to Update"}
+                    ? `${t('update_this_page')}: ${targetPage.name}`
+                    : t('select_page_to_update')}
                 </label>
                 <Combobox
                   value={suggestion.target_page_id ?? ""}
@@ -127,7 +129,7 @@ export default function SuggestionCard({
                   <div className="relative">
                     <Combobox.Input
                       className="w-full rounded border border-[var(--primary)] px-2 py-1 bg-[var(--surface)] text-[var(--foreground)]"
-                      placeholder="Search page..."
+                      placeholder={t('search_page')}
                       onChange={(e) => setFilter(e.target.value)}
                       displayValue={(id) => pages.find((p) => p.id === id)?.name || ""}
                     />
@@ -156,7 +158,7 @@ export default function SuggestionCard({
   
             {subStep === 'b' && (
               <div className="col-span-2">
-                <label className="block text-sm font-semibold mb-1">Merge With</label>
+                <label className="block text-sm font-semibold mb-1">{t('merge_with')}</label>
                 <div className="flex flex-wrap gap-2">
                   {suggestions
                     .filter((s, i) => i !== index)

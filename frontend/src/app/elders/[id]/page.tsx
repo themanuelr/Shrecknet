@@ -13,6 +13,7 @@ import Image from "next/image";
 import WikiLinkHoverCard from "../../components/editor/WikiLinkHoverCard";
 import { Loader2 } from "lucide-react";
 import { BookOpen } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface Message extends ChatMessage { time: Date }
 interface SourceInfo { title: string; url: string; logo?: string }
@@ -22,6 +23,7 @@ export default function ElderChatPage() {
   const id = Number(params?.id);
   const { user, token } = useAuth();
   const { agent } = useAgentById(id);
+  const { t } = useTranslation();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [sourceInfos, setSourceInfos] = useState<SourceInfo[]>([]);
@@ -95,7 +97,7 @@ export default function ElderChatPage() {
     } catch {
       setMessages(m => {
         const arr = [...m];
-        arr[arr.length - 1] = { role: "assistant", content: "Sorry, something went wrong.", time: new Date() };
+        arr[arr.length - 1] = { role: "assistant", content: t("generic_error"), time: new Date() };
         return arr;
       });
       updateSourceInfos([]);
@@ -107,7 +109,7 @@ export default function ElderChatPage() {
   async function clearMessages() {
     if (!id) return;
     const confirmed = window.confirm(
-      "This will permanently delete your chat history with this Elder. Continue?"
+      t("delete_chat_confirm")
     );
     if (!confirmed) return;
     try {
@@ -150,7 +152,7 @@ export default function ElderChatPage() {
                 onClick={clearMessages}
                 className="ml-auto px-3 py-1 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
               >
-                Clear chat
+                {t("clear_chat")}
               </button>
             </div>
             
@@ -167,7 +169,7 @@ export default function ElderChatPage() {
                       </div>
                     )}
                     {loading && idx === messages.length - 1 && m.role === "assistant" && m.content === "" ? (
-                      <span className="flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" /> Thinking...</span>
+                      <span className="flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" /> {t("thinking")}</span>
                     ) : (
                       renderMessageContent(m)
                     )}
@@ -192,8 +194,7 @@ export default function ElderChatPage() {
       </svg>
       <BookOpen className="w-5 h-5 text-fuchsia-600" />
       <span className="font-semibold text-fuchsia-700 text-base">
-      
-        Relevant Sources
+        {t("relevant_sources")}
       </span>
     </div>
           {/* Source suggestions */}
@@ -229,7 +230,7 @@ export default function ElderChatPage() {
                 className="flex-1 rounded-xl border border-[var(--primary)] p-2 bg-[var(--surface)] text-[var(--foreground)] placeholder-[var(--primary)]/70 focus:outline-none"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Type your message..."
+                placeholder={t("type_message")}
                 disabled={loading}
               />
               <button
@@ -237,7 +238,7 @@ export default function ElderChatPage() {
                 className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] disabled:opacity-50"
                 disabled={loading || !input.trim()}
               >
-                Send
+                {t("send")}
               </button>
             </form>
           </div>

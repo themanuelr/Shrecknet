@@ -1,8 +1,10 @@
 "use client";
 import DashboardWorlds from "../components/worlds/DashboardWorlds";
 import DashboardLayout from "../components/DashboardLayout";
+import { useTranslation } from "../hooks/useTranslation";
 
-export default function WorldsPage() {  
+export default function WorldsPage() {
+  const { t } = useTranslation();
 
   return (
     <DashboardLayout>
@@ -10,10 +12,10 @@ export default function WorldsPage() {
         {/* Splash/Hero */}
         <div className="flex flex-col items-center mb-8">          
           <h1 className="font-serif text-3xl md:text-5xl font-bold text-[var(--primary)] text-center mb-2 tracking-tight">
-            Explore Worlds
+            {t("explore_worlds_title")}
           </h1>
           <p className="text-base md:text-lg text-[var(--foreground)]/70 text-center max-w-2xl">
-            Worlds are unique RPG universes—create, explore, and visit them all from here.
+            {t("explore_worlds_desc")}
           </p>
         </div>
 

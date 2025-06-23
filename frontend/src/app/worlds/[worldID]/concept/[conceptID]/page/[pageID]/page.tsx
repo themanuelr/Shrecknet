@@ -18,6 +18,7 @@ import HeaderSection from "@/app/components/see_page/HeaderSection";
 import BodySection from "@/app/components/see_page/BodySection";
 import EditableContent from "@/app/components/editor/EditableContent";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
+import { useTranslation } from "../../../../../hooks/useTranslation";
 import { hasRole } from "@/app/lib/roles";
 import ModalContainer from "@/app/components/template/modalContainer";
 import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -58,6 +59,7 @@ function CollapsibleDetails({ open, setOpen, children }) {
 
 export default function PageView() {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const pageId = Number(params?.pageID);
@@ -233,9 +235,9 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                     <button
                       onClick={() => setShowDeleteModal(true)}
                       className="p-2 rounded-full bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-400 transition shadow-sm text-red-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-400"
-                      title="Delete Page"
+                      title={t("delete_page")}
                     >
-                      <Trash2 className="w-5 h-5" /> Delete Page
+                      <Trash2 className="w-5 h-5" /> {t("delete_page")}
                     </button>
                   </div>
                 )}
@@ -341,16 +343,16 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
           {/* --- Delete Confirmation Modal --- */}
           {showDeleteModal && (
             <ModalContainer
-              title="Delete Page"
+              title={t("delete_page")}
               onClose={() => setShowDeleteModal(false)}
               className="max-w-md"
             >
               <div className="text-center py-4">
                 <p className="text-lg font-semibold text-red-600 mb-3">
-                  Are you sure you want to delete this page?
+                  {t("delete_page_confirm")}
                 </p>
                 <p className="text-sm text-[var(--foreground)]/80 mb-6">
-                  This action cannot be undone. All page content and links will be lost.
+                  {t("delete_page_warning")}
                 </p>
                 <div className="flex justify-center gap-4">
                   <button
@@ -358,13 +360,13 @@ const bodySectionValues = filterNonEmptySectionValues(getSectionValues("body"));
                     disabled={deleting}
                     className="px-5 py-2 rounded-full bg-red-500 text-white font-bold hover:bg-red-600 transition"
                   >
-                    {deleting ? "Deleting..." : "Yes, Delete"}
+                    {deleting ? t("deleting") : t("yes_delete")}
                   </button>
                   <button
                     onClick={() => setShowDeleteModal(false)}
                     className="px-5 py-2 rounded-full bg-[var(--primary)] text-white font-bold hover:bg-[var(--accent)] transition"
                   >
-                    Cancel
+                    {t("cancel")}
                   </button>
                 </div>
               </div>

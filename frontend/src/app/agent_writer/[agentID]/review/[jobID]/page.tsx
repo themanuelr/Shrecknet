@@ -9,6 +9,7 @@
   import { useConcepts } from "@/app/lib/useConcept";
   import { useWorld } from "@/app/lib/useWorld";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "../../../hooks/useTranslation";
 import { getPage, getPagesForConcept, updatePage, createPage } from "@/app/lib/pagesAPI";
 import CreatePageForm from "@/app/components/create_page/CreatePageForm";
 import HTMLRenderer from "@/app/components/editor/HTMLRenderer";
@@ -74,6 +75,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
 }
 
   export default function ReviewPage() {
+    const { t } = useTranslation();
     const { agentID, jobID } = useParams();
   const { token } = useAuth();
   const [job, setJob] = useState<any>(null);
@@ -256,7 +258,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
     if (!job) return (
       <AuthGuard>
         <DashboardLayout>
-          <div className="p-6 text-[var(--foreground)]">Loading...</div>
+          <div className="p-6 text-[var(--foreground)]">{t('loading')}</div>
         </DashboardLayout>
       </AuthGuard>
     );
@@ -266,7 +268,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
       <AuthGuard>
         <DashboardLayout>
           <div className="p-6 text-[var(--foreground)] flex items-center gap-2">
-            <Loader2 className="animate-spin" /> Generating pages...
+            <Loader2 className="animate-spin" /> {t('summoning_scribes')}
           </div>
         </DashboardLayout>
       </AuthGuard>
@@ -277,12 +279,12 @@ function AgentBubble({ agent, children, loading = false }: any) {
       <AuthGuard>
         <DashboardLayout>
           <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
-            <AgentBubble agent={agent}>All pages were updated and created!</AgentBubble>
+            <AgentBubble agent={agent}>{t('all_pages_updated')}</AgentBubble>
             <button
               onClick={() => router.push(`/agent_writer?agent=${agentID}`)}
               className="mt-4 px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-bold shadow"
             >
-              Return to Agent Writer
+              {t('return_agent_writer')}
             </button>
           </div>
         </DashboardLayout>
@@ -324,12 +326,12 @@ function AgentBubble({ agent, children, loading = false }: any) {
                 {agent && (
                   <div className="flex items-center gap-4 mb-4">
                     <Image src={agent.logo || "/images/default/avatars/logo.png"} alt={agent.name} width={64} height={64} className="rounded-full border-2 border-[var(--primary)] shadow-lg" />
-                    <h1 className="text-2xl font-extrabold text-[var(--primary)]">Review Legends</h1>
+                    <h1 className="text-2xl font-extrabold text-[var(--primary)]">{t('review_legends')}</h1>
                   </div>
                 )}
                 <div className="flex flex-col sm:flex-row flex-wrap gap-4 border-b border-[var(--border)] pb-4 mb-6">
                   <div className="flex flex-col gap-2">
-                    <p className="font-semibold text-green-700">Suggested new pages</p>
+                    <p className="font-semibold text-green-700">{t('suggested_new_pages')}</p>
                     <div className="flex flex-wrap gap-2">
                       {generatedPages.filter(p => !p.isUpdate).map((p, idx) => (
                         <button
@@ -349,16 +351,16 @@ function AgentBubble({ agent, children, loading = false }: any) {
                   {generatedPages.some(p => p.isUpdate) && (
                     <div className="flex flex-col gap-2 sm:ml-4 mt-4 sm:mt-0 border-t sm:border-t-0 sm:border-l border-[var(--border)] pt-4 sm:pt-0 sm:pl-4">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-blue-700">Pages to update</p>
+                        <p className="font-semibold text-blue-700">{t('pages_to_update')}</p>
                         <button
                           onClick={handleBulkUpdate}
                           disabled={bulkUpdating}
                           className="px-3 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold shadow disabled:opacity-50"
                         >
-                          {bulkUpdating ? 'Updating...' : 'Update All'}
+                          {bulkUpdating ? t('processing') : t('update_all')}
                         </button>
                       </div>
-                      <p className="text-xs text-blue-700">All update suggestions will be applied automatically.</p>
+                      <p className="text-xs text-blue-700">{t('update_all_desc')}</p>
                       <div className="flex flex-wrap gap-2">
                         {generatedPages.filter(p => p.isUpdate).map((p, idx) => (
                           <button
@@ -380,7 +382,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
                 {bulkUpdating && (
                   <div className="w-full mt-4">
                     <AgentBubble agent={agent} loading>
-                      Applying all update suggestions. Please wait...
+                      {t('bulk_updating')}
                     </AgentBubble>
                   </div>
                 )}
@@ -394,23 +396,23 @@ function AgentBubble({ agent, children, loading = false }: any) {
                         <img src={concepts.find((c) => c.id === p.concept_id)!.logo} alt="concept logo" className="w-10 h-10 rounded-full border border-[var(--border)]" />
                       )}
                       <h3 className="text-xl font-bold text-[var(--primary)]">
-                        {concepts?.find((c) => c.id === p.concept_id)?.name || "Unknown Concept"}
+                        {concepts?.find((c) => c.id === p.concept_id)?.name || t('unknown_concept')}
                       </h3>
                     </div>
 
                     <AgentBubble agent={agent}>
-                      <p className="font-semibold">Based on what I wrote, this is what I will add to this page:</p>
+                      <p className="font-semibold">{t('based_on_what_i_wrote')}</p>
                       <HTMLRenderer
                         content={p.isUpdate ? p.new_autogenerated_content : p.autogenerated_content}
                       />
                     </AgentBubble>
                     {Array.isArray(p.source_pages) && p.source_pages.length > 0 && (
                       <div className="text-xs text-[var(--muted-foreground)] mb-2">
-                        From: {p.source_pages.map((sp: any) => sp.name).join(', ')}
+                        {t('from')} {p.source_pages.map((sp: any) => sp.name).join(', ')}
                       </div>
                     )}
 
-                    <p className="mt-6 mb-2 font-medium text-[var(--foreground)]">And here is the page's information:</p>
+                    <p className="mt-6 mb-2 font-medium text-[var(--foreground)]">{t('page_information')}</p>
 
                     <CreatePageForm
                       selectedWorld={world}

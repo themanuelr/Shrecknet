@@ -16,6 +16,7 @@ import CreatePageForm from "../../../components/create_page/CreatePageForm";
 import SuggestionCard from "../../../components/agents/SuggestionCard";
 import Image from "next/image";
 import { Loader2, PlusCircle, PenLine, Merge, AlertTriangle } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const AGENT_PERSONALITIES = {
   "Lorekeeper Lyra": "“Every story is a new star in the night sky. Let’s light up your world!”",
@@ -75,6 +76,7 @@ function AgentBubble({ agent, children, loading = false }) {
 }
 
 export default function PageAnalyze() {
+  const { t } = useTranslation();
   const { agentID, pageID } = useParams();
   const { user, token } = useAuth();
   const { page } = usePageById(Number(pageID));
@@ -122,7 +124,7 @@ export default function PageAnalyze() {
       setStep(2);
     } catch (err) {
       console.error(err);
-      alert("Failed to analyze page");
+      alert(t('fail_analyze_page'));
     }
     setLoading(false);
   }
@@ -247,7 +249,7 @@ export default function PageAnalyze() {
       setStep(3);
     } catch (err) {
       console.error(err);
-      alert("Failed to generate pages");
+      alert(t('fail_generate_pages'));
     }
     setLoading(false);
   }
@@ -291,11 +293,11 @@ export default function PageAnalyze() {
             {step === 0 && (
               <>
                 <AgentBubble agent={agent}>
-                  <b>Step 1: Review the Old Tome</b>
+                  <b>{t('step1_review_tome')}</b>
                   <br />
                   {user?.nickname
-                    ? `${user.nickname}, let us read the ancient page together...`
-                    : '“Let us read the ancient page together...”'}
+                    ? `${user.nickname}, ${t('lets_read_page')}`
+                    : `“${t('lets_read_page')}”`}
                 </AgentBubble>
                 {page && (
                   <div className="bg-[var(--card)] p-6 rounded-xl border border-[var(--border)] shadow max-w-3xl mx-auto">
@@ -308,7 +310,7 @@ export default function PageAnalyze() {
                     onClick={handleAnalyze}
                     disabled={loading}
                     className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] font-bold shadow hover:bg-[var(--accent)] transition disabled:opacity-50"
-                  >{loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Reading...</> : "I am ready, Scribe!"}</button>
+                  >{loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('reading')}</> : t('ready_scribe')}</button>
                 </div>
               </>
             )}
@@ -323,38 +325,38 @@ export default function PageAnalyze() {
     <div className="w-full max-w-screen-2xl mx-auto px-4 mb-4">
       <AgentBubble agent={agent}>
         {subStep === 'a' && (
-          <>
-            <b>Step 2A: Remove Unworthy Suggestions</b>
+          <> 
+            <b>{t('step2a_remove')}</b>
             <br />
             {user?.nickname
-              ? `${user.nickname}, begin by eliminating any irrelevant or incorrect suggestions.`
-              : 'Begin by eliminating any irrelevant or incorrect suggestions.'}
+              ? `${user.nickname}, ${t('step2a_desc')}`
+              : t('step2a_desc')}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-              Click “Remove” on any suggestion you don't want to keep.
+              {t('step2a_hint')}
             </p>
           </>
         )}
         {subStep === 'b' && (
-          <>
-            <b>Step 2B: Merge Similar Suggestions</b>
+          <> 
+            <b>{t('step2b_merge')}</b>
             <br />
             {user?.nickname
-              ? `${user.nickname}, now group together suggestions that refer to the same topic.`
-              : 'Now, group together suggestions that refer to the same topic.'}
+              ? `${user.nickname}, ${t('step2b_desc')}`
+              : t('step2b_desc')}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-              Use the “Merge With” dropdown on each card to link related suggestions.
+              {t('step2b_hint')}
             </p>
           </>
         )}
         {subStep === 'c' && (
-          <>
-            <b>Step 2C: Finalize Pages</b>
+          <> 
+            <b>{t('step2c_finalize')}</b>
             <br />
             {user?.nickname
-              ? `${user.nickname}, time to assign concepts and decide whether to create or update pages.`
-              : 'Time to assign concepts and decide whether to create or update pages.'}
+              ? `${user.nickname}, ${t('step2c_desc')}`
+              : t('step2c_desc')}
             <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-              Set the action, select the target concept, and pick an existing page if updating.
+              {t('step2c_hint')}
             </p>
           </>
         )}
@@ -394,9 +396,9 @@ export default function PageAnalyze() {
 
         {/* Summary Panel */}
         <div className="sticky top-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
-          <h2 className="text-xl font-bold mb-3 text-[var(--primary)] border-b border-[var(--primary)] pb-1">📋 Summary</h2>
-          <p className="text-sm mb-4 text-[var(--muted-foreground)]">{selectedSuggestions.length} suggestions</p>
-          <p className="mb-4">Track your progress through this step-by-step refinement.</p>
+          <h2 className="text-xl font-bold mb-3 text-[var(--primary)] border-b border-[var(--primary)] pb-1">📋 {t('summary')}</h2>
+          <p className="text-sm mb-4 text-[var(--muted-foreground)]">{selectedSuggestions.length} {t('suggestions_label')}</p>
+          <p className="mb-4">{t('track_progress')}</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             {selectedSuggestions.map((s, idx) => {
               const isMerged = selectedSuggestions.some((other, j) =>
@@ -414,7 +416,7 @@ export default function PageAnalyze() {
                   <div className="text-xs text-[var(--muted-foreground)]">{type} in {s.concept || "(No Concept)"}</div>
                   {!s.concept && (
                     <div className="text-red-500 text-xs flex items-center gap-1 mt-1">
-                      <AlertTriangle className="w-3 h-3" /> Missing concept
+                      <AlertTriangle className="w-3 h-3" /> {t('missing_concept')}
                     </div>
                   )}
                 </div>
@@ -432,7 +434,7 @@ export default function PageAnalyze() {
         onClick={goBackSubStep}
         className="px-4 py-2 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-bold shadow hover:bg-[var(--accent)]/30 transition"
       >
-        Back
+        {t('back')}
       </button>
 
       {step === 2 && subStep === 'c' && (
@@ -444,10 +446,10 @@ export default function PageAnalyze() {
             onChange={(e) => setBulkAcceptUpdates(e.target.checked)}
             className="accent-[var(--primary)]"
           />
-          Automatically apply all <span className="font-semibold text-blue-500">Update</span> suggestions without review
+          {t('auto_apply_updates')} 
         </label>
         <p className="text-xs text-[var(--muted-foreground)] ml-6 mt-1">
-          These pages will be directly updated and won’t appear in the next step.
+          {t('auto_apply_updates_desc')}
         </p>
       </div>
     )}
@@ -456,7 +458,7 @@ export default function PageAnalyze() {
           onClick={advanceSubStep}
           className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-bold shadow hover:bg-[var(--accent)] transition"
         >
-          Continue to Step {subStep === 'a' ? '2B' : '2C'}
+          {t('continue_to_step')} {subStep === 'a' ? '2B' : '2C'}
         </button>
       ) : (
         <button
@@ -464,7 +466,7 @@ export default function PageAnalyze() {
           disabled={loading}
           className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-bold shadow hover:bg-[var(--accent)] transition disabled:opacity-50"
         >
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : "Inscribe Legends!"}
+          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('processing')}</> : t('inscribe_legends')}
         </button>
       )}
     </div>
@@ -474,8 +476,8 @@ export default function PageAnalyze() {
 {step === 3 && generatedPages.length > 0 && (
   <>
     <AgentBubble agent={agent}>
-      <b>Final Step: Review and Approve</b><br />
-      “Here are the drafts of the reviewed suggestions!Read them all, change them all, and decide what you want to do with them...”
+      <b>{t('final_step_review')}</b><br />
+      {t('final_step_desc')}
     </AgentBubble>
 
     <div className="w-full max-w-screen-2xl mx-auto px-4">
@@ -513,7 +515,7 @@ export default function PageAnalyze() {
                 />
               )}
               <h3 className="text-xl font-bold text-[var(--primary)]">
-                {concepts?.find(c => c.id === p.concept_id)?.name || "Unknown Concept"}
+                {concepts?.find(c => c.id === p.concept_id)?.name || t('unknown_concept')}
               </h3>
             </div>
 
