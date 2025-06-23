@@ -12,6 +12,7 @@ import WorldFormModal from "./WorldFormModal";
 import ImportWorldModal from "../importexport/ImportWorldModal";
 import { ConfirmDeleteWorldModal } from "../template/ConfirmModal";
 import WorldCard from "./WorldCard";
+import { useTranslation } from "../../hooks/useTranslation";
 
 
 export default function DashboardWorlds({
@@ -20,6 +21,7 @@ export default function DashboardWorlds({
   showCreateButton = true,
   linkURL = "worlds",
 }) {
+  const { t } = useTranslation();
   const { user, token } = useAuth();
   const { worlds, mutate, isLoading, error } = useWorlds(token);
 
@@ -40,11 +42,11 @@ export default function DashboardWorlds({
     try {
       await createGameWorld(data, token);
       setCreateModalOpen(false);
-      setShowSuccess("World created!");
+      setShowSuccess(t("world_created"));
       setTimeout(() => setShowSuccess(""), 1800);
       mutate();
     } catch (err) {
-      setFormError(err?.detail || err?.message || "Failed to create world");
+      setFormError(err?.detail || err?.message || t("failed_create_world"));
     }
     setLoading(false);
   }
@@ -57,11 +59,11 @@ export default function DashboardWorlds({
       await updateGameWorld(editingWorld.id, data, token);
       setEditModalOpen(false);
       setEditingWorld(null);
-      setShowSuccess("World updated!");
+      setShowSuccess(t("world_updated"));
       setTimeout(() => setShowSuccess(""), 1800);
       mutate();
     } catch (err) {
-      setFormError(err?.detail || err?.message || "Failed to update world");
+      setFormError(err?.detail || err?.message || t("failed_update_world"));
     }
     setLoading(false);
   }
@@ -73,11 +75,11 @@ export default function DashboardWorlds({
     try {
       await deleteGameWorld(deletingWorld.id, token);
       setDeletingWorld(null);
-      setShowSuccess("World deleted!");
+      setShowSuccess(t("world_deleted"));
       setTimeout(() => setShowSuccess(""), 1800);
       mutate();
     } catch (err) {
-      setFormError(err?.detail || err?.message || "Failed to delete world");
+      setFormError(err?.detail || err?.message || t("failed_delete_world"));
     }
     setLoading(false);
   }
@@ -86,14 +88,14 @@ export default function DashboardWorlds({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <span className="text-lg text-[var(--primary)] animate-pulse">Loading worlds...</span>
+        <span className="text-lg text-[var(--primary)] animate-pulse">{t("loading_worlds")}</span>
       </div>
     );
   }
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <span className="text-lg text-red-500">Error loading worlds. Please try again.</span>
+        <span className="text-lg text-red-500">{t("error_loading_worlds")}</span>
       </div>
     );
   }
@@ -104,21 +106,21 @@ export default function DashboardWorlds({
     return (
       <div className="w-full flex flex-col items-center justify-center my-20 opacity-80">
         <span className="text-6xl mb-2">✨</span>
-        <h3 className="text-xl font-bold mb-1">No worlds yet!</h3>
-        <p className="mb-3 text-sm">Create your first universe to begin your adventure.</p>
+        <h3 className="text-xl font-bold mb-1">{t("no_worlds_yet")}</h3>
+        <p className="mb-3 text-sm">{t("no_worlds_yet_desc")}</p>
         {hasRole(user?.role, "world builder") && (
           <div className="flex gap-3">
             <button
               className="px-6 py-2 rounded-xl font-bold shadow bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--accent)] hover:text-[var(--primary)] border border-[var(--primary)]/30 transition"
               onClick={() => setCreateModalOpen(true)}
             >
-              + Create World
+              {"+ " + t("create_world")}
             </button>
             <button
               className="px-6 py-2 rounded-xl font-semibold shadow bg-transparent border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--surface-variant)] transition"
               onClick={() => setImportModalOpen(true)}
             >
-              ⬆ Import World
+              {"⬆ " + t("import_world")}
             </button>
           </div>
         )}
@@ -178,13 +180,13 @@ export default function DashboardWorlds({
             className="px-6 py-2 rounded-xl font-bold shadow bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--accent)] hover:text-[var(--primary)] border border-[var(--primary)]/30 transition"
             onClick={() => setCreateModalOpen(true)}
           >
-            + Create World
+            {"+ " + t("create_world")}
           </button>
           <button
             className="px-6 py-2 rounded-xl font-semibold shadow bg-transparent border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--surface-variant)] transition"
             onClick={() => setImportModalOpen(true)}
           >
-            ⬆ Import World
+            {"⬆ " + t("import_world")}
           </button>
         </div>
       )}
@@ -217,7 +219,7 @@ export default function DashboardWorlds({
           className="fixed bottom-8 right-8 bg-[var(--primary)] text-[var(--primary-foreground)] font-bold py-3 px-6 rounded-full shadow-lg hover:bg-[var(--accent)] hover:text-[var(--background)] border border-[var(--primary)]/30 transition md:hidden"
           onClick={() => setCreateModalOpen(true)}
         >
-          + Create World
+          {"+ " + t("create_world")}
         </button>
       )}
 
