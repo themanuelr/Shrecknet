@@ -2,28 +2,30 @@
 "use client";
 import FeatureCard from "./FeatureCard";
 import { Globe, Users, Bot, Dice5 } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export default function Features({ className = "", forceGrid = false }) {
+  const { t } = useTranslation();
   const features = [
     {
       icon: <Globe className="w-8 h-8" />,
-      title: "Visit Worlds",
-      desc: "Visit our ever-expanding rich RPG settings with pages, concepts and groups.",
+      title: t("visit_worlds"),
+      desc: t("visit_worlds_desc"),
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Collaborate",
-      desc: "Invite players and co-writers to shape our adventures together.",
+      title: t("collaborate"),
+      desc: t("collaborate_desc"),
     },
     {
       icon: <Bot className="w-8 h-8" />,
-      title: "Talk to our Elders",
-      desc: "Talk to our Agentic AI NPCs about the worlds, the game rules or anything you wish.",
+      title: t("talk_elders"),
+      desc: t("talk_elders_desc"),
     },
     {
       icon: <Dice5 className="w-8 h-8" />,
-      title: "Virtual Table",
-      desc: "Jump into your online table powered by Foundry with a single click.",
+      title: t("virtual_table"),
+      desc: t("virtual_table_desc"),
     },
   ];
   return (

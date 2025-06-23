@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useAuth } from "./components/auth/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
+import { useTranslation } from "./hooks/useTranslation";
 import Image from "next/image";
 import AuthCard from "./components/auth/AuthCard";
 import Starfield from "./components/template/Starfield";
@@ -14,6 +15,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const firstLogin = searchParams.get("firstLogin");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!loading && user) {
@@ -22,7 +24,9 @@ function LoginPageContent() {
   }, [loading, user, router]);
 
   if (loading) {
-    return <div className="w-full text-center py-10 text-primary">Loading...</div>;
+    return (
+      <div className="w-full text-center py-10 text-primary">{t("loading")}</div>
+    );
   }
   if (user) return null;
 
@@ -49,20 +53,19 @@ function LoginPageContent() {
         {/* RIGHT: Hero text + login */}
         <div className="flex flex-col items-center w-full max-w-lg md:max-w-xl lg:max-w-2xl px-3 md:px-0">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-center bg-gradient-to-r from-[#e0c3fc] via-[#7b2ff2] to-[#5f166e] bg-clip-text text-transparent drop-shadow-lg mb-1 animate-fadeIn">
-            Welcome to <span className="text-white">Shrecknet</span>
+            {t("welcome")}
           </h1>
           <div className="mb-3 text-lg md:text-xl font-semibold text-center text-[var(--primary)] animate-fadeIn">
-            You Build, We Forge!
+            {t("tagline")}
           </div>
           <div className="mb-8 max-w-xl mx-auto text-base md:text-lg text-center text-white/90 animate-fadeIn">
-            Enter a universe of creation, collaboration, and discovery.<br />
-            <span className="text-white">Shrecknet</span> is your forge for worlds, characters, and adventures – powered by Generative AI and built for storytellers, players, and adventurers.
+            {t("description")}
           </div>
           <div
             className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-white/20 backdrop-blur-[18px] bg-white/10 p-7 animate-fadeIn flex flex-col gap-2"
             style={{ boxShadow: "0 8px 60px 0 #7b2ff244, 0 2px 10px #2e205988" }}
           >
-            <AuthCard initialError={firstLogin ? "Please log in first" : undefined} />
+          <AuthCard initialError={firstLogin ? t("first_login_error") : undefined} />
           </div>
         </div>
       </section>
