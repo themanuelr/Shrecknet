@@ -74,7 +74,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
 
 export default function SuggestionsPage() {
   const { agentID, jobID } = useParams();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const router = useRouter();
 
   const [job, setJob] = useState<any>(null);
@@ -240,7 +240,10 @@ export default function SuggestionsPage() {
                 {subStep === 'a' && (
                   <>
                     <b>Step 2A: Remove Unworthy Suggestions</b>
-                    <br />Begin by eliminating any irrelevant or incorrect suggestions.
+                    <br />
+                    {user?.nickname
+                      ? `${user.nickname}, begin by eliminating any irrelevant or incorrect suggestions.`
+                      : 'Begin by eliminating any irrelevant or incorrect suggestions.'}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
                       Click “Remove” on any suggestion you don't want to keep.
                     </p>
@@ -249,7 +252,10 @@ export default function SuggestionsPage() {
                 {subStep === 'b' && (
                   <>
                     <b>Step 2B: Merge Similar Suggestions</b>
-                    <br />Now, group together suggestions that refer to the same topic.
+                    <br />
+                    {user?.nickname
+                      ? `${user.nickname}, now group together suggestions that refer to the same topic.`
+                      : 'Now, group together suggestions that refer to the same topic.'}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
                       Use the “Merge With” dropdown on each card to link related suggestions.
                     </p>
@@ -258,7 +264,10 @@ export default function SuggestionsPage() {
                 {subStep === 'c' && (
                   <>
                     <b>Step 2C: Finalize Pages</b>
-                    <br />Time to assign concepts and decide whether to create or update pages.
+                    <br />
+                    {user?.nickname
+                      ? `${user.nickname}, time to assign concepts and decide whether to create or update pages.`
+                      : 'Time to assign concepts and decide whether to create or update pages.'}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
                       Set the action, select the target concept, and pick an existing page if updating.
                     </p>

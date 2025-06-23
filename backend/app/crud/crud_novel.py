@@ -76,7 +76,9 @@ async def create_novel(
                 {"role": "system", "content": helper_content},
                 {"role": "user", "content": group_text},
             ]
-            helper_resp = await chat_with_agent(session, world_agent_id, helper_msgs)
+            helper_resp = await chat_with_agent(
+                session, world_agent_id, helper_msgs, user_nickname=None
+            )
             world_info = helper_resp.get("answer", "")
 
         prev_summary = " ".join(summaries[-3:])
@@ -102,7 +104,9 @@ async def create_novel(
             {"role": "system", "content": base_prompt},
             {"role": "user", "content": group_text},
         ]
-        resp = await chat_with_agent(session, agent.id, messages)
+        resp = await chat_with_agent(
+            session, agent.id, messages, user_nickname=None
+        )
         output = resp.get("answer", "")
         # Parse output
         if "\nSummary:" in output:
@@ -132,7 +136,9 @@ async def create_novel(
             {"role": "system", "content": critic_prompt},
             {"role": "user", "content": full_summary},
         ]
-        critic_resp = await chat_with_agent(session, critic_agent_id, critic_messages)
+        critic_resp = await chat_with_agent(
+            session, critic_agent_id, critic_messages, user_nickname=None
+        )
         critic_notes = critic_resp.get("answer", "")
 
     # Second rewrite incorporating critic suggestions
@@ -170,7 +176,9 @@ async def create_novel(
             {"role": "system", "content": rewrite_prompt},
             {"role": "user", "content": chunk},
         ]
-        resp = await chat_with_agent(session, agent.id, messages)
+        resp = await chat_with_agent(
+            session, agent.id, messages, user_nickname=None
+        )
         rewritten = resp.get("answer", "")
 
         if world_agent_id:
@@ -178,7 +186,9 @@ async def create_novel(
                 {"role": "system", "content": "Provide additional world details for this text."},
                 {"role": "user", "content": rewritten},
             ]
-            helper_resp = await chat_with_agent(session, world_agent_id, helper_msgs)
+            helper_resp = await chat_with_agent(
+                session, world_agent_id, helper_msgs, user_nickname=None
+            )
             rewritten = rewritten + " " + helper_resp.get("answer", "")
 
         final_sections2.append(rewritten)

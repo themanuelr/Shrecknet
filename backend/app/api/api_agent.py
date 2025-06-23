@@ -187,7 +187,12 @@ async def chat(
     history = crud_chat_history.load_history(user.id, agent_id)
     user_msg = msgs[-1] if msgs else {"role": "user", "content": ""}
     chat_messages = history + [user_msg]
-    assistant_resp = await chat_with_agent(session, agent_id, chat_messages)
+    assistant_resp = await chat_with_agent(
+        session,
+        agent_id,
+        chat_messages,
+        user_nickname=user.nickname,
+    )
 
     assistant_msg = {"role": "assistant", "content": assistant_resp["answer"]}
     if assistant_resp.get("sources"):
