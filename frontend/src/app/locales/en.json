@@ -80,6 +80,19 @@
   "desc_agent_writer": "Automate and review page creation, linking, and summaries.",
   "desc_agent_novelist": "Generate adventure hooks, session logs, and dramatic retellings.",
   "desc_agent_specialist": "Niche agents for specific game mechanics or moderation.",
+
+  "elders_title": "The Elders",
+  "elders_description": "Step into the council chamber of Shrecknet and meet its wisest beings. Each Elder guards the lore of a unique world and is eager to share their knowledge with you.",
+  "loading_elders": "Loading elders...",
+  "speak_with_elder": "Speak with this Elder",
+  "clear_chat": "Clear chat",
+  "thinking": "Thinking...",
+  "relevant_sources": "Relevant Sources",
+  "type_message": "Type your message...",
+  "send": "Send",
+  "delete_chat_confirm": "This will permanently delete your chat history with this Elder. Continue?",
+  "generic_error": "Sorry, something went wrong."
+
   "explore_worlds_title": "Explore Worlds",
   "explore_worlds_desc": "Worlds are unique RPG universes—create, explore, and visit them all from here.",
   "loading_worlds": "Loading worlds...",
@@ -182,4 +195,5 @@
   "fail_generate_pages": "Failed to generate pages",
   "based_on_what_i_wrote": "Based on what I wrote, this is what I will add to this page:",
   "page_information": "And here is the page's information:"
+
 }

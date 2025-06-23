@@ -2,12 +2,14 @@
 import DashboardLayout from "../components/DashboardLayout";
 import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
+import { useTranslation } from "../hooks/useTranslation";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function EldersPage() {
   const { agents, isLoading } = useAgents();
   const { worlds } = useWorlds();
+  const { t } = useTranslation();
 
   const conversational = agents.filter(a => a.task === "conversational");
   const worldName = (id: number) => worlds.find(w => w.id === id)?.name || "";
@@ -17,14 +19,14 @@ export default function EldersPage() {
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 py-10">
         <div className="flex flex-col items-center mb-8 text-center">
           <h1 className="font-serif text-3xl md:text-5xl font-bold text-[var(--primary)] mb-2 tracking-tight">
-            The Elders
+            {t("elders_title")}
           </h1>
           <p className="text-base md:text-lg text-[var(--foreground)]/70 max-w-2xl">
-            Step into the council chamber of Shrecknet and meet its wisest beings. Each Elder guards the lore of a unique world and is eager to share their knowledge with you.
+            {t("elders_description")}
           </p>
         </div>
         {isLoading ? (
-          <div className="text-center text-lg text-[var(--primary)]">Loading elders...</div>
+          <div className="text-center text-lg text-[var(--primary)]">{t("loading_elders")}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
             {conversational.map(agent => (
@@ -47,7 +49,7 @@ export default function EldersPage() {
                   {worldName(agent.world_id)}
                 </p>
                 <p className="text-xs text-center text-[var(--foreground)]/60 group-hover:text-[var(--primary)]">
-                  Speak with this Elder
+                  {t("speak_with_elder")}
                 </p>
               </Link>
             ))}
