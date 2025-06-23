@@ -10,9 +10,12 @@ import { getGameWorlds } from "@/app/lib/gameworldsAPI";
 import { MdPublic } from "react-icons/md";
 import { RiFile3Line } from "react-icons/ri";
 import { useRouter } from "next/navigation";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export default function TopBar() {
   const { user, logout, token } = useAuth();
+  const { t } = useTranslation();
   const showCreatePage =
     user &&
     (user.role === "writer" ||
@@ -118,7 +121,7 @@ export default function TopBar() {
               border border-[var(--primary)]/70 shadow-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] focus:outline-none
               placeholder:text-[var(--primary)]/70 text-base transition
               font-semibold"
-            placeholder="Search for a page…"
+            placeholder={t("search_placeholder")}
             value={searchValue}
             onFocus={() => setSearchOpen(true)}
             onChange={(e) => {
@@ -145,7 +148,7 @@ export default function TopBar() {
               fontWeight: 500,
               letterSpacing: ".01em",
             }}
-            aria-label="Search pages"
+            aria-label={t("search_placeholder")}
           />
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-[var(--primary)]/70" />
           {searchOpen && searchValue.length > 1 && (
@@ -161,9 +164,9 @@ export default function TopBar() {
               }}
             >
               {isLoading ? (
-                <div className="py-4 px-5 text-sm text-[var(--primary)]/80">Loading…</div>
+                <div className="py-4 px-5 text-sm text-[var(--primary)]/80">{t("loading")}</div>
               ) : searchResults.length === 0 ? (
-                <div className="py-4 px-5 text-sm text-[var(--primary)]/70">No results found</div>
+                <div className="py-4 px-5 text-sm text-[var(--primary)]/70">{t("no_results_found")}</div>
               ) : (
                 searchResults.map((page, i) => {
                   const world = worldsMap[page.world_id || page.gameworld_id];
@@ -226,9 +229,10 @@ export default function TopBar() {
             }}
           >
             <FaBookmark className="text-lg" />
-            <span className="hidden sm:inline">Create Page</span>
+            <span className="hidden sm:inline">{t("create_page")}</span>
           </Link>
         )}
+        <LanguageSwitcher className="w-24" />
         <ThemeToggle />
         <button
           onClick={() => {
@@ -238,7 +242,7 @@ export default function TopBar() {
           className="px-3 py-2 rounded-xl bg-transparent hover:bg-[var(--primary)] text-[var(--primary)] hover:text-[var(--primary-foreground)] border border-[var(--primary)] shadow-none font-semibold flex items-center gap-1 transition"
         >
           <FaSignOutAlt className="text-lg" />
-          <span className="hidden sm:inline">Logout</span>
+          <span className="hidden sm:inline">{t("logout")}</span>
         </button>
       </div>
     </header>

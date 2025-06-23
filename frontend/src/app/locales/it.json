@@ -25,5 +25,20 @@
   "talk_elders": "Parla con i nostri Anziani",
   "talk_elders_desc": "Parla con i nostri NPC IA sui mondi, le regole di gioco o qualsiasi cosa desideri.",
   "virtual_table": "Tavolo Virtuale",
-  "virtual_table_desc": "Entra nel tuo tavolo online con Foundry con un solo clic."
+  "virtual_table_desc": "Entra nel tuo tavolo online con Foundry con un solo clic.",
+  "search_placeholder": "Cerca una pagina…",
+  "no_results_found": "Nessun risultato",
+  "create_page": "Crea Pagina",
+  "logout": "Esci",
+  "see_all_pages": "Vedi Tutte le Pagine",
+  "ai_world_elders": "Anziani del Mondo AI",
+  "ai_system_specialists": "Specialisti di Sistema AI",
+  "ai_page_writers": "Scrittori di Pagine AI",
+  "ai_adventure_novelists": "Romanzieri di Avventure AI",
+  "world_builder": "Costruttore di Mondi",
+  "system_settings": "Impostazioni di Sistema",
+  "worlds": "Mondi",
+  "hi": "Ciao!",
+  "personalize": "Personalizza",
+  "profile_updated_success": "Profilo aggiornato con successo!"
 }

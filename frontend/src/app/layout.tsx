@@ -3,7 +3,6 @@ import { AuthProvider } from "./components/auth/AuthProvider";
 import GlobalAuthRedirect from "./components/auth/GlobalAuthRedirect";
 import { ThemeProvider } from "./hooks/useThemes";
 import { TranslationProvider } from "./hooks/useTranslation";
-import LanguageSwitcher from "./components/LanguageSwitcher";
 import Script from "next/script";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +24,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TranslationProvider>
           <AuthProvider>
             <ThemeProvider>
-              <LanguageSwitcher />
               <GlobalAuthRedirect />
               {children}
             </ThemeProvider>
