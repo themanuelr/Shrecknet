@@ -25,5 +25,20 @@
   "talk_elders": "Talk to our Elders",
   "talk_elders_desc": "Talk to our Agentic AI NPCs about the worlds, the game rules or anything you wish.",
   "virtual_table": "Virtual Table",
-  "virtual_table_desc": "Jump into your online table powered by Foundry with a single click."
+  "virtual_table_desc": "Jump into your online table powered by Foundry with a single click.",
+  "search_placeholder": "Search for a page…",
+  "no_results_found": "No results found",
+  "create_page": "Create Page",
+  "logout": "Logout",
+  "see_all_pages": "See All Pages",
+  "ai_world_elders": "AI World Elders",
+  "ai_system_specialists": "AI System Specialists",
+  "ai_page_writers": "AI Page Writers",
+  "ai_adventure_novelists": "AI Adventure Novelists",
+  "world_builder": "World Builder",
+  "system_settings": "System Settings",
+  "worlds": "Worlds",
+  "hi": "Hi!",
+  "personalize": "Personalize",
+  "profile_updated_success": "Profile updated with success!"
 }

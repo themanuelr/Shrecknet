@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthProvider";
 import UserModal from "../user_management/User_Modal";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "../../hooks/useTranslation";
 
 // Material Symbols
 import PublicIcon from "@mui/icons-material/Public";
@@ -16,6 +17,7 @@ import { Bot, BookOpenText, PenLine, Sparkles } from "lucide-react";
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }) {
   const { user, token, isLoading: authLoading, refreshUser } = useAuth();
+  const { t } = useTranslation();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState("");
   const [profileError, setProfileError] = useState("");
@@ -25,7 +27,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
   async function handleProfileSave() {
     if (typeof refreshUser === "function") await refreshUser();
     setProfileModalOpen(false);
-    setProfileSuccess("Profile updated with success!");
+    setProfileSuccess(t("profile_updated_success"));
     setTimeout(() => setProfileSuccess(""), 2000);
   }
   function handleProfileError(msg) {
@@ -36,50 +38,50 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
   // Menu Items
   const menu = [
     {
-      label: "Virtual Table",
+      label: t("virtual_table"),
       icon: <CasinoRoundedIcon fontSize="medium" />,
       href: "https://foundry.shrecknet.club",
       external: true,
       show: true,
     },
     {
-      label: "Worlds",
+      label: t("worlds"),
       icon: <PublicIcon fontSize="medium" />,
       href: "/worlds",
       external: false,
       show: true,
     },
     {
-      label: "See All Pages",
+      label: t("see_all_pages"),
       icon: <BookOpenText fontSize="medium" />,
       href: "/all_pages",
       external: false,
       show: user && ["writer", "system admin"].includes(user.role),
     },
     {
-      label: "AI World Elders",
+      label: t("ai_world_elders"),
       icon: <GroupRoundedIcon fontSize="medium" />,
       href: "/elders",
       external: false,
       show: true,
     },
     {
-      label: "AI System Specialists",
+      label: t("ai_system_specialists"),
       icon: <Sparkles fontSize="medium" />,
       href: "/ai_specialist",
       external: false,
       show: true,
-    },    
+    },
 
     {
-      label: "AI Page Writers",
+      label: t("ai_page_writers"),
       icon: <Bot fontSize="medium" />,
       href: "/agent_writer",
       external: false,
       show: user && ["writer", "system admin"].includes(user.role),
     },
     {
-      label: "AI Adventure Novelists",
+      label: t("ai_adventure_novelists"),
       icon: <PenLine fontSize="medium" />,
       href: "/ai_novelist",
       external: false,
@@ -87,21 +89,21 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
     },
 
     {
-      label: "World Builder",
+      label: t("world_builder"),
       icon: <BuildRoundedIcon fontSize="medium" />,
       href: "/world_builder",
       external: false,
       show: user && ["world builder", "system admin"].includes(user.role),
-    },    
+    },
  
   
     {
-      label: "System Settings",
+      label: t("system_settings"),
       icon: <GroupRoundedIcon fontSize="medium" />,
       href: "/system_settings",
       external: false,
       show: user && user.role === "system admin",
-    },    
+    },
   ];
 
   // Don't render if not logged in
@@ -210,10 +212,10 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => {} }
             />
           </div>
           <div className="font-bold text-[var(--primary)] text-lg capitalize flex items-center gap-2">
-            {user?.nickname || "Hi!"}
+            {user?.nickname || t("hi")}
             <button
               className="ml-1 p-1 text-[var(--primary)]/80 hover:text-[var(--primary)] transition"
-              title="Personalize"
+              title={t("personalize")}
               onClick={() => setProfileModalOpen(true)}
             >
               <PersonEditAlt1RoundedIcon style={{ fontSize: 20 }} />
