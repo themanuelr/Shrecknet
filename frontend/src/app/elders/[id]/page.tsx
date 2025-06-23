@@ -161,6 +161,11 @@ export default function ElderChatPage() {
                     <Image src={agent?.logo || "/images/default/avatars/logo.png"} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover mr-2 self-end" />
                   )}
                   <div className={`${m.role === "user" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "bg-[var(--surface-variant)]"} rounded-xl px-3 py-2 shadow max-w-[80%] whitespace-pre-wrap`}>
+                    {m.role === "assistant" && (
+                      <div className="text-xs font-semibold text-[var(--primary)] mb-1">
+                        {agent?.name}
+                      </div>
+                    )}
                     {loading && idx === messages.length - 1 && m.role === "assistant" && m.content === "" ? (
                       <span className="flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" /> Thinking...</span>
                     ) : (

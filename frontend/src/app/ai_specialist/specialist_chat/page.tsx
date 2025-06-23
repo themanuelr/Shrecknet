@@ -434,6 +434,11 @@ function SpecialistChatPageContent() {
                       animate={{ scale: 1, y: 0, opacity: 1 }}
                       transition={{ type: "spring", stiffness: 260, damping: 18 }}
                     >
+                      {m.role === "assistant" && (
+                        <div className="text-xs font-semibold text-fuchsia-700 mb-1">
+                          {agent?.name}
+                        </div>
+                      )}
                       {renderMessageContent(m, idx, m.role === "assistant")}
                     </motion.div>
                     {m.role === "user" && user?.image_url && (
