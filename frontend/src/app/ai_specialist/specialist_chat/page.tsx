@@ -181,7 +181,7 @@ function SpecialistChatPageContent() {
 
   useEffect(() => {
     if (!agentId) return;
-    getSpecialistHistory(agentId, token || "")
+    getSpecialistHistory(agentId, token || "", 10)
       .then((msgs) => {
         setAllMessages(msgs as ChatMessage[]);
         setMessages((msgs as ChatMessage[]).slice(-10));
@@ -265,6 +265,17 @@ function SpecialistChatPageContent() {
     }
   }
 
+  async function handleOpenHistory() {
+    if (!agentId) return;
+    try {
+      const full = await getSpecialistHistory(agentId, token || "", 1000);
+      setAllMessages(full as ChatMessage[]);
+      setShowHistoryModal(true);
+    } catch {
+      setShowHistoryModal(true);
+    }
+  }
+
   function renderMessageContent(msg: ChatMessage, idx: number, isAssistant: boolean) {
     // If last assistant message and loading, use typewriter
     if (isAssistant && loading && idx === messages.length - 1) {
@@ -330,9 +341,9 @@ function SpecialistChatPageContent() {
             <div className="flex items-center gap-2 mb-2">
               <button
                 className="ml-auto text-xs text-fuchsia-600 underline"
-                onClick={() => setShowHistoryModal(true)}
+                onClick={handleOpenHistory}
               >
-                See whole chat
+                See chat history
               </button>
               <button
                 className="text-xs text-red-600 underline"

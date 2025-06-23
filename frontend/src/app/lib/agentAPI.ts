@@ -96,8 +96,12 @@ export async function chatTest(
   return await res.json();
 }
 
-export async function getChatHistory(agentId: number, token: string) {
-  const res = await fetch(`${API_URL}/agents/${agentId}/history`, {
+export async function getChatHistory(
+  agentId: number,
+  token: string,
+  limit = 20,
+) {
+  const res = await fetch(`${API_URL}/agents/${agentId}/history?limit=${limit}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw await res.text();

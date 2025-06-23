@@ -97,10 +97,17 @@ export async function chatWithSpecialist(
   return (await res.json()) as { answer: string; sources: SourceLink[] };
 }
 
-export async function getSpecialistHistory(agentId: number, token: string) {
-  const res = await fetch(`${API_URL}/specialist_agents/${agentId}/history`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+export async function getSpecialistHistory(
+  agentId: number,
+  token: string,
+  limit = 20,
+) {
+  const res = await fetch(
+    `${API_URL}/specialist_agents/${agentId}/history?limit=${limit}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
+  );
   if (!res.ok) throw await res.text();
   const data = await res.json();
   return data.messages || [];

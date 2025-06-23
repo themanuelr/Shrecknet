@@ -205,9 +205,13 @@ async def chat(
 
 
 @router.get("/{agent_id}/history")
-async def chat_history(agent_id: int, user: User = Depends(get_current_user)):
+async def chat_history(
+    agent_id: int,
+    limit: int = 20,
+    user: User = Depends(get_current_user),
+):
     messages = crud_chat_history.load_history(user.id, agent_id)
-    return {"messages": messages[-20:]}
+    return {"messages": messages[-limit:]}
 
 
 @router.delete("/{agent_id}/history")

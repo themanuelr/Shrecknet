@@ -6,10 +6,12 @@ import { Loader2 } from "lucide-react";
 import { useAgents } from "../../lib/useAgents";
 import { useAuth } from "../auth/AuthProvider";
 import WikiLinkHoverCard from "../editor/WikiLinkHoverCard";
+import ModalContainer from "./modalContainer";
 import {
   chatWithAgent,
   ChatMessage,
   getChatHistory,
+  SourceLink,
 } from "../../lib/agentAPI";
 
 export default function ChatPanel({
@@ -33,6 +35,9 @@ export default function ChatPanel({
   const [btnHover, setBtnHover] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [sourceLinks, setSourceLinks] = useState<SourceLink[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,12 +60,19 @@ export default function ChatPanel({
 
   useEffect(() => {
     if (selectedAgentId === null) return;
-    getChatHistory(selectedAgentId, token || "")
+    getChatHistory(selectedAgentId, token || "", 10)
       .then((msgs) => {
-        setMessages(msgs as ChatMessage[]);
+        setAllMessages(msgs as ChatMessage[]);
+        setMessages((msgs as ChatMessage[]).slice(-10));
+        const last = [...(msgs as ChatMessage[])].reverse().find(m => m.role === "assistant" && m.sources);
+        setSourceLinks(last?.sources || []);
         scrollToBottom();
       })
-      .catch(() => setMessages([]));
+      .catch(() => {
+        setMessages([]);
+        setAllMessages([]);
+        setSourceLinks([]);
+      });
   }, [selectedAgentId, token]);
 
   function scrollToBottom() {
@@ -73,8 +85,10 @@ export default function ChatPanel({
     e.preventDefault();
     if (!input.trim() || selectedAgentId === null) return;
     const newMsg: ChatMessage = { role: "user", content: input.trim() };
-    const updated = [...messages, newMsg];
-    setMessages(updated);
+    const updatedAll = [...allMessages, newMsg];
+    setAllMessages(updatedAll);
+    const display = [...messages, newMsg].slice(-10);
+    setMessages(display);
     setInput("");
     scrollToBottom();
     setLoading(true);
@@ -82,23 +96,38 @@ export default function ChatPanel({
     try {
       const { answer, sources } = await chatWithAgent(
         selectedAgentId,
-        updated,
+        updatedAll,
         token || ""
       );
+      setAllMessages(m => [...m, { role: "assistant", content: answer, sources }]);
       setMessages(m => {
         const arr = [...m];
         arr[arr.length - 1] = { role: "assistant", content: answer, sources };
-        return arr;
+        return arr.slice(-10);
       });
+      setSourceLinks(sources || []);
       scrollToBottom();
     } catch {
+      setAllMessages(m => [...m, { role: "assistant", content: "Sorry, something went wrong." }]);
       setMessages(m => [
         ...m.slice(0, -1),
         { role: "assistant", content: "Sorry, something went wrong." },
-      ]);
+      ].slice(-10));
+      setSourceLinks([]);
       scrollToBottom();
     }
     setLoading(false);
+  }
+
+  async function handleOpenHistory() {
+    if (selectedAgentId === null) return;
+    try {
+      const full = await getChatHistory(selectedAgentId, token || "", 1000);
+      setAllMessages(full as ChatMessage[]);
+      setShowHistoryModal(true);
+    } catch {
+      setShowHistoryModal(true);
+    }
   }
 
   function renderMessageContent(msg: ChatMessage) {
@@ -111,17 +140,6 @@ export default function ChatPanel({
             {i < lines.length - 1 && <br />}
           </span>
         ))}
-        {msg.sources && msg.sources.length > 0 && (
-          <ul className="mt-1 text-xs space-y-1">
-            {msg.sources.map((s) => (
-              <li key={s.url}>
-                <WikiLinkHoverCard href={s.url}>
-                  {`<link ${s.title}>`}
-                </WikiLinkHoverCard>
-              </li>
-            ))}
-          </ul>
-        )}
       </>
     );
   }
@@ -166,15 +184,25 @@ export default function ChatPanel({
               )}
               <span className="text-xl font-bold text-[var(--primary)]">{selectedAgent?.name}</span>
             </div>
-            <button
-              onClick={() => {
-                setSelectedAgentId(null);
-                setMessages([]);
-              }}
-              className="text-sm text-purple-600 hover:underline"
-            >
-              Talk to another Elder
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpenHistory}
+                className="text-sm text-purple-600 hover:underline"
+              >
+                See chat history
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedAgentId(null);
+                  setMessages([]);
+                  setAllMessages([]);
+                  setSourceLinks([]);
+                }}
+                className="text-sm text-purple-600 hover:underline"
+              >
+                Talk to another Elder
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto space-y-4 pb-2">
             {messages.map((m, idx) => (
@@ -205,9 +233,29 @@ export default function ChatPanel({
             ))}
             <div ref={messagesEndRef} />
           </div>
+          {sourceLinks.length > 0 && (
+            <div className="mt-2 mb-2">
+              <span className="text-sm font-semibold text-purple-700">Sources:</span>
+              <ul className="text-xs flex flex-wrap gap-2 mt-1">
+                {sourceLinks.map((s) => (
+                  <li key={s.url}>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-purple-700"
+                    >
+                      {s.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <form onSubmit={handleSend} className="mt-2 flex gap-2">
-            <input
-              className="flex-1 rounded-xl border border-purple-300 p-2 bg-white text-purple-800 placeholder-purple-400 focus:outline-none"
+            <textarea
+              className="flex-1 rounded-xl border border-purple-300 p-2 bg-white text-purple-800 placeholder-purple-400 focus:outline-none resize-y"
+              rows={3}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
@@ -373,15 +421,25 @@ export default function ChatPanel({
             </div>
             <div className="flex items-center gap-2">
               {selectedAgent && (
-                <button
-                  onClick={() => {
-                    setSelectedAgentId(null);
-                    setMessages([]);
-                  }}
-                  className="text-sm text-purple-600 hover:underline"
-                >
-                  Talk to another Elder
-                </button>
+                <>
+                  <button
+                    onClick={handleOpenHistory}
+                    className="text-sm text-purple-600 hover:underline mr-2"
+                  >
+                    See chat history
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedAgentId(null);
+                      setMessages([]);
+                      setAllMessages([]);
+                      setSourceLinks([]);
+                    }}
+                    className="text-sm text-purple-600 hover:underline"
+                  >
+                    Talk to another Elder
+                  </button>
+                </>
               )}
               <button
                 onClick={onClose}
@@ -395,6 +453,28 @@ export default function ChatPanel({
         )}
         {open && panelContent}
       </div>
+      {showHistoryModal && (
+        <ModalContainer
+          title="Full Chat History"
+          onClose={() => setShowHistoryModal(false)}
+          className="max-w-2xl"
+        >
+          <div className="space-y-4">
+            {allMessages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`px-3 py-2 rounded-xl shadow max-w-[80%] ${m.role === "user" ? "bg-purple-200" : "bg-purple-50"} text-purple-900`}
+                >
+                  {renderMessageContent(m)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ModalContainer>
+      )}
     </>
   );
 }
