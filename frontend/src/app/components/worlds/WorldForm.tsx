@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { uploadImage } from "../../lib/uploadImage";
 import { M3FloatingInput } from "../template/M3FloatingInput";
+import { useTranslation } from "../hooks/useTranslation";
 
 async function uploadWorldLogo(file, worldName) {
   const safeWorldName = worldName.trim().replace(/[^a-zA-Z0-9_-]/g, "_") || "new_world";
@@ -19,6 +20,7 @@ export default function WorldForm({
   worlds,
   onCancel,
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: initialData?.name || "",
     system: initialData?.system || "",
@@ -51,11 +53,11 @@ export default function WorldForm({
     setLocalError("");
     // Local validation
     if (!form.name.trim() || !form.system.trim() || !form.description.trim()) {
-      setLocalError("Please fill in all fields.");
+      setLocalError(t("please_fill_fields"));
       return;
     }
     if (wordCount(form.description) > 50) {
-      setLocalError("Description can't be more than 50 words.");
+      setLocalError(t("description_limit"));
       return;
     }
     if (
@@ -64,7 +66,7 @@ export default function WorldForm({
         w => w.name.trim().toLowerCase() === form.name.trim().toLowerCase()
       )
     ) {
-      setLocalError("A world with this name already exists.");
+      setLocalError(t("duplicate_world"));
       return;
     }
     // Upload logo if a new file was picked
@@ -75,7 +77,7 @@ export default function WorldForm({
         logoUrl = await uploadWorldLogo(form.logo, form.name);
         setForm(f => ({ ...f, logo: null, logoUrl }));
       } catch (err) {
-        setLocalError("Image upload failed: " + err.message);
+        setLocalError(t("image_upload_failed") + " " + err.message);
         setUploading(false);
         return;
       }
@@ -110,7 +112,7 @@ export default function WorldForm({
 
       {/* World Name */}
       <M3FloatingInput
-        label="World Name"
+        label={t("world_name")}
         name="name"
         value={form.name}
         onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -121,25 +123,25 @@ export default function WorldForm({
 
       {/* Game System */}
       <M3FloatingInput
-        label="Game System"
+        label={t("game_system")}
         name="system"
         value={form.system}
         onChange={e => setForm(f => ({ ...f, system: e.target.value }))}
         required
         disabled={loading || uploading}
         maxLength={60}
-        placeholder="E.g. D&D 5e, Tormenta, etc."
+        placeholder={t("game_system_placeholder")}
       />
 
       {/* Description */}
       <div>
-        <span className="text-[var(--primary)] font-semibold text-base mb-2">Description</span>
+        <span className="text-[var(--primary)] font-semibold text-base mb-2">{t("description_label")}</span>
         <textarea
           name="description"
           value={form.description}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
           className="w-full min-h-[80px] max-h-[210px] rounded-xl border-2 border-[var(--border)] px-4 py-3 bg-[var(--surface)] text-[var(--foreground)] placeholder-[var(--primary)]/60 focus:outline-none focus:border-[var(--primary)] text-base transition"
-          placeholder="Describe your world (max 50 words)..."
+          placeholder={t("description_placeholder")}
           required
           disabled={loading || uploading}
           maxLength={4000}
@@ -151,7 +153,7 @@ export default function WorldForm({
 
       {/* Logo Upload */}
       <div>
-        <span className="block text-[var(--primary)] font-semibold text-base mb-1">World Logo</span>
+        <span className="block text-[var(--primary)] font-semibold text-base mb-1">{t("world_logo")}</span>
         <div className="flex items-center gap-4">
           <input
             type="file"
@@ -189,14 +191,14 @@ export default function WorldForm({
           onClick={onCancel}
           disabled={loading || uploading}
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           type="submit"
           className="px-6 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] font-bold rounded-xl shadow hover:bg-[var(--accent)] hover:text-[var(--background)] transition text-lg"
           disabled={loading || uploading}
         >
-          {loading || uploading ? "Saving..." : "Save"}
+          {loading || uploading ? t("saving") : t("save")}
         </button>
       </div>
     </form>

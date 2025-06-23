@@ -6,10 +6,12 @@ import { hasRole } from "@/app/lib/roles";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { HiOutlineLightBulb } from "react-icons/hi2";
 import { HiOutlineDocumentText } from "react-icons/hi2";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export default function WorldCard({ world, linkURL, showEdit, onEdit, onDelete }) {
   const { user } = useAuth();
   const { concepts, isLoading } = useConcepts(world.id);
+  const { t } = useTranslation();
 
   const conceptCount = concepts.length;
   const pagesCount = concepts.reduce((sum, c) => sum + (c.pages_count || 0), 0);
@@ -23,14 +25,14 @@ export default function WorldCard({ world, linkURL, showEdit, onEdit, onDelete }
         <div className="absolute right-5 top-5 z-30 flex flex-col gap-3 items-center">
           <button
             className="p-3 bg-white/70 border border-[var(--primary)] rounded-xl shadow hover:bg-[var(--primary)]/50 hover:scale-110 transition"
-            title="Edit"
+            title={t("edit_button")}
             onClick={() => onEdit(world)}
           >
             <FaEdit className="text-[var(--primary)]" />
           </button>
           <button
             className="p-3 bg-white/70 border border-red-300 rounded-xl shadow hover:bg-red-100 hover:scale-110 transition"
-            title="Delete"
+            title={t("delete_button")}
             onClick={() => onDelete(world)}
           >
             <FaTrash className="text-red-500" />
@@ -52,7 +54,7 @@ export default function WorldCard({ world, linkURL, showEdit, onEdit, onDelete }
           </h3>
           <div className="flex gap-4 text-xs text-white/90 mt-1">
             {isLoading ? (
-              <span>Loading...</span>
+              <span>{t("loading")}</span>
             ) : (
               <>
                 <span className="flex items-center gap-1 text-black/90 font-semibold"><HiOutlineLightBulb className="w-4 h-4 text-black" /> {conceptCount} Concept{conceptCount === 1 ? "" : "s"}</span>

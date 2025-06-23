@@ -16,11 +16,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useConcepts } from "@/app/lib/useConcept";
 import { HiOutlineDocumentText } from "react-icons/hi2";
+import { useTranslation } from "../../../hooks/useTranslation";
 export default function GroupPage({ params }) {
 
 
   const { worldID, groupID } = use(params);
   const { token } = useAuth();
+  const { t } = useTranslation();
 
   const router = useRouter();
 
@@ -41,7 +43,7 @@ export default function GroupPage({ params }) {
   if (loading || !world) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center text-[var(--primary)] text-lg">
-        Loading group...
+        {t("loading_group")}
       </div>
     );
   }
@@ -85,10 +87,10 @@ export default function GroupPage({ params }) {
           {/* Right: Info */}
           <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-3">
             <h1 className="text-2xl md:text-3xl font-bold text-[var(--primary)] mb-1">
-              Pages about <span className="underline">{groupID}</span>
+              {t("pages_about_group")} <span className="underline">{groupID}</span>
             </h1>
             <p className="text-base text-black/90 max-w-lg leading-relaxed">
-              Dive into the stories and lore grouped under <strong>{groupID}</strong>. These dominions represent a shared theme in your world.
+              {t("group_dive_into")} <strong>{groupID}</strong>.
             </p>
           </div>
         </div>

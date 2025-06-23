@@ -18,12 +18,14 @@ import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
 import ModalContainer from "../../components/template/modalContainer";
 import { useUsers } from "@/app/lib/useUsers";
 import { HiOutlineDocumentText } from "react-icons/hi2";
+import { useTranslation } from "../../hooks/useTranslation";
 import Image from "next/image";
 import { FaRegObjectGroup } from "react-icons/fa6"; // or FaUserFriends, FaRegObjectGroup, etc.
 import { FaUsers } from "react-icons/fa6"; // or FaUserFriends, FaRegObjectGroup, etc.
 
 export default function WorldDetailPage({ params }) {
   const { worldID } = use(params);
+  const { t } = useTranslation();
   const { user, token } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -62,8 +64,8 @@ export default function WorldDetailPage({ params }) {
     }
   }
   
-  if (loading) return <div>Loading world...</div>;
-  if (!world) return <div>World not found.</div>;
+  if (loading) return <div>{t("loading_world")}</div>;
+  if (!world) return <div>{t("world_not_found")}</div>;
 
   const canEditWorld = user && (user.role === "world builder" || user.role === "system admin");
   const highlightConcepts = concepts.filter(c => !c.group && c.display_on_world);
@@ -130,7 +132,7 @@ export default function WorldDetailPage({ params }) {
 
         {/* Highlight Concepts */}
         <div className="max-w-6xl mx-auto px-4 md:px-0 mb-10">
-  <h2 className="text-xl font-bold text-[var(--primary)] mb-4">Explore This World</h2>
+  <h2 className="text-xl font-bold text-[var(--primary)] mb-4">{t("explore_this_world")}</h2>
   <div  
     className="
       grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4
@@ -206,7 +208,7 @@ export default function WorldDetailPage({ params }) {
 
 <div className="max-w-6xl mx-auto px-4 md:px-0 mb-14">
   <h2 className="text-lg font-bold text-[var(--primary)] mb-8 flex items-center gap-2">
-    <FaUsers className="text-[var(--primary)]" /> Looking for something specific?
+    <FaUsers className="text-[var(--primary)]" /> {t("looking_for_something")}
   </h2>
   <div className="flex flex-wrap gap-4">
     {highlightGroups.map((group) => (
@@ -232,7 +234,7 @@ export default function WorldDetailPage({ params }) {
             select-none
             backdrop-blur-[5px]
           "
-          title="View group"
+          title={t("view_group")}
           tabIndex={0}
           style={{
             minWidth: "120px",
@@ -262,10 +264,10 @@ export default function WorldDetailPage({ params }) {
       className="w-24 h-24 rounded-full object-cover border-2 border-[var(--primary)] shadow-xl mb-4"
     />
     <h2 className="text-2xl md:text-3xl font-bold text-[var(--primary)] mb-2">
-      Meet the Agents of {world.name}
+      {t("meet_agents")} {world.name}
     </h2>
     <p className="text-base md:text-lg text-[var(--foreground)]/80 max-w-xl">
-      Speak with knowledgeable Elders or consult a Specialist dedicated to this world.
+      {t("agents_section_desc")}
     </p>
     <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
       <div className="absolute left-4 top-4 w-24 h-24 bg-[var(--primary)]/20 rounded-full blur-3xl animate-pulse" />
@@ -274,7 +276,7 @@ export default function WorldDetailPage({ params }) {
   </div>
 
   {agentsLoading ? (
-    <div className="text-center text-[var(--primary)]">Loading agents...</div>
+    <div className="text-center text-[var(--primary)]">{t("loading_agents")}</div>
   ) : (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
       {[...conversationalAgents, ...specialistAgents].map(agent => (
