@@ -92,45 +92,95 @@ function AgentAnimatedAvatar({ logo, emote = "normal" }: { logo?: string; emote?
   );
 }
 
-function TomeCard({ src, onDownload }: any) {
-  // fancier type/preview/tooltip logic can be added here!
+export function TomeCard({ src, onDownload }) {
+  const isFile = src.type === "file";
   return (
     <motion.div
-      className="bg-white border-2 border-fuchsia-300 rounded-xl shadow flex flex-col items-center p-2 hover:scale-105 hover:shadow-lg transition-all cursor-pointer"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      whileHover={{ scale: 1.07, boxShadow: "0 4px 16px #a78bfa44" }}
+      className="
+        bg-white/70 backdrop-blur-md rounded-xl shadow-sm
+        border border-fuchsia-100 hover:border-fuchsia-300
+        flex flex-col items-start gap-1 px-3 py-2
+        min-w-[170px] max-w-[220px] transition-all
+        hover:shadow-fuchsia-100/40
+        cursor-pointer group
+      "
+      whileHover={{
+        scale: 1.035,
+        boxShadow: "0 2px 12px #a78bfa22",
+      }}
     >
-      <div className="mb-1 flex items-center gap-1">
-        {src.type === "file" ? (
-          <File className="w-5 h-5 text-fuchsia-600" />
+      <div className="flex items-center gap-2 w-full">
+        {isFile ? (
+          <File className="w-4 h-4 text-fuchsia-600" />
         ) : (
-          <Link2 className="w-5 h-5 text-indigo-600" />
+          <Link2 className="w-4 h-4 text-indigo-600" />
         )}
-        <span className="font-bold text-indigo-700">{src.name}</span>
+        <span className="font-semibold text-[15px] text-neutral-800">{src.name}</span>
+        <div className="ml-auto">
+          {isFile ? (
+             <button
+             className="mt-2 text-xs text-white bg-fuchsia-600 hover:bg-fuchsia-700 px-2 py-1 rounded"
+             onClick={() => onDownload(src.id!, src.path?.split("/").pop() || "source")}
+           >
+             <Download className="w-4 h-4 inline" /> Download
+           </button>
+          ) : src.url ? (
+            <a
+              href={src.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open Link"
+              className="rounded-full hover:bg-indigo-50 p-1"
+              onClick={e => e.stopPropagation()}
+            >
+              <BookOpen className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition" />
+            </a>
+          ) : null}
+        </div>
       </div>
-      <span className="text-xs text-indigo-400">{src.path ? src.path.split("/").pop() : src.url}</span>
-      {src.type === "file" ? (
-        <button
-          className="mt-2 text-xs text-white bg-fuchsia-600 hover:bg-fuchsia-700 px-2 py-1 rounded"
-          onClick={() => onDownload(src.id!, src.path?.split("/").pop() || "source")}
-        >
-          <Download className="w-4 h-4 inline" /> Download
-        </button>
-      ) : src.url ? (
-        <a
-          href={src.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 text-xs text-indigo-700 underline flex items-center gap-1"
-        >
-          <BookOpen className="w-4 h-4" />
-          Visit
-        </a>
-      ) : null}
     </motion.div>
   );
 }
+
+// function TomeCard({ src, onDownload }: any) {
+//   // fancier type/preview/tooltip logic can be added here!
+//   return (
+//     <motion.div
+//       className="bg-white border-2 border-fuchsia-300 rounded-xl shadow flex flex-col items-center p-2 hover:scale-105 hover:shadow-lg transition-all cursor-pointer"
+//       initial={{ y: 20, opacity: 0 }}
+//       animate={{ y: 0, opacity: 1 }}
+//       whileHover={{ scale: 1.07, boxShadow: "0 4px 16px #a78bfa44" }}
+//     >
+//       <div className="mb-1 flex items-center gap-1">
+//         {src.type === "file" ? (
+//           <File className="w-5 h-5 text-fuchsia-600" />
+//         ) : (
+//           <Link2 className="w-5 h-5 text-indigo-600" />
+//         )}
+//         <span className="font-bold text-indigo-700">{src.name}</span>
+//       </div>
+//       <span className="text-xs text-indigo-400">{src.path ? src.path.split("/").pop() : src.url}</span>
+//       {src.type === "file" ? (
+//         <button
+//           className="mt-2 text-xs text-white bg-fuchsia-600 hover:bg-fuchsia-700 px-2 py-1 rounded"
+//           onClick={() => onDownload(src.id!, src.path?.split("/").pop() || "source")}
+//         >
+//           <Download className="w-4 h-4 inline" /> Download
+//         </button>
+//       ) : src.url ? (
+//         <a
+//           href={src.url}
+//           target="_blank"
+//           rel="noopener noreferrer"
+//           className="mt-2 text-xs text-indigo-700 underline flex items-center gap-1"
+//         >
+//           <BookOpen className="w-4 h-4" />
+//           Visit
+//         </a>
+//       ) : null}
+//     </motion.div>
+//   );
+// }
 
 function SpecialistChatPageContent() {
   const { user, token } = useAuth();
@@ -405,59 +455,8 @@ function SpecialistChatPageContent() {
                 ))}
                 <div ref={messagesEndRef} />
               </div>
-
-            {sourceInfos.length > 0 && (
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="w-5 h-5 text-fuchsia-600" />
-                  <span className="font-semibold text-fuchsia-700 text-base">Relevant Sources</span>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {sourceInfos.map((s) => (
-                    s.url ? (
-                      <motion.a
-                        key={s.url}
-                        href={s.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300 hover:bg-fuchsia-100"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        {s.logo && (
-                          <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
-                        )}
-                        <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
-                      </motion.a>
-                    ) : (
-                      <motion.div
-                        key={s.title}
-                        className="flex items-center gap-2 px-2 py-1 rounded-lg bg-fuchsia-50 border border-fuchsia-300"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        {s.logo && (
-                          <Image src={s.logo} alt={s.title} width={32} height={32} className="w-8 h-8 rounded object-cover" />
-                        )}
-                        <span className="text-sm font-semibold text-fuchsia-700">{s.title}</span>
-                      </motion.div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 mt-3">
-              {QUICK_REPLIES.map((q, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                    className="bg-fuchsia-200 hover:bg-fuchsia-300 text-fuchsia-700 px-3 py-1 rounded-xl text-xs shadow transition"
-                    onClick={(e) => handleSend(e as any, q)}
-                    disabled={loading}
-                  >
-                    {q}
-                  </button>
-                ))}
-            </div>
+            
+            
 
             <form onSubmit={handleSend} className="mt-3 flex gap-2">
               <textarea
