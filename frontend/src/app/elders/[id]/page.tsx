@@ -31,7 +31,7 @@ export default function ElderChatPage() {
 
   useEffect(() => {
     if (!id) return;
-    getChatHistory(id, token || "")
+    getChatHistory(id, token || "", 10)
       .then((msgs) => {
         const withTime = (msgs as ChatMessage[]).map(m => ({ ...m, time: new Date() }));
         setMessages(withTime);
