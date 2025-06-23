@@ -15,7 +15,7 @@ import { FaSearch } from "react-icons/fa";
 import ModalContainer from "@/app/components/template/modalContainer";
 import CardScroller from "@/app/components/template/CardScroller";
 import Image from "next/image";
-import { useTranslation } from "../../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 export default function ConceptPage({ params }) {
   const { conceptID } = use(params);
   const { token } = useAuth();

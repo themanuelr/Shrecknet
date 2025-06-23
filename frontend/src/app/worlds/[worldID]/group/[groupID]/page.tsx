@@ -16,7 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useConcepts } from "@/app/lib/useConcept";
 import { HiOutlineDocumentText } from "react-icons/hi2";
-import { useTranslation } from "../../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 export default function GroupPage({ params }) {
 
 

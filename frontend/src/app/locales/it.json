@@ -80,7 +80,7 @@
   "desc_agent_writer": "Automatizza e revisiona la creazione di pagine, i collegamenti e i riassunti.",
   "desc_agent_novelist": "Genera spunti di avventura, resoconti di sessione e racconti drammatici.",
 
-  "desc_agent_specialist": "Agenti specializzati per meccaniche specifiche o moderazione."
+  "desc_agent_specialist": "Agenti specializzati per meccaniche specifiche o moderazione.",
   "choose_specialist": "Scegli il tuo Specialista",
   "choose_specialist_desc": "Consulta un'IA specializzata per assisterti con compiti avanzati.",
   "summoning_specialists": "Evocazione degli Specialisti...",
@@ -121,7 +121,7 @@
   "type_message": "Digita il tuo messaggio...",
   "send": "Invia",
   "delete_chat_confirm": "Questo eliminerà definitivamente la tua cronologia con questo Anziano. Continuare?",
-  "generic_error": "Spiacente, qualcosa è andato storto."
+  "generic_error": "Spiacente, qualcosa è andato storto.",
 
   "explore_worlds_title": "Esplora Mondi",
   "explore_worlds_desc": "I mondi sono universi GDR unici: creali, esplorali e visitali tutti da qui.",
@@ -178,8 +178,7 @@
   "delete_world_warning": "Eliminerai tutte le pagine e i contenuti di questo mondo!",
   "please_type": "Digita",
   "to_confirm": "per confermare:",
-  "deleting": "Eliminazione..."
-=======
+  "deleting": "Eliminazione...",
   "step1_review_tome": "Passo 1: Rivedi il Vecchio Tomo",
   "lets_read_page": "leggiamo insieme la pagina antica...",
   "ready_scribe": "Sono pronto, Scriba!",

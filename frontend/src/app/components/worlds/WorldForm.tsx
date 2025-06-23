@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { uploadImage } from "../../lib/uploadImage";
 import { M3FloatingInput } from "../template/M3FloatingInput";
-import { useTranslation } from "../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 
 async function uploadWorldLogo(file, worldName) {
   const safeWorldName = worldName.trim().replace(/[^a-zA-Z0-9_-]/g, "_") || "new_world";

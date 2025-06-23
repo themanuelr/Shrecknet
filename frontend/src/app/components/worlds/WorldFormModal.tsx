@@ -1,6 +1,6 @@
 import ModalContainer from "../template/modalContainer";
 import WorldForm from "./WorldForm";
-import { useTranslation } from "../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 
 /**
  * @param {boolean} open - Whether the modal is open

@@ -123,7 +123,7 @@ export function TomeCard({ src, onDownload }) {
              className="mt-2 text-xs text-white bg-fuchsia-600 hover:bg-fuchsia-700 px-2 py-1 rounded"
              onClick={() => onDownload(src.id!, src.path?.split("/").pop() || "source")}
            >
-             <Download className="w-4 h-4 inline" /> {t('download')}
+             <Download className="w-4 h-4 inline" /> {('download')}
            </button>
           ) : src.url ? (
             <a

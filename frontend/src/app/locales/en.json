@@ -79,7 +79,6 @@
   "desc_agent_conversational": "Chat with your world’s rules, lore, and personalities.",
   "desc_agent_writer": "Automate and review page creation, linking, and summaries.",
   "desc_agent_novelist": "Generate adventure hooks, session logs, and dramatic retellings.",
-  "desc_agent_specialist": "Niche agents for specific game mechanics or moderation."
   "choose_specialist": "Choose your Specialist",
   "choose_specialist_desc": "Consult a specialist AI to assist you with advanced tasks.",
   "summoning_specialists": "Summoning Specialists...",
@@ -107,7 +106,6 @@
   "quick_summarize": "Can you summarize that?",
   "quick_next_step": "What's the next step?",
   "quick_how_did_you_know": "How did you know that?",
-=======
   "desc_agent_specialist": "Niche agents for specific game mechanics or moderation.",
 
   "elders_title": "The Elders",
@@ -120,7 +118,7 @@
   "type_message": "Type your message...",
   "send": "Send",
   "delete_chat_confirm": "This will permanently delete your chat history with this Elder. Continue?",
-  "generic_error": "Sorry, something went wrong."
+  "generic_error": "Sorry, something went wrong.",
 
   "explore_worlds_title": "Explore Worlds",
   "explore_worlds_desc": "Worlds are unique RPG universes—create, explore, and visit them all from here.",
@@ -177,7 +175,7 @@
   "delete_world_warning": "You will delete all the pages and content of this world!",
   "please_type": "Please type",
   "to_confirm": "to confirm:",
-  "deleting": "Deleting..."
+  "deleting": "Deleting...",
   "step1_review_tome": "Step 1: Review the Old Tome",
   "lets_read_page": "let us read the ancient page together...",
   "ready_scribe": "I am ready, Scribe!",
@@ -224,5 +222,4 @@
   "fail_generate_pages": "Failed to generate pages",
   "based_on_what_i_wrote": "Based on what I wrote, this is what I will add to this page:",
   "page_information": "And here is the page's information:"
-
 }

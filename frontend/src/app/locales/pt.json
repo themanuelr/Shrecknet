@@ -79,7 +79,7 @@
   "desc_agent_conversational": "Converse com as regras, o lore e as personalidades do seu mundo.",
   "desc_agent_writer": "Automatize e revise a criação de páginas, links e resumos.",
   "desc_agent_novelist": "Gere ganchos de aventura, registros de sessão e recontos dramáticos.",
-  "desc_agent_specialist": "Agentes específicos para mecânicas ou moderação."
+  "desc_agent_specialist": "Agentes específicos para mecânicas ou moderação.",
   "choose_specialist": "Escolha seu Especialista",
   "choose_specialist_desc": "Consulte uma IA especialista para ajudá-lo com tarefas avançadas.",
   "summoning_specialists": "Invocando Especialistas...",
@@ -107,7 +107,6 @@
   "quick_summarize": "Você pode resumir?",
   "quick_next_step": "Qual é o próximo passo?",
   "quick_how_did_you_know": "Como você sabia disso?",
-=======
   "desc_agent_specialist": "Agentes específicos para mecânicas ou moderação.",
 
   "elders_title": "Os Anciões",
@@ -120,7 +119,7 @@
   "type_message": "Digite sua mensagem...",
   "send": "Enviar",
   "delete_chat_confirm": "Isso apagará permanentemente seu histórico de conversa com este Ancião. Continuar?",
-  "generic_error": "Desculpe, algo deu errado."
+  "generic_error": "Desculpe, algo deu errado.",
 
   "explore_worlds_title": "Explorar Mundos",
   "explore_worlds_desc": "Mundos são universos de RPG únicos — crie, explore e visite todos aqui.",
@@ -177,7 +176,7 @@
   "delete_world_warning": "Você irá remover todas as páginas e conteúdo deste mundo!",
   "please_type": "Digite",
   "to_confirm": "para confirmar:",
-  "deleting": "Excluindo..."
+  "deleting": "Excluindo...",
   "step1_review_tome": "Etapa 1: Revisar o Tomo Antigo",
   "lets_read_page": "vamos ler a página antiga juntos...",
   "ready_scribe": "Estou pronto, Escriba!",

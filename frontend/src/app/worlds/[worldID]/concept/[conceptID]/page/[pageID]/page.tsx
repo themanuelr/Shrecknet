@@ -18,7 +18,7 @@ import HeaderSection from "@/app/components/see_page/HeaderSection";
 import BodySection from "@/app/components/see_page/BodySection";
 import EditableContent from "@/app/components/editor/EditableContent";
 import WorldBreadcrumb from "@/app/components/worlds/WorldBreadCrump";
-import { useTranslation } from "../../../../../hooks/useTranslation";
+import { useTranslation } from "@/app/hooks/useTranslation";
 import { hasRole } from "@/app/lib/roles";
 import ModalContainer from "@/app/components/template/modalContainer";
 import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
