@@ -116,7 +116,11 @@ Novelized arc:
     if progress_cb:
         progress_cb(len(arcs) + 1, len(arcs) + 2)
 
-    final_writer_prompt = f"""
+    arc_novels_joined = "\n\n".join(arc_novels)
+    arc_critic_notes_joined = "\n\n".join(arc_critic_notes)
+
+    final_writer_prompt = (
+        f"""
 You are a talented fantasy novelist. Combine and polish the following arcs into a single, seamless, concise fantasy novel chapter.
 - Incorporate important world details where appropriate.
 - Apply the critic's suggestions to improve narrative flow, character depth, and world consistency.
@@ -127,11 +131,12 @@ You are a talented fantasy novelist. Combine and polish the following arcs into 
 - Make the final chapter emotionally engaging and easy to read.
 - Format the output using valid HTML: wrap each paragraph in <p>. Use <h2>/<h3> for titles if relevant. Format dialogue as you would in a novel, with each line in its own <p> or <blockquote> if appropriate.
 Novelized arcs:
-{"\n\n".join(arc_novels)}
+{arc_novels_joined}
 
 Critic notes for each arc:
-{"\n\n".join(arc_critic_notes)}
+{arc_critic_notes_joined}
 """
+    )
 
     final_resp = await chat_with_agent(
         session, agent.id, [{"role": "system", "content": final_writer_prompt}]
