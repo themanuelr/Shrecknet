@@ -15,6 +15,7 @@ import { useWriterJobs } from "../lib/useWriterJobs";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpenText, Search, Sparkles, Feather, Undo2, ArrowLeftCircle } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 
 const AGENT_PERSONALITIES = {
   "Lorekeeper Lyra": "“A tale untold is a world unseen. Let’s fill these pages with legend!”",
@@ -30,6 +31,7 @@ const JOB_LABELS = {
 
 function AgentWriterPageContent() {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const { agents, isLoading: agentsLoading } = useAgents();
   const { worlds } = useWorlds();
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
@@ -75,7 +77,7 @@ function AgentWriterPageContent() {
   if (!hasRole(user?.role, "writer")) {
     return (
       <DashboardLayout>
-        <div className="p-10 text-2xl text-red-600 font-bold">Not authorized</div>
+        <div className="p-10 text-2xl text-red-600 font-bold">{t('not_authorized')}</div>
       </DashboardLayout>
     );
   }
@@ -93,19 +95,17 @@ function AgentWriterPageContent() {
               {/* Scriptorium Hero */}
               <div className="w-full flex flex-col items-center gap-4 bg-gradient-to-br from-indigo-100/70 via-fuchsia-100/80 to-white/80 rounded-2xl shadow-xl p-8 border border-indigo-200">
                 <BookOpenText className="w-12 h-12 text-indigo-400 mb-2" />
-                <h1 className="text-3xl font-bold text-indigo-700 text-center font-serif mb-1">Welcome to the Scriptorium</h1>
-                <p className="text-center text-lg text-indigo-900/80 mb-2">
-                  Legendary AI Scribes await to help you <span className="font-semibold text-fuchsia-600">craft new tales</span> and expand your world!
-                </p>
+                <h1 className="text-3xl font-bold text-indigo-700 text-center font-serif mb-1">{t('scribe_welcome')}</h1>
+                <p className="text-center text-lg text-indigo-900/80 mb-2">{t('scribe_intro')}</p>
                 <p className="text-center text-indigo-800/70 text-base">
-                  Select a Scribe below. Each Scribe will study the lore of your world and propose new stories, characters, or secrets to enrich your universe.<br/>
-                  <span className="italic text-fuchsia-700">The pen is yours, but the Scribe brings it to life.</span>
+                  {t('scribe_select')}<br/>
+                  <span className="italic text-fuchsia-700">{t('scribe_pen_line')}</span>
                 </p>
               </div>
               {/* Scribe Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-6 w-full">
                 {agentsLoading ? (
-                  <div className="col-span-2 text-center text-lg">Summoning Scribes...</div>
+                  <div className="col-span-2 text-center text-lg">{t('summoning_scribes')}</div>
                 ) : (
                   writerAgents.map(a => (
                     <button
@@ -188,7 +188,7 @@ function AgentWriterPageContent() {
                 className="mt-4 sm:mt-0 sm:ml-auto flex gap-2 items-center px-4 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold shadow hover:bg-fuchsia-800 transition"
               >
                 <ArrowLeftCircle className="w-5 h-5" />
-                Back to Scribes
+                {t('back_to_scribes')}
               </button>
             </div>
 
@@ -198,25 +198,25 @@ function AgentWriterPageContent() {
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="text-left text-indigo-800">
-                      <th className="p-2">Status</th>
-                      <th className="p-2">Page</th>
-                      <th className="p-2">Type</th>
-                      <th className="p-2">Started</th>
-                      <th className="p-2">Ended</th>
-                      <th className="p-2">Duration</th>
+                      <th className="p-2">{t('status')}</th>
+                      <th className="p-2">{t('page')}</th>
+                      <th className="p-2">{t('type')}</th>
+                      <th className="p-2">{t('started')}</th>
+                      <th className="p-2">{t('ended')}</th>
+                      <th className="p-2">{t('duration')}</th>
                       <th className="p-2"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {jobs.map(job => (
                       <tr key={job.id} className={`border-t border-indigo-100 ${job.status === 'done' ? 'bg-indigo-50/80' : 'bg-yellow-50/70 animate-pulse'}`}>
-                        <td className={`p-2 ${job.status === 'done' ? 'text-fuchsia-700 font-semibold' : 'text-yellow-700 font-semibold'}`}>{job.status === 'done' ? 'Needs Review' : 'Running'}</td>
+                        <td className={`p-2 ${job.status === 'done' ? 'text-fuchsia-700 font-semibold' : 'text-yellow-700 font-semibold'}`}>{job.status === 'done' ? t('needs_review') : t('running')}</td>
                         <td className="p-2">{job.pages.join(', ')}</td>
                         <td className="p-2">{JOB_LABELS['analyze_pages']}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.status === 'done' && job.end_time ? new Date(job.end_time).toLocaleString() : '-'}</td>
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
-                        <td className="p-2">{job.status === 'done' ? (<Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.id}`}>Review</Link>) : null}</td>
+                        <td className="p-2">{job.status === 'done' ? (<Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.id}`}>{t('review')}</Link>) : null}</td>
                       </tr>
                     ))}
                     {runningJobs.map(job => (
@@ -232,7 +232,7 @@ function AgentWriterPageContent() {
                     ))}
                     {waitingJobs.map(job => (
                       <tr key={job.job_id} className="border-t border-indigo-100 bg-indigo-50/80">
-                        <td className="p-2 text-fuchsia-700 font-semibold">Needs Review</td>
+                        <td className="p-2 text-fuchsia-700 font-semibold">{t('needs_review')}</td>
                         <td className="p-2">{pageMap[job.page_id]?.name || job.page_id}</td>
                         <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
@@ -240,16 +240,16 @@ function AgentWriterPageContent() {
                         <td className="p-2">{job.start_time && job.end_time ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime())/1000) + 's' : '-'}</td>
                         <td className="p-2 flex gap-2">
                           {job.job_type === 'analyze_pages' ? (
-                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>Review</Link>
+                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/suggestions/${job.job_id}`}>{t('review')}</Link>
                           ) : (
-                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>Review</Link>
+                            <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>{t('review')}</Link>
                           )}
                         </td>
                       </tr>
                     ))}
                     {doneJobs.map(job => (
                       <tr key={job.job_id} className="border-t border-indigo-100 text-indigo-400 bg-white">
-                        <td className="p-2">Done</td>
+                        <td className="p-2">{t('done')}</td>
                         <td className="p-2">{job.page_name}</td>
                         <td className="p-2">{JOB_LABELS[job.job_type] || job.job_type}</td>
                         <td className="p-2">{job.start_time ? new Date(job.start_time).toLocaleString() : '-'}</td>
@@ -259,7 +259,7 @@ function AgentWriterPageContent() {
                       </tr>
                     ))}
                     {runningJobs.length === 0 && waitingJobs.length === 0 && doneJobs.length === 0 && (
-                      <tr><td colSpan={7} className="p-2 text-center">No jobs</td></tr>
+                      <tr><td colSpan={7} className="p-2 text-center">{t('no_jobs')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -277,16 +277,14 @@ function AgentWriterPageContent() {
             <div>
               <div className="flex flex-col sm:flex-row items-end gap-4 mt-10 mb-2">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1 text-fuchsia-700">Library of Lore</h3>
-                  <p className="text-indigo-900/80 mb-2">
-                    Select tomes and scrolls for your Scribe to analyze and suggest new content!
-                  </p>
+                  <h3 className="text-xl font-bold mb-1 text-fuchsia-700">{t('library_of_lore')}</h3>
+                  <p className="text-indigo-900/80 mb-2">{t('library_desc')}</p>
                 </div>
                 <div className="flex items-center gap-2 bg-white border border-indigo-200 px-4 py-2 rounded-xl shadow-inner w-full sm:w-[260px]">
                   <Search className="w-5 h-5 text-indigo-400" />
                   <input
                     className="bg-transparent outline-none flex-1 text-base text-indigo-700 placeholder-indigo-400"
-                    placeholder="Search lore..."
+                    placeholder={t('search_lore_placeholder')}
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPageIndex(0); }}
                   />
@@ -297,12 +295,12 @@ function AgentWriterPageContent() {
                     const res = await startAnalyzeJob(selectedAgent.id, selectedPages, token || "");
                     setJobs(j => [...j, { id: res.job_id, pages: selectedPages.map(pid => pageMap[pid]?.name || pid), status: "queued" }]);
                     setSelectedPages([]);
-                    setJobFeedback("Processing selected pages...");
+                    setJobFeedback(t('processing_selected_pages'));
                     setTimeout(() => setJobFeedback(null), 1200);
                   }}
                   className="px-4 py-2 rounded-xl bg-fuchsia-600 text-white font-semibold shadow hover:bg-fuchsia-800 transition text-sm disabled:opacity-50"
                 >
-                  <Feather className="w-4 h-4 mr-1 inline" /> Process Selected
+                  <Feather className="w-4 h-4 mr-1 inline" /> {t('process_selected')}
                 </button>
               </div>
               <div className="overflow-x-auto rounded-xl border border-indigo-100 shadow">
@@ -347,13 +345,13 @@ function AgentWriterPageContent() {
                               setTimeout(() => setJobFeedback(null), 1200);
                             }}
                           >
-                            Start Job
+                            {t('start_job')}
                           </button>
                         </td>
                       </tr>
                     ))}
                     {paginated.length === 0 && (
-                      <tr><td colSpan={7} className="text-center py-4">No lore found. Try a different search.</td></tr>
+                      <tr><td colSpan={7} className="text-center py-4">{t('no_lore_found')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -365,7 +363,7 @@ function AgentWriterPageContent() {
                   onClick={() => setPageIndex(p => Math.max(0, p - 1))}
                   className="px-3 py-1 rounded-xl border border-fuchsia-300 text-fuchsia-700 disabled:opacity-50 font-semibold"
                 >
-                  Previous
+                  {t('previous')}
                 </button>
                 <span className="text-sm">Page {pageIndex + 1} of {totalPages}</span>
                 <button
@@ -373,7 +371,7 @@ function AgentWriterPageContent() {
                   onClick={() => setPageIndex(p => Math.min(totalPages - 1, p + 1))}
                   className="px-3 py-1 rounded-xl border border-fuchsia-300 text-fuchsia-700 disabled:opacity-50 font-semibold"
                 >
-                  Next
+                  {t('next')}
                 </button>
               </div>
             </div>
