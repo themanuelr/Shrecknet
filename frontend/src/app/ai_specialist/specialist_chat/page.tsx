@@ -141,6 +141,7 @@ function SpecialistChatPageContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -238,6 +239,7 @@ function SpecialistChatPageContent() {
   }
 
   async function handleDownload(sourceId: number, filename: string) {
+    setShowDownloadModal(true);
     try {
       const blob = await downloadSource(agentId, sourceId, token || "");
       downloadBlob(blob, filename);
@@ -245,6 +247,8 @@ function SpecialistChatPageContent() {
       // You can trigger an emote or show a toast here!
       setAgentEmote("surprised");
       console.error("Failed to download source", err);
+    } finally {
+      setShowDownloadModal(false);
     }
   }
 
@@ -482,6 +486,16 @@ function SpecialistChatPageContent() {
                   </div>
                 </div>
               ))}
+            </div>
+          </ModalContainer>
+        )}
+        {showDownloadModal && (
+          <ModalContainer title="Preparing Download" onClose={() => setShowDownloadModal(false)}>
+            <div className="flex flex-col items-center gap-4 text-fuchsia-700">
+              <AgentAnimatedAvatar logo={agent?.logo} emote="thinking" />
+              <p className="text-center text-base font-semibold">
+                Let me wrap this for you dear, wait a bit, might take a minute or two...
+              </p>
             </div>
           </ModalContainer>
         )}
