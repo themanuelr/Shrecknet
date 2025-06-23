@@ -12,6 +12,7 @@ import { useConcepts } from "@/app/lib/useConcept";
 import { useWorld } from "@/app/lib/useWorld";
 import { usePages } from "@/app/lib/usePage";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 const STEPS = [
   { label: "Review Lore" },
@@ -73,6 +74,7 @@ function AgentBubble({ agent, children, loading = false }: any) {
 }
 
 export default function SuggestionsPage() {
+  const { t } = useTranslation();
   const { agentID, jobID } = useParams();
   const { user, token } = useAuth();
   const router = useRouter();
@@ -239,37 +241,37 @@ export default function SuggestionsPage() {
               <AgentBubble agent={agent}>
                 {subStep === 'a' && (
                   <>
-                    <b>Step 2A: Remove Unworthy Suggestions</b>
+                    <b>{t('step2a_remove')}</b>
                     <br />
                     {user?.nickname
-                      ? `${user.nickname}, begin by eliminating any irrelevant or incorrect suggestions.`
-                      : 'Begin by eliminating any irrelevant or incorrect suggestions.'}
+                      ? `${user.nickname}, ${t('step2a_desc')}`
+                      : t('step2a_desc')}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-                      Click “Remove” on any suggestion you don't want to keep.
+                      {t('step2a_hint')}
                     </p>
                   </>
                 )}
                 {subStep === 'b' && (
                   <>
-                    <b>Step 2B: Merge Similar Suggestions</b>
+                    <b>{t('step2b_merge')}</b>
                     <br />
                     {user?.nickname
-                      ? `${user.nickname}, now group together suggestions that refer to the same topic.`
-                      : 'Now, group together suggestions that refer to the same topic.'}
+                      ? `${user.nickname}, ${t('step2b_desc')}`
+                      : t('step2b_desc')}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-                      Use the “Merge With” dropdown on each card to link related suggestions.
+                      {t('step2b_hint')}
                     </p>
                   </>
                 )}
                 {subStep === 'c' && (
                   <>
-                    <b>Step 2C: Finalize Pages</b>
+                    <b>{t('step2c_finalize')}</b>
                     <br />
                     {user?.nickname
-                      ? `${user.nickname}, time to assign concepts and decide whether to create or update pages.`
-                      : 'Time to assign concepts and decide whether to create or update pages.'}
+                      ? `${user.nickname}, ${t('step2c_desc')}`
+                      : t('step2c_desc')}
                     <p className="mt-2 text-sm italic text-[var(--muted-foreground)]">
-                      Set the action, select the target concept, and pick an existing page if updating.
+                      {t('step2c_hint')}
                     </p>
                   </>
                 )}
@@ -306,9 +308,9 @@ export default function SuggestionsPage() {
               </div>
 
               <div className="sticky top-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
-                <h2 className="text-xl font-bold mb-3 text-[var(--primary)] border-b border-[var(--primary)] pb-1">📋 Summary</h2>
-                <p className="text-sm mb-4 text-[var(--muted-foreground)]">{selectedSuggestions.length} suggestions</p>
-                <p className="mb-4">Track your progress through this step-by-step refinement.</p>
+                <h2 className="text-xl font-bold mb-3 text-[var(--primary)] border-b border-[var(--primary)] pb-1">📋 {t('summary')}</h2>
+                <p className="text-sm mb-4 text-[var(--muted-foreground)]">{selectedSuggestions.length} {t('suggestions_label')}</p>
+                <p className="mb-4">{t('track_progress')}</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   {sortedSuggestions.map((s, idx) => {
                     const isMerged = selectedSuggestions.some(
@@ -329,7 +331,7 @@ export default function SuggestionsPage() {
                         <div className="text-xs text-[var(--muted-foreground)]">{type} in {s.concept || "(No Concept)"}</div>
                         {!s.concept && (
                           <div className="text-red-500 text-xs flex items-center gap-1 mt-1">
-                            <AlertTriangle className="w-3 h-3" /> Missing concept
+                            <AlertTriangle className="w-3 h-3" /> {t('missing_concept')}
                           </div>
                         )}
                       </div>
@@ -344,7 +346,7 @@ export default function SuggestionsPage() {
                 onClick={goBackSubStep}
                 className="px-4 py-2 rounded-xl border border-[var(--primary)] text-[var(--primary)] font-bold shadow hover:bg-[var(--accent)]/30 transition"
               >
-                Back
+                {t('back')}
               </button>
 
 
@@ -353,7 +355,7 @@ export default function SuggestionsPage() {
                   onClick={advanceSubStep}
                   className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white font-bold shadow hover:bg-[var(--accent)] transition"
                 >
-                  Continue to Step {subStep === 'a' ? '2B' : '2C'}
+                  {t('continue_to_step')} {subStep === 'a' ? '2B' : '2C'}
                 </button>
               ) : (
                 <button
@@ -363,10 +365,10 @@ export default function SuggestionsPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+                      <Loader2 className="w-4 h-4 animate-spin" /> {t('processing')}
                     </>
                   ) : (
-                    "Inscribe Legends!"
+                    t('inscribe_legends')
                   )}
                 </button>
               )}
