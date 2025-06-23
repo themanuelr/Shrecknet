@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { getUserCount, loginUser, registerUser, userExists } from "../../lib/usersApi";
+import { useTranslation } from "../../hooks/useTranslation";
 
 // Material 3 Floating Label Field
 function M3TextField({
@@ -57,6 +58,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
 
   const { setToken, setRedirectAfterLogin, getRedirectAfterLogin } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     getUserCount()
@@ -108,7 +110,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
           const exists = await userExists(form.email);
           if (!exists) {
             setFormMode(FormMode.REGISTER);
-            setInfo("Welcome to Shrecknet! First you have to create an account!");
+            setInfo(t("welcome_first_login"));
             return;
           }
         } catch (e) {}
@@ -130,7 +132,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
 
 
   if (usersExist === null)
-    return <div className="text-white text-center py-8">Loading...</div>;
+    return <div className="text-white text-center py-8">{t("loading")}</div>;
 
   return (
     <div
@@ -151,7 +153,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
               }}
               className={`flex-1 py-2 text-sm font-semibold transition-colors ${formMode === FormMode.LOGIN ? "bg-gradient-to-r from-[#7b2ff2] to-[#e0c3fc] text-white" : "text-[var(--primary)] hover:bg-white/10 hover:text-white"}`}
             >
-              Login
+              {t("login_tab")}
             </button>
           )}
           <button
@@ -164,21 +166,21 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
             }}
             className={`flex-1 py-2 text-sm font-semibold transition-colors ${formMode !== FormMode.LOGIN ? "bg-gradient-to-r from-[#7b2ff2] to-[#e0c3fc] text-white" : "text-[var(--primary)] hover:bg-white/10 hover:text-white"}`}
           >
-            Create Account
+            {t("create_account_tab")}
           </button>
         </div>
         <h3 className="font-bold text-xl mb-5 text-white/90 text-left drop-shadow-sm">
           {formMode === FormMode.LOGIN
-            ? "Sign in to your adventure"
+            ? t("sign_in_adventure")
             : formMode === FormMode.REGISTER
-            ? "Create your account"
-            : "Welcome, World Builder!"}
+            ? t("create_your_account")
+            : t("welcome_builder")}
         </h3>
         {formMode === FormMode.FIRST_USER && (
           <div className="font-sans text-base text-[var(--accent)] mb-5 text-left">
-            No users found. <br />
+            {t("no_users_found")} <br />
             <span className="font-semibold text-yellow-400">
-              Set up the first account as System Admin!
+              {t("setup_first_account")}
             </span>
           </div>
         )}
@@ -195,7 +197,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
         <form className="w-full flex flex-col gap-5" onSubmit={handleSubmit}>
           {(formMode === FormMode.REGISTER || formMode === FormMode.FIRST_USER) && (
             <M3TextField
-              label="Nickname"
+              label={t("nickname")}
               name="nickname"
               value={form.nickname}
               onChange={handleChange}
@@ -204,7 +206,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
             />
           )}
           <M3TextField
-            label="Email"
+            label={t("email")}
             name="email"
             type="email"
             value={form.email}
@@ -213,7 +215,7 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
             required
           />
           <M3TextField
-            label="Password"
+            label={t("password")}
             name="password"
             type="password"
             value={form.password}
@@ -229,10 +231,10 @@ export default function AuthCard({ initialError = null }: { initialError?: strin
             disabled={loading}
           >
             {loading
-              ? "Processing..."
+              ? t("processing")
               : formMode === FormMode.LOGIN
-              ? "Sign In"
-              : "Create Account"}
+              ? t("sign_in")
+              : t("create_account")}
           </button>
         </form>
       </div>

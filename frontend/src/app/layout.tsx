@@ -2,7 +2,9 @@ import "./globals.css";
 import { AuthProvider } from "./components/auth/AuthProvider";
 import GlobalAuthRedirect from "./components/auth/GlobalAuthRedirect";
 import { ThemeProvider } from "./hooks/useThemes";
-import Script from 'next/script';
+import { TranslationProvider } from "./hooks/useTranslation";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import Script from "next/script";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,12 +22,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
 
-        <AuthProvider>
-          <ThemeProvider>
-            <GlobalAuthRedirect />
-            {children}
-          </ThemeProvider>
-        </AuthProvider>
+        <TranslationProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <LanguageSwitcher />
+              <GlobalAuthRedirect />
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
+        </TranslationProvider>
       </body>
     </html>
   );
