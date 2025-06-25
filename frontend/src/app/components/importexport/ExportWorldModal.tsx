@@ -8,9 +8,11 @@ import { getCharacteristics } from "../../lib/characteristicsAPI";
 import { useAuth } from "../auth/AuthProvider";
 import Image from "next/image";
 import { Download } from "lucide-react";
+import { useTranslation } from "@/app/hooks/useTranslation";
 
 export default function ExportWorldModal({ open, onClose }) {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [worlds, setWorlds] = useState([]);
   const [selectedWorldId, setSelectedWorldId] = useState("");
   const [concepts, setConcepts] = useState([]);
@@ -72,10 +74,10 @@ export default function ExportWorldModal({ open, onClose }) {
         blob,
         `world_${selectedWorldId}_${world?.name || "export"}.zip`
       );
-      setSuccess("Export started! File should download automatically.");
+      setSuccess(t("export_started"));
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
-      setError("Export failed. Please try again!" + err);
+      setError(t("export_failed") + " " + err);
     } finally {
       setDownloading(false);
     }
@@ -84,11 +86,11 @@ export default function ExportWorldModal({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <ModalContainer title="Export World" onClose={onClose} className="max-w-xl">
+    <ModalContainer title={t("export_world")} onClose={onClose} className="max-w-xl">
       <div className="flex flex-col gap-5">
         <div>
           <label className="block mb-1 text-[var(--primary)] font-semibold">
-            Select a world to export:
+            {t("select_world_export")}
           </label>
           <select
             value={selectedWorldId}
@@ -96,7 +98,7 @@ export default function ExportWorldModal({ open, onClose }) {
             disabled={loading || downloading}
             className="w-full px-4 py-2 rounded-xl border border-[var(--primary)] bg-[var(--surface)] text-[var(--primary)] focus:outline-none"
           >
-            <option value="">— Choose World —</option>
+            <option value="">{t("choose_world")}</option>
             {worlds.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.name}
@@ -127,20 +129,20 @@ export default function ExportWorldModal({ open, onClose }) {
                 <b>Characteristics:</b> {characteristics.length}
               </div>
               <div className="text-xs mt-2 text-[var(--primary)]/80 italic">
-                <b>Export includes:</b>
+                <b>{t("export_includes")}</b>
                 <ul className="list-disc ml-6 text-xs mt-1">
                   <li>
-                    World structure (<b>concepts</b>, <b>characteristics</b>, <b>world data</b>)
+                    {t("export_structure")}
                   </li>
                   <li>
-                    <span className="text-[var(--primary)]">All referenced images (logos, icons) for world/concepts/characteristics</span>
+                    <span className="text-[var(--primary)]">{t("export_images")}</span>
                   </li>
                   <li>
-                    <span className="text-[var(--primary)]">Everything packed in a single <b>.zip</b> file</span>
+                    <span className="text-[var(--primary)]">{t("export_zip_file")}</span>
                   </li>
                 </ul>
                 <span className="block mt-2 text-[var(--primary)]/60">
-                  <b>Pages/content will <u>not</u> be exported.</b>
+                  <b>{t("export_no_pages")}</b>
                 </span>
               </div>
             </div>
@@ -160,12 +162,12 @@ export default function ExportWorldModal({ open, onClose }) {
         <div className="flex justify-end gap-3 mt-2">
           <button
             type="button"
-            className="px-5 py-2 rounded-xl font-semibold bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 border transition"
-            onClick={onClose}
-            disabled={downloading}
-          >
-            Cancel
-          </button>
+          className="px-5 py-2 rounded-xl font-semibold bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 border transition"
+          onClick={onClose}
+          disabled={downloading}
+        >
+            {t("cancel")}
+        </button>
           <button
             type="button"
             className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold shadow transition border
@@ -177,7 +179,7 @@ export default function ExportWorldModal({ open, onClose }) {
             disabled={downloading || !selectedWorldId}
           >
             <Download className="w-5 h-5" />
-            {downloading ? "Exporting..." : "Export World"}
+            {downloading ? t("exporting") : t("export_world_button")}
           </button>
         </div>
       </div>

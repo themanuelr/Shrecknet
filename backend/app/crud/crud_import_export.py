@@ -213,5 +213,6 @@ async def import_world(session: AsyncSession, world_json: dict):
                     display_type=ch.get("display_type"),  # NEW
                 )
                 session.add(link)
+                await session.flush()
     await session.commit()
     return new_world.id
