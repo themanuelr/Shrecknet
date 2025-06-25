@@ -6,8 +6,10 @@ import { uploadImage } from "../../lib/uploadImage";
 import { useAuth } from "../auth/AuthProvider";
 import { importWorldZip } from "../../lib/importWorldZip"; // <- your jszip helper
 import Image from "next/image";
+import { useTranslation } from "@/app/hooks/useTranslation";
 export default function ImportWorldModal({ open, onClose, onImported }) {
-  const { token } = useAuth();  
+  const { token } = useAuth();
+  const { t } = useTranslation();
   const [importData, setImportData] = useState<unknown>(null);
   const [editedWorld, setEditedWorld] = useState<unknown>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -32,16 +34,16 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
     if (!f) return;
     try {
       if (f.name.endsWith(".zip")) {
-        setProgress("Reading ZIP file...");
+        setProgress(t("reading_zip"));
         // 1. Extract and upload images, get world.json
         const jsonString = await importWorldZip(f);
-        setProgress("Parsing world.json...");
+        setProgress(t("parsing_world_json"));
         const data = JSON.parse(jsonString);
         setImportData(data);
         setEditedWorld(data.world ? { ...data.world } : null);
         setProgress("");
       } else if (f.name.endsWith(".json")) {
-        setProgress("Reading JSON...");
+        setProgress(t("reading_json"));
         const text = await f.text();
         const data = JSON.parse(text);
         setImportData(data);
@@ -51,7 +53,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
         throw new Error("File must be a .json or .zip");
       }
     } catch (err) {
-      setError("Invalid file: " + err?.message);
+      setError(t("invalid_file") + " " + err?.message);
       setImportData(null);
       setProgress("");
     }
@@ -116,7 +118,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
 
   return (
     <ModalContainer
-      title="Import World"
+      title={t("import_world")}
       onClose={onClose}
       className="max-w-2xl"
     >
@@ -126,7 +128,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
       >
         {/* File input */}
         <label className="text-[var(--primary)] font-semibold mb-1">
-          Choose a .zip or .json file to import:
+          {t("choose_file_import")}
         </label>
         <input
           type="file"
@@ -152,10 +154,10 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
         {importData && editedWorld && (
           <div className="bg-[var(--surface-variant)]/60 rounded-xl border border-[var(--border)] px-4 py-3 mb-3">
             <div className="mb-2">
-              <div className="font-semibold text-[var(--primary)] mb-1">World Info</div>
+              <div className="font-semibold text-[var(--primary)] mb-1">{t("world_info")}</div>
               <div className="pl-1 text-[var(--primary)]/90 text-sm grid gap-2">
                 <div>
-                  <b>Name:</b>{" "}
+                  <b>{t("world_name")}:</b>{" "}
                   <input
                     type="text"
                     value={world.name || ""}
@@ -165,7 +167,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
                   />
                 </div>
                 <div>
-                  <b>System:</b>{" "}
+                  <b>{t("game_system")}:</b>{" "}
                   <input
                     type="text"
                     value={world.system || ""}
@@ -175,7 +177,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
                   />
                 </div>
                 <div>
-                  <b>Description:</b>{" "}
+                  <b>{t("description_label")}:</b>{" "}
                   <textarea
                     value={world.content || ""}
                     onChange={e => handleEditField("content", e.target.value)}
@@ -184,7 +186,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <b>Logo:</b>
+                  <b>{t("world_logo")}:</b>
                   {world.logo && (
                     <Image
                     width={400}
@@ -201,16 +203,16 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
                     disabled={loading || logoUploading}
                     className="block rounded bg-[var(--surface)] px-2 py-1 border border-[var(--primary)]/50 text-[var(--primary)]"
                   />
-                  {logoUploading && <span className="text-xs text-[var(--primary)]">Uploading...</span>}
+                  {logoUploading && <span className="text-xs text-[var(--primary)]">{t("processing")}</span>}
                   <span className="text-xs">{world.logo}</span>
                 </div>
                 <div>
-                  <b>Concepts:</b> {concepts.length} &nbsp; <b>Characteristics:</b> {characteristics.length}
+                  <b>{t("concepts_label")}</b> {concepts.length} &nbsp; <b>{t("characteristics_label")}</b> {characteristics.length}
                 </div>
               </div>
             </div>
             <div>
-              <div className="font-semibold text-[var(--primary)] mb-1">Concepts & Characteristics</div>
+              <div className="font-semibold text-[var(--primary)] mb-1">{t("concepts_label")} &amp; {t("characteristics_label")}</div>
               <div className="max-h-48 overflow-y-auto border border-[var(--primary)]/10 rounded p-2 bg-[var(--background)]/10">
                 <ul className="list-disc ml-5 text-[var(--primary)]/80 text-sm">
                   {concepts.map((concept, idx) => (
@@ -245,7 +247,7 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
             onClick={() => { reset(); onClose(); }}
             disabled={loading}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="submit"
@@ -253,15 +255,15 @@ export default function ImportWorldModal({ open, onClose, onImported }) {
             disabled={loading || !importData}
           >
             {loading
-              ? "Importing..."
+              ? t("importing")
               : success
-              ? "Imported!"
-              : "Confirm Import"
+              ? t("imported")
+              : t("confirm_import")
             }
           </button>
         </div>
         <div className="text-xs mt-2 text-[var(--primary)]/60">
-          World creator and creation date will be set to the importing user/time.
+          {t("world_creator_notice")}
         </div>
       </form>
     </ModalContainer>
