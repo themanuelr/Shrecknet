@@ -140,9 +140,9 @@ export default function WikiLinkHoverCard({ href, children }) {
               <Image
                 width={400}
                 height={400}
-                src={info.world.logo || "/images/worlds/new_game.png"}
-                alt={info.world.name}
-                title={info.world.name}
+                src={info.page.logo || "/images/worlds/new_game.png"}
+                alt={info.page.name}
+                title={info.page.name}
               />
             </div>
           </span>,
