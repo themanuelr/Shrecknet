@@ -245,5 +245,10 @@
   "confirm_import": "Confirm Import",
   "importing": "Importing...",
   "imported": "Imported!",
-  "world_creator_notice": "World creator and creation date will be set to the importing user/time."
+  "world_creator_notice": "World creator and creation date will be set to the importing user/time.",
+  "create_backup": "Create Backup",
+  "import_backup": "Import Backup",
+  "backup_importing": "Importing backup...",
+  "backup_imported": "Backup imported!",
+  "backup_failed": "Backup failed. Please try again!"
 }
