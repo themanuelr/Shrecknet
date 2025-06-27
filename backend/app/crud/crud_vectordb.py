@@ -1,6 +1,12 @@
 import os
 from typing import List, Dict
 
+try:
+    from chromadb.errors import ChromaError
+except Exception:  # pragma: no cover - fallback
+    class ChromaError(Exception):
+        pass
+
 import chromadb
 from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -20,6 +26,45 @@ _text_splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=50,
     length_function=lambda txt: len(txt.split()),
 )
+
+
+def _safe_add_documents(collection: Chroma, docs: List[Document]) -> None:
+    """Safely add documents, splitting on 413 errors."""
+
+    client = collection._collection._client
+    try:
+        max_size = (
+            client.get_max_batch_size()
+            if hasattr(client, "get_max_batch_size")
+            else getattr(client, "max_batch_size", 0)
+        )
+    except Exception:
+        max_size = 0
+
+    if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+        max_size = 100
+
+    def _add_batch(batch: List[Document]) -> None:
+        if not batch:
+            return
+        try:
+            collection.add_documents(batch)
+        except Exception as exc:
+            msg = str(exc).lower()
+            if (
+                isinstance(exc, ChromaError)
+                or "payload" in msg
+                or "length" in msg
+                or "413" in msg
+            ) and len(batch) > 1:
+                mid = len(batch) // 2
+                _add_batch(batch[:mid])
+                _add_batch(batch[mid:])
+            else:
+                raise
+
+    for i in range(0, len(docs), max_size):
+        _add_batch(docs[i : i + max_size])
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -160,21 +205,7 @@ async def add_page(session: AsyncSession, page_id: int):
 
     # ``chromadb`` can fail on very large batches, so split the data into
     # reasonable chunks based on the client's advertised limit.
-    client = collection._collection._client
-    try:
-        max_size = (
-            client.get_max_batch_size()
-            if hasattr(client, "get_max_batch_size")
-            else getattr(client, "max_batch_size", 0)
-        )
-    except Exception:
-        max_size = 0
-
-    if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
-        max_size = 100
-
-    for i in range(0, len(docs), max_size):
-        collection.add_documents(docs[i : i + max_size])
+    _safe_add_documents(collection, docs)
    
 
     # print (f" --- API VECTORDB - Page added to the chromadb!")
