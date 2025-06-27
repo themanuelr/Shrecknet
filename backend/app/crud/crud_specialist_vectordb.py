@@ -1,5 +1,11 @@
 import os
 from typing import List
+
+try:
+    from chromadb.errors import ChromaError
+except Exception:  # pragma: no cover - fallback when chromadb not installed
+    class ChromaError(Exception):
+        pass
 from datetime import datetime, timezone
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -25,6 +31,95 @@ _text_splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=50,
     length_function=lambda txt: len(txt.split()),
 )
+
+
+def _safe_add_documents(collection: Chroma, docs: List[Document]) -> None:
+    """Add documents in batches, splitting further on 413 errors."""
+
+    client = collection._collection._client
+    try:
+        max_size = (
+            client.get_max_batch_size()
+            if hasattr(client, "get_max_batch_size")
+            else getattr(client, "max_batch_size", 0)
+        )
+    except Exception:
+        max_size = 0
+
+    if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+        max_size = 100
+
+    def _add_batch(batch: List[Document]) -> None:
+        if not batch:
+            return
+        try:
+            collection.add_documents(batch)
+        except Exception as exc:
+            msg = str(exc).lower()
+            if (
+                isinstance(exc, ChromaError)
+                or "payload" in msg
+                or "length" in msg
+                or "413" in msg
+            ) and len(batch) > 1:
+                mid = len(batch) // 2
+                _add_batch(batch[:mid])
+                _add_batch(batch[mid:])
+            else:
+                raise
+
+    for i in range(0, len(docs), max_size):
+        _add_batch(docs[i : i + max_size])
+
+
+def _safe_add_records(
+    collection: Chroma,
+    ids: list[str] | None,
+    embeddings: list[list[float]],
+    documents: list[str],
+    metadatas: list[dict],
+) -> None:
+    """Safely add raw records with optional IDs, handling 413 errors."""
+
+    client = collection._collection._client
+    try:
+        max_size = (
+            client.get_max_batch_size()
+            if hasattr(client, "get_max_batch_size")
+            else getattr(client, "max_batch_size", 0)
+        )
+    except Exception:
+        max_size = 0
+
+    if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+        max_size = 100
+
+    def _add_batch(start: int, end: int) -> None:
+        if end <= start:
+            return
+        try:
+            collection._collection.add(
+                ids=ids[start:end] if ids else None,
+                embeddings=embeddings[start:end],
+                documents=documents[start:end],
+                metadatas=metadatas[start:end],
+            )
+        except Exception as exc:
+            msg = str(exc).lower()
+            if (
+                isinstance(exc, ChromaError)
+                or "payload" in msg
+                or "length" in msg
+                or "413" in msg
+            ) and end - start > 1:
+                mid = start + (end - start) // 2
+                _add_batch(start, mid)
+                _add_batch(mid, end)
+            else:
+                raise
+
+    for i in range(0, len(documents), max_size):
+        _add_batch(i, min(i + max_size, len(documents)))
 
 
 def _get_collection(agent_id: int) -> Chroma:
@@ -78,26 +173,7 @@ async def rebuild_agent(session: AsyncSession, agent_id: int) -> int:
             d.metadata["chunk_index"] = i
             docs.append(d)
     if docs:
-        # ``chromadb`` may reject very large batches. Determine a sensible batch
-        # size from the client and add documents in chunks to avoid ``413``
-        # or ``length limit exceeded`` errors when the payload is too big.
-        client = collection._collection._client
-        try:
-            max_size = (
-                client.get_max_batch_size()
-                if hasattr(client, "get_max_batch_size")
-                else getattr(client, "max_batch_size", 0)
-            )
-        except Exception:
-            max_size = 0
-
-        # Cap the batch size at a conservative default when the value is
-        # undefined or exceeds reasonable limits.
-        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
-            max_size = 100
-
-        for i in range(0, len(docs), max_size):
-            collection.add_documents(docs[i : i + max_size])
+        _safe_add_documents(collection, docs)
 
     agent = await session.get(Agent, agent_id)
     if agent:
@@ -146,32 +222,7 @@ async def import_agent_vectordb(session: AsyncSession, agent_id: int, data: dict
     _delete_collection(f"specialist_{agent_id}", collection)
 
     if docs:
-        # ``chromadb`` can reject very large payloads. Determine the maximum
-        # batch size supported by the underlying client and send the data in
-        # chunks to avoid ``413 Payload Too Large`` errors during import.
-        client = collection._collection._client
-        try:
-            max_size = (
-                client.get_max_batch_size()
-                if hasattr(client, "get_max_batch_size")
-                else getattr(client, "max_batch_size", 0)  # type: ignore[attr-defined]
-            )
-        except Exception:
-            max_size = 0
-
-        # ``get_max_batch_size`` may return ``-1`` (unlimited) or a value that's
-        # still too high for the HTTP server. Cap the batch size at a safe
-        # default to prevent ``413 Payload Too Large`` errors.
-        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
-            max_size = 100
-
-        for i in range(0, len(docs), max_size):
-            collection._collection.add(
-                ids=ids[i : i + max_size] if ids else None,
-                embeddings=embeds[i : i + max_size],
-                documents=docs[i : i + max_size],
-                metadatas=metas[i : i + max_size],
-            )
+        _safe_add_records(collection, ids, embeds, docs, metas)
 
     agent = await session.get(Agent, agent_id)
     if agent:
@@ -237,21 +288,7 @@ async def rebuild_agent_with_progress(
     if docs:
         if progress_callback:
             progress_callback(f"embedding documents {len(docs)}")
-        client = collection._collection._client
-        try:
-            max_size = (
-                client.get_max_batch_size()
-                if hasattr(client, "get_max_batch_size")
-                else getattr(client, "max_batch_size", 0)
-            )
-        except Exception:
-            max_size = 0
-
-        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
-            max_size = 100
-
-        for i in range(0, len(docs), max_size):
-            collection.add_documents(docs[i : i + max_size])
+        _safe_add_documents(collection, docs)
 
     agent = await session.get(Agent, agent_id)
     if agent:
