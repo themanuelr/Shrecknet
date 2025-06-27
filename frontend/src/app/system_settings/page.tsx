@@ -4,17 +4,39 @@ import DashboardLayout from "../components/DashboardLayout";
 import { hasRole } from "../lib/roles";
 import { useAuth } from "../components/auth/AuthProvider";
 import { useState } from "react";
+import { useTranslation } from "@/app/hooks/useTranslation";
 import ImportWorldModal from "../components/importexport/ImportWorldModal";
-import { Download, Upload, Users2, Bot, PenLine } from "lucide-react";
+import { Download, Upload, Users2, Bot, PenLine, FileDown, FileUp } from "lucide-react";
 import Link from "next/link";
 import ExportWorldModal from "../components/importexport/ExportWorldModal";
+import ImportBackupModal from "../components/importexport/ImportBackupModal";
+import { createBackup } from "../lib/backupAPI";
+import { downloadBlob } from "../lib/importExportAPI";
 
 
 export default function UserManagementPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { t } = useTranslation();
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [success, setSuccess] = useState("");
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const [loadingBackup, setLoadingBackup] = useState(false);
+
+  async function handleCreateBackup() {
+    if (!token) return;
+    setLoadingBackup(true);
+    try {
+      const blob = await createBackup(token);
+      downloadBlob(blob, `backup.zip`);
+      setSuccess(t('export_started'));
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setSuccess(t('backup_failed'));
+    } finally {
+      setLoadingBackup(false);
+    }
+  }
 
   if (!hasRole(user?.role, "system admin")) {
     return (
@@ -83,6 +105,43 @@ export default function UserManagementPage() {
                 }}
               />
             <ExportWorldModal open={exportModalOpen} onClose={() => setExportModalOpen(false)} />
+            </div>
+
+            {/* Backup Area */}
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm p-6 w-full flex flex-col sm:flex-row gap-6 items-center">
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="text-[var(--primary)] font-bold text-lg mb-1">Backup / Restore</div>
+                <div className="text-[var(--foreground)]/80 text-sm mb-3">
+                  Create a full backup of all data and uploads, or import a backup to completely replace current data.
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold border border-[var(--primary)] shadow transition ${loadingBackup ? 'bg-[var(--primary)]/10 text-[var(--primary)]/60' : 'bg-transparent text-[var(--primary)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary-foreground)]'}`}
+                    onClick={handleCreateBackup}
+                    disabled={loadingBackup}
+                  >
+                    <FileDown className="w-5 h-5" />
+                    {loadingBackup ? t('processing') : t('create_backup')}
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl font-bold bg-[var(--primary)] text-[var(--primary-foreground)] shadow hover:bg-[var(--accent)] hover:text-[var(--background)] transition border border-[var(--primary)]"
+                    onClick={() => setBackupModalOpen(true)}
+                  >
+                    <FileUp className="w-5 h-5" />
+                    {t('import_backup')}
+                  </button>
+                </div>
+              </div>
+              <ImportBackupModal
+                open={backupModalOpen}
+                onClose={() => setBackupModalOpen(false)}
+                onImported={() => {
+                  setSuccess('Backup imported successfully!');
+                  setTimeout(() => setSuccess(''), 2000);
+                }}
+              />
             </div>
 
             {/* Agents Settings Area */}

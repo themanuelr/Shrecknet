@@ -249,5 +249,10 @@
   "confirm_import": "Conferma Importazione",
   "importing": "Importazione in corso...",
   "imported": "Importato!",
-  "world_creator_notice": "Il creatore del mondo e la data verranno impostati sull'utente che importa."
+  "world_creator_notice": "Il creatore del mondo e la data verranno impostati sull'utente che importa.",
+  "create_backup": "Crea Backup",
+  "import_backup": "Importa Backup",
+  "backup_importing": "Importazione backup...",
+  "backup_imported": "Backup importato!",
+  "backup_failed": "Backup fallito. Riprova!"
 }
