@@ -78,7 +78,26 @@ async def rebuild_agent(session: AsyncSession, agent_id: int) -> int:
             d.metadata["chunk_index"] = i
             docs.append(d)
     if docs:
-        collection.add_documents(docs)
+        # ``chromadb`` may reject very large batches. Determine a sensible batch
+        # size from the client and add documents in chunks to avoid ``413``
+        # or ``length limit exceeded`` errors when the payload is too big.
+        client = collection._collection._client
+        try:
+            max_size = (
+                client.get_max_batch_size()
+                if hasattr(client, "get_max_batch_size")
+                else getattr(client, "max_batch_size", 0)
+            )
+        except Exception:
+            max_size = 0
+
+        # Cap the batch size at a conservative default when the value is
+        # undefined or exceeds reasonable limits.
+        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+            max_size = 100
+
+        for i in range(0, len(docs), max_size):
+            collection.add_documents(docs[i : i + max_size])
 
     agent = await session.get(Agent, agent_id)
     if agent:
@@ -218,7 +237,21 @@ async def rebuild_agent_with_progress(
     if docs:
         if progress_callback:
             progress_callback(f"embedding documents {len(docs)}")
-        collection.add_documents(docs)
+        client = collection._collection._client
+        try:
+            max_size = (
+                client.get_max_batch_size()
+                if hasattr(client, "get_max_batch_size")
+                else getattr(client, "max_batch_size", 0)
+            )
+        except Exception:
+            max_size = 0
+
+        if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+            max_size = 100
+
+        for i in range(0, len(docs), max_size):
+            collection.add_documents(docs[i : i + max_size])
 
     agent = await session.get(Agent, agent_id)
     if agent:

@@ -157,7 +157,24 @@ async def add_page(session: AsyncSession, page_id: int):
     docs = _text_splitter.create_documents([document], metadatas=[metadata])
     for i, doc in enumerate(docs):
         doc.metadata["chunk_index"] = i
-    collection.add_documents(docs)
+
+    # ``chromadb`` can fail on very large batches, so split the data into
+    # reasonable chunks based on the client's advertised limit.
+    client = collection._collection._client
+    try:
+        max_size = (
+            client.get_max_batch_size()
+            if hasattr(client, "get_max_batch_size")
+            else getattr(client, "max_batch_size", 0)
+        )
+    except Exception:
+        max_size = 0
+
+    if not isinstance(max_size, int) or max_size <= 0 or max_size > 100:
+        max_size = 100
+
+    for i in range(0, len(docs), max_size):
+        collection.add_documents(docs[i : i + max_size])
    
 
     # print (f" --- API VECTORDB - Page added to the chromadb!")
