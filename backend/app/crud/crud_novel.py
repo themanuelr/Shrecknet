@@ -74,7 +74,7 @@ Transcript:
 """
 
         novel_resp = await chat_with_agent(
-            session, agent.id, [{"role": "system", "content": novel_prompt}]
+            session, world_agent_id.id, [{"role": "system", "content": novel_prompt}]
         )
         novel_arc = novel_resp.get("answer", "").strip()
         arc_novels.append(novel_arc)
