@@ -79,7 +79,7 @@ function NovelistJobStatus({ agentId, jobs }: { agentId: number; jobs: any[] }) 
 const stepTitles = [
   "Source Text",
   "Instructions",
-  "Writing Style Example",
+  "Previous Session",
   "Helper Agents",
   "Summary",
 ];
@@ -173,7 +173,7 @@ function CreateStoryModal({
   onComplete: (params: {
     text: string;
     instructions: string;
-    example: number | "";
+    previous: number | "";
     helpers: number[];
   }) => void;
 }) {
@@ -188,17 +188,17 @@ function CreateStoryModal({
   // Step 2: instructions
   const [instructions, setInstructions] = useState("");
 
-  // Step 3: style example
-  const [example, setExample] = useState<number | "">("");
-  const [exampleSearch, setExampleSearch] = useState("");
+  // Step 3: previous session page
+  const [previousPage, setPreviousPage] = useState<number | "">("");
+  const [previousSearch, setPreviousSearch] = useState("");
   const filteredPages = useMemo(
     () =>
-      !exampleSearch
+      !previousSearch
         ? pages
         : pages.filter((p) =>
-            p.name.toLowerCase().includes(exampleSearch.toLowerCase())
+            p.name.toLowerCase().includes(previousSearch.toLowerCase())
           ),
-    [pages, exampleSearch]
+    [pages, previousSearch]
   );
 
   // Step 4: helpers
@@ -223,7 +223,7 @@ function CreateStoryModal({
     step > 2;
 
   function handleComplete() {
-    onComplete({ text, instructions, example, helpers });
+    onComplete({ text, instructions, previous: previousPage, helpers });
     onClose();
   }
 
@@ -330,7 +330,7 @@ function CreateStoryModal({
       {step === 3 && (
         <>
           <AgentTip agent={agent}>
-            If you want, pick a page from your world as a writing style reference!
+            Optionally pick the page from your previous session to help keep the story consistent.
           </AgentTip>
           <div className="mb-2 flex items-center gap-2">
             <Search className="w-4 h-4 text-indigo-500" />
@@ -338,8 +338,8 @@ function CreateStoryModal({
               type="text"
               className="border rounded px-2 py-1 text-sm w-full"
               placeholder="Search pages by name..."
-              value={exampleSearch}
-              onChange={(e) => setExampleSearch(e.target.value)}
+              value={previousSearch}
+              onChange={(e) => setPreviousSearch(e.target.value)}
             />
           </div>
           <div className="max-h-40 overflow-auto mb-2 border border-indigo-100 rounded">
@@ -352,9 +352,9 @@ function CreateStoryModal({
               {filteredPages.slice(0, 15).map((p) => (
                 <li key={p.id}>
                   <button
-                    onClick={() => setExample(p.id)}
+                    onClick={() => setPreviousPage(p.id)}
                     className={`flex items-center gap-2 px-3 py-2 w-full text-left ${
-                      example === p.id
+                      previousPage === p.id
                         ? "bg-indigo-100 font-bold"
                         : "hover:bg-indigo-50"
                     }`}
@@ -367,9 +367,9 @@ function CreateStoryModal({
             </ul>
           </div>
           <div className="text-xs text-indigo-600">
-            {example
-              ? <>Selected: <span className="font-semibold">{pages.find(p => p.id === example)?.name}</span></>
-              : "No style example selected."}
+            {previousPage
+              ? <>Selected: <span className="font-semibold">{pages.find(p => p.id === previousPage)?.name}</span></>
+              : "No previous session selected."}
           </div>
         </>
       )}
@@ -440,9 +440,9 @@ function CreateStoryModal({
                 : "None"}
             </div>
             <div>
-              <strong>Style Example:</strong>{" "}
-              {example
-                ? pages.find((p) => p.id === example)?.name
+              <strong>Previous Session:</strong>{" "}
+              {previousPage
+                ? pages.find((p) => p.id === previousPage)?.name
                 : "None"}
             </div>
             <div>
@@ -505,18 +505,22 @@ function CreateNovelPageContent() {
   async function handleCreate({
     text,
     instructions,
-    example,
+    previous,
     helpers,
   }: {
     text: string;
     instructions: string;
-    example: number | "";
+    previous: number | "";
     helpers: number[];
   }) {
-    const exampleText = pages?.find((p) => p.id === example)?.content || null;
     const res = await startNovelJob(
       agentId,
-      { text, instructions, example: exampleText, helper_agents: helpers },
+      {
+        text,
+        instructions,
+        previous_page_id: previous || null,
+        helper_agents: helpers,
+      },
       token || ""
     );
     router.push(`/ai_novelist/create_novel?agent= ${agentId}`);
