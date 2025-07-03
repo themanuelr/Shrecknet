@@ -10,7 +10,7 @@ import { useAgents } from "../lib/useAgents";
 import { useWorlds } from "../lib/userWorlds";
 import { usePages } from "../lib/usePage";
 import { useConcepts } from "../lib/useConcept";
-import { startAnalyzeJob, getWriterJob } from "../lib/agentAPI";
+import { startAnalyzeJob, getWriterJob, updateWriterJob } from "../lib/agentAPI";
 import { useWriterJobs } from "../lib/useWriterJobs";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,7 +46,7 @@ function AgentWriterPageContent() {
   const PAGE_SIZE = 10;
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
-  const { jobs: writerJobs } = useWriterJobs();
+  const { jobs: writerJobs, mutate: mutateWriterJobs } = useWriterJobs();
   const [jobFeedback, setJobFeedback] = useState<string | null>(null);
 
   useEffect(() => {
@@ -244,6 +244,15 @@ function AgentWriterPageContent() {
                           ) : (
                             <Link className="text-fuchsia-700 underline font-bold" href={`/agent_writer/${selectedAgent.id}/review/${job.job_id}`}>{t('review')}</Link>
                           )}
+                          <button
+                            className="text-red-600 underline"
+                            onClick={async () => {
+                              await updateWriterJob(job.job_id, { action_needed: 'done' }, token || '');
+                              mutateWriterJobs();
+                            }}
+                          >
+                            {t('close_job')}
+                          </button>
                         </td>
                       </tr>
                     ))}

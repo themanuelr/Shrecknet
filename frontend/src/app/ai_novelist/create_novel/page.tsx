@@ -9,13 +9,14 @@ import { Suspense, useEffect, useState, useMemo, useRef } from "react";
 import { useAgentById } from "../../lib/useAgentById";
 import { useAgents } from "../../lib/useAgents";
 import { usePages } from "../../lib/usePage";
-import { startNovelJob } from "../../lib/agentAPI";
+import { startNovelJob, updateNovelistJob } from "../../lib/agentAPI";
 import { useNovelistJobs } from "../../lib/useNovelistJobs";
 import RichEditor from "../../components/editor/RichEditor";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Search, BookOpen } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const AGENT_PERSONALITIES: Record<string, string> = {
   "Lorekeeper Lyra": "“A tale untold is a world unseen. Let’s weave a new legend!”",
@@ -36,6 +37,9 @@ function NovelistJobStatus({ agentId, jobs }: { agentId: number; jobs: any[] }) 
     .slice(0, 3);
 
   function Row({ job }: { job: any }) {
+    const { token } = useAuth();
+    const { mutate } = useNovelistJobs();
+    const { t } = useTranslation();
     const duration = job.start_time && job.end_time
       ? Math.round((new Date(job.end_time).getTime() - new Date(job.start_time).getTime()) / 1000) + "s"
       : "-";
@@ -45,9 +49,20 @@ function NovelistJobStatus({ agentId, jobs }: { agentId: number; jobs: any[] }) 
         <td className="p-1">{job.start_time ? new Date(job.start_time).toLocaleString() : "-"}</td>
         <td className="p-1">{job.end_time ? new Date(job.end_time).toLocaleString() : "-"}</td>
         <td className="p-1">{duration}</td>
-        <td className="p-1">
+        <td className="p-1 space-x-2">
           {job.status === "done" && (
-            <Link className="text-indigo-700 underline" href={`review/${job.job_id}?agent=${agentId}`}>Review</Link>
+            <>
+              <Link className="text-indigo-700 underline" href={`review/${job.job_id}?agent=${agentId}`}>Review</Link>
+              <button
+                className="text-red-600 underline"
+                onClick={async () => {
+                  await updateNovelistJob(job.job_id, { action_needed: "done" }, token || "");
+                  mutate();
+                }}
+              >
+                {t("close_job")}
+              </button>
+            </>
           )}
         </td>
       </tr>
@@ -497,7 +512,7 @@ function CreateNovelPageContent() {
   const agentId = Number(searchParams.get("agent") || 0);
   const { agent } = useAgentById(agentId);
   const { agents } = useAgents();
-  const { jobs } = useNovelistJobs();
+  const { jobs, mutate } = useNovelistJobs();
   const { pages } = usePages(agent ? { gameworld_id: agent.world_id } : {});
 
   const [modalOpen, setModalOpen] = useState(false);

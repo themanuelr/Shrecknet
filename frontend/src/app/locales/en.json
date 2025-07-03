@@ -68,6 +68,7 @@
   "running": "Running",
   "done": "Done",
   "review": "Review",
+  "close_job": "Close",
   "processing_selected_pages": "Processing selected pages...",
   "no_lore_found": "No lore found. Try a different search.",
   "agent_settings": "Agent Settings",
