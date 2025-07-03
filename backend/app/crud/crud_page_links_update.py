@@ -255,9 +255,16 @@ async def sync_page_ref_attributes(page: Page | int):
         )
 
         for pcv, char in result.all():
-            if not pcv.value:
+            # value can be stored as either a list or a single string depending
+            # on the characteristic configuration. Normalise it to a list of
+            # strings so the rest of the logic can assume a list.
+            if pcv.value is None:
                 continue
-            for ref_id in pcv.value:
+            ref_ids = pcv.value if isinstance(pcv.value, list) else [pcv.value]
+            ref_ids = [str(r) for r in ref_ids if r is not None]
+            if not ref_ids:
+                continue
+            for ref_id in ref_ids:
                 ref_page = await get_page(session, int(ref_id))
                 if not ref_page:
                     continue
@@ -276,7 +283,11 @@ async def sync_page_ref_attributes(page: Page | int):
                 for rev_char in rev_chars:
                     rev_val = await session.get(PageCharacteristicValue, (ref_page.id, rev_char.id))
                     if rev_val:
-                        vals = rev_val.value or []
+                        vals = rev_val.value
+                        if vals is None:
+                            vals = []
+                        elif not isinstance(vals, list):
+                            vals = [str(vals)]
                         if str(page.id) not in vals:
                             vals.append(str(page.id))
                             rev_val.value = vals
