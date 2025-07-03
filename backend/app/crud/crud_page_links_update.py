@@ -1,19 +1,15 @@
 import re
-from app.models.model_page import Page
 from sqlalchemy.future import select
+from bs4 import BeautifulSoup
 
 from app.database import async_session_maker
 from app.crud.crud_page import get_page
 
 from app.models.model_page import Page, PageCharacteristicValue
-from app.models.model_characteristic import Characteristic
+from app.models.model_characteristic import Characteristic, ConceptCharacteristicLink
+
 
 CROSSLINK_RE = re.compile(r'/worlds/\d+/concept/\d+/page/(\d+)')
-
-from bs4 import BeautifulSoup
-import re
-
-
 async def remove_page_refs_from_characteristics(deleted_page: Page | int):
     """Remove references to a deleted page from all page reference characteristics
     within the same game world."""
@@ -30,8 +26,8 @@ async def remove_page_refs_from_characteristics(deleted_page: Page | int):
             select(Characteristic).where(
                 (Characteristic.type == "page_ref") &
                 (Characteristic.gameworld_id == deleted_page.gameworld_id)
-            )
         )
+    )
         page_ref_characteristics = result.scalars().all()
 
         if not page_ref_characteristics:
@@ -239,3 +235,59 @@ async def auto_crosslink_batch(new_page_id: int):
 
     for page in candidate_pages:
         await auto_crosslink_page_content(page)
+
+async def sync_page_ref_attributes(page: Page | int):
+    """Ensure page reference characteristics are mirrored on the referenced page."""
+    async with async_session_maker() as session:
+        if isinstance(page, Page):
+            page = await get_page(session, page.id)
+        else:
+            page = await get_page(session, page)
+
+        if not page:
+            return
+
+        result = await session.execute(
+            select(PageCharacteristicValue, Characteristic)
+            .join(Characteristic, PageCharacteristicValue.characteristic_id == Characteristic.id)
+            .where(PageCharacteristicValue.page_id == page.id)
+            .where(Characteristic.type == "page_ref")
+        )
+
+        for pcv, char in result.all():
+            if not pcv.value:
+                continue
+            for ref_id in pcv.value:
+                ref_page = await get_page(session, int(ref_id))
+                if not ref_page:
+                    continue
+
+                rev_chars_result = await session.execute(
+                    select(Characteristic)
+                    .join(ConceptCharacteristicLink, ConceptCharacteristicLink.characteristic_id == Characteristic.id)
+                    .where(ConceptCharacteristicLink.concept_id == ref_page.concept_id)
+                    .where(Characteristic.type == "page_ref")
+                    .where(Characteristic.ref_concept_id == page.concept_id)
+                )
+                rev_chars = rev_chars_result.scalars().all()
+                if not rev_chars:
+                    continue
+
+                for rev_char in rev_chars:
+                    rev_val = await session.get(PageCharacteristicValue, (ref_page.id, rev_char.id))
+                    if rev_val:
+                        vals = rev_val.value or []
+                        if str(page.id) not in vals:
+                            vals.append(str(page.id))
+                            rev_val.value = vals
+                    else:
+                        session.add(
+                            PageCharacteristicValue(
+                                page_id=ref_page.id,
+                                characteristic_id=rev_char.id,
+                                value=[str(page.id)],
+                            )
+                        )
+
+        await session.commit()
+        await session.flush()
