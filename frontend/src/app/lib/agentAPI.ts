@@ -209,7 +209,7 @@ export async function startNovelJob(
   data: {
     text: string;
     instructions: string;
-    example?: string | null;
+    previous_page_id?: number | null;
     helper_agents?: number[];
   },
   token: string

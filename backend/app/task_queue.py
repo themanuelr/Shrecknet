@@ -428,7 +428,7 @@ def task_generate_pages_job(
     asyncio.run(run())
 
 @celery_app.task
-def task_create_novel_job(agent_id: int, text: str, instructions: str, example: str | None, helper_agents: list[int], job_id: str):
+def task_create_novel_job(agent_id: int, text: str, instructions: str, previous_page_id: int | None, helper_agents: list[int], job_id: str):
     async def run():
         job_dir = Path(settings.novelist_job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
@@ -466,7 +466,7 @@ def task_create_novel_job(agent_id: int, text: str, instructions: str, example: 
                 agent,
                 text,
                 instructions,
-                example,
+                previous_page_id,
                 helper_agents,
                 progress_cb,
             )

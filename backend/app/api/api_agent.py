@@ -428,7 +428,7 @@ class AnalyzePagesJobRequest(BaseModel):
 class NovelJobRequest(BaseModel):
     text: str
     instructions: str
-    example: str | None = None
+    previous_page_id: int | None = None
     helper_agents: Optional[List[int]] = None
 
 
@@ -494,7 +494,7 @@ async def create_novel_job_endpoint(
         agent_id,
         payload.text,
         payload.instructions,
-        payload.example,
+        payload.previous_page_id,
         payload.helper_agents or [],
         job_id,
     )
