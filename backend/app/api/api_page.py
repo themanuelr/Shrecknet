@@ -84,9 +84,9 @@ async def create_page_endpoint(
 
      # Schedule background crosslink update only if this page allows
     if not db_page.ignore_crosslink:
-        from app.task_queue import task_auto_crosslink_batch
+        from app.task_queue import task_auto_crosslink_batch, task_sync_page_ref_attributes
         task_auto_crosslink_batch.delay(db_page.id)
-
+        task_sync_page_ref_attributes.delay(db_page.id)
     return response
 
     # values = await get_page_characteristic_values(session, db_page.id)
@@ -166,8 +166,9 @@ async def update_page_endpoint(
     response = PageRead.model_validate({**db_page.model_dump(), "values": values})
 
     print ("Page was updated with the right values, now going into auto_crosslink!")
-    from app.task_queue import task_auto_crosslink_page_content
+    from app.task_queue import task_auto_crosslink_page_content, task_sync_page_ref_attributes
     task_auto_crosslink_page_content.delay(db_page.id)
+    task_sync_page_ref_attributes.delay(db_page.id)
 
     return response
 
