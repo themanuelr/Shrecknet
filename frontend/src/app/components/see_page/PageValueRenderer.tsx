@@ -234,11 +234,11 @@ export default function PageValueRenderer({
                   : "#"
               }
               className={`
-                flex items-center gap-5 w-full
-                transition                
-                hover:underline
+                flex items-center gap-${isMini ? 2 : 4} w-full
+                rounded-lg border border-[var(--border)] bg-[var(--surface)]
+                px-${isMini ? 2 : 3} py-${isMini ? 2 : 3}
+                shadow-sm transition hover:bg-[var(--surface-variant)]
                 ${isMini ? "text-xs" : ""}
-                justify-left
               `}
               style={{ textDecoration: "none" }}
             >

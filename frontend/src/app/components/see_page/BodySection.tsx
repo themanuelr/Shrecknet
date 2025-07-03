@@ -47,7 +47,14 @@ export default function BodySection({ values, worldId, conceptid }) {
               >
                 {/* Render lists or single values */}
                 {Array.isArray(value) ? (
-                  <div className="flex flex-wrap  gap-3">
+                  <div
+                    className={
+                      characteristic.type === "page_ref"
+                        ?
+                          "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                        : "flex flex-wrap gap-3"
+                    }
+                  >
                     {value.length > 0 ? (
                       value.map((v, i) =>
                         characteristic.type === "page_ref" ? (
@@ -57,12 +64,10 @@ export default function BodySection({ values, worldId, conceptid }) {
                             value={v}
                             worldId={worldId}
                             conceptid={conceptid}
+                            variant="mini"
                           />
                         ) : (
-                          <div
-                            key={i}
-                            className="px-3 py-1 text-sm"
-                          >
+                          <div key={i} className="px-3 py-1 text-sm">
                             {v}
                           </div>
                         )
