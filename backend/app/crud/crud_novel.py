@@ -90,12 +90,12 @@ async def create_novel(
         arc_context = ""
         if rag_agent_id:
             context_prompt = f"""Given this RPG transcript fragment, extract and return a brief world/setting summary for each of the character names/roles, places, organizations or any important information you find on the context, and relevant background from your knowledge.
-Be brief, do not repeat the transcript.
-Instructions:
-{instructions}
-Transcript:
-{arc_text}
-"""
+            Be brief, do not repeat the transcript.
+            Instructions:
+            {instructions}
+            Transcript:
+            {arc_text}
+            """
             rag_resp = await chat_with_agent(
                 session, rag_agent_id, [{"role": "user", "content": context_prompt}]
             )
@@ -105,25 +105,25 @@ Transcript:
 
         # 3b. Writer agent: novelize this arc (LangChain LLM)
         novel_prompt = f"""
-You are a talented fantasy novelist. Rewrite the following RPG transcript arc as a **brief, engaging, and flowing novel segment** (max 1000 words).
-Use the context below to make the story immersive and accurate.
+        You are a talented fantasy novelist. Rewrite the following RPG transcript arc as a **brief, engaging, and flowing novel segment** (max 1000 words).
+        Use the context below to make the story immersive and accurate.
 
-Context:
-{arc_context if arc_context else '[No context provided]'}
+        Context:
+        {arc_context if arc_context else '[No context provided]'}
 
-Instructions:
-{instructions}
+        Instructions:
+        {instructions}
 
-- Write your answer in the same language as the transcript below.
-- Format dialogue as in a novel (for example: — Gryx: What's happening here?).
-- Keep it concise, focus on main events, character emotions, and dramatic transitions.
-- You may add brief invented narration, dialogue, or transitions for flow, as long as they fit the characters and events.
-- Do NOT repeat or invent entire scenes; only fill gaps for readability.
-- Give the segment a clear beginning, middle, and end.
+        - Write your answer in the same language as the transcript below.
+        - Format dialogue as in a novel (for example: — Gryx: What's happening here?).
+        - Keep it concise, focus on main events, character emotions, and dramatic transitions.
+        - You may add brief invented narration, dialogue, or transitions for flow, as long as they fit the characters and events.
+        - Do NOT repeat or invent entire scenes; only fill gaps for readability.
+        - Give the segment a clear beginning, middle, and end.
 
-Transcript:
-{arc_text}
-"""
+        Transcript:
+        {arc_text}
+        """
         novel_arc = await langchain_chat_completion(
             system_prompt=tone,
             user_prompt=novel_prompt,            
@@ -133,19 +133,17 @@ Transcript:
         # 3c. Critic: feedback per arc (LangChain LLM)
         critic_system_prompt = "You are an experienced, constructive but critical fantasy literature reviewer."
         critic_prompt = f"""
-You are a fantasy literary critic. Read this novelized arc and the context. Give bullet-point feedback on:
-- story flow,
-- character consistency,
-- world accuracy,
-- narrative immersion.
-Point out anything that contradicts the world, characters, or instructions. Suggest brief improvements if needed.
+        You are a fantasy literary critic. Read this novelized arc and the context. Give bullet-point feedback on:
+        - story flow,
+        - character consistency,
+        - world accuracy,
+        - narrative immersion.
+        Point out anything that contradicts the world, characters, or instructions. Suggest brief improvements if needed.
 
-Novelized arc:
-{novel_arc}
+        Novelized arc:
+        {novel_arc}
 
-Context:
-{arc_context if arc_context else '[No context provided]'}
-"""
+        """
         critic_notes = await langchain_chat_completion(
             system_prompt=critic_system_prompt,
             user_prompt=critic_prompt,            
@@ -161,41 +159,27 @@ Context:
     arc_novels_joined = "\n\n".join(arc_novels)
     arc_critic_notes_joined = "\n\n".join(arc_critic_notes)
 
-    # Fetch world context for the whole thing
-    full_context = ""
-    if rag_agent_id:
-        context_prompt = f"""Given the following transcript, return a brief world summary, main characters, and setting.
-Transcript:
-{text}
-"""
-        rag_resp = await chat_with_agent(
-            session, rag_agent_id, [{"role": "user", "content": context_prompt}]
-        )
-        full_context = rag_resp.get("answer", "").strip()
-    else:
-        full_context = ""
+
 
     final_writer_prompt = f"""
-You are a talented fantasy novelist. Combine and polish the following arcs into a single, seamless, concise fantasy novel chapter.
+    You are a talented fantasy novelist. Combine and polish the following arcs into a single, seamless, concise fantasy novel chapter.
 
-Context:
-{full_context if full_context else '[No context provided]'}
 
-Critic notes for each arc:
-{arc_critic_notes_joined}
+    Critic notes for each arc:
+    {arc_critic_notes_joined}
 
-Novelized arcs:
-{arc_novels_joined}
+    Novelized arcs:
+    {arc_novels_joined}
 
-Instructions:
-- Incorporate important world details where appropriate.
-- Apply the critic's suggestions to improve narrative flow, character depth, and world consistency.
-- You may invent brief dialogue lines or transitions if needed for story cohesion, as long as they do not contradict the story so far.
-- The entire output must be **no more than 4000 words**.
-- Eliminate repetition, awkward transitions, or extraneous detail.
-- Make the final chapter emotionally engaging and easy to read.
-- Format the output using valid HTML: wrap each paragraph in <p>. Use <h2>/<h3> for titles if relevant. Format dialogue as you would in a novel, with each line in its own <p> or <blockquote> if appropriate.
-"""
+    Instructions:
+    - Incorporate important world details where appropriate.
+    - Apply the critic's suggestions to improve narrative flow, character depth, and world consistency.
+    - You may invent brief dialogue lines or transitions if needed for story cohesion, as long as they do not contradict the story so far.
+    - The entire output must be **no more than 4000 words**.
+    - Eliminate repetition, awkward transitions, or extraneous detail.
+    - Make the final chapter emotionally engaging and easy to read.
+    - Format the output using valid HTML: wrap each paragraph in <p>. Use <h2>/<h3> for titles if relevant. Format dialogue as you would in a novel, with each line in its own <p> or <blockquote> if appropriate.
+    """
 
     draft = await langchain_chat_completion(
         system_prompt=tone,
