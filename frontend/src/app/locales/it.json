@@ -68,6 +68,7 @@
   "running": "In corso",
   "done": "Completato",
   "review": "Revisiona",
+  "close_job": "Chiudi",
   "processing_selected_pages": "Elaborazione delle pagine selezionate...",
   "no_lore_found": "Nessun lore trovato. Prova un'altra ricerca.",
   "agent_settings": "Impostazioni Agenti",
